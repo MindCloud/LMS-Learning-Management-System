@@ -1,3 +1,6 @@
+// src/pages/Dashboard.jsx (or wherever your Dashboard component lives)
+// Updated with professional Sonner toast notifications
+
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
@@ -9,8 +12,11 @@ import {
   query,
   where,
   updateDoc,
+  deleteDoc,
 } from "firebase/firestore";
 import { onAuthStateChanged, signOut } from "firebase/auth";
+import { toast } from "sonner"; // <-- Added
+
 import MarkModal from "./MarkModal";
 import {
   LayoutDashboard,
@@ -33,6 +39,8 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
+  Trash2,
+  MessageCircle,
 } from "lucide-react";
 
 function Dashboard() {
@@ -46,17 +54,25 @@ function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const studentsPerPage = 6;
+  const [selectedGrade, setSelectedGrade] = useState("all");
+  const [studentToDelete, setStudentToDelete] = useState(null);
 
+  // Sidebar grade filters
+  const [selectedGradeNotices, setSelectedGradeNotices] = useState("all");
+  const [selectedGradeMaterials, setSelectedGradeMaterials] = useState("all");
+  const [selectedGradeHomework, setSelectedGradeHomework] = useState("all");
+
+  const studentsPerPage = 6;
   const navigate = useNavigate();
 
-  // Sign out -> /login
   const handleLogout = async () => {
     try {
       await signOut(auth);
+      toast.success("Logged out successfully");
       navigate("/login");
     } catch (e) {
       console.error("Logout failed:", e);
+      toast.error("Failed to log out. Please try again.");
     }
   };
 
@@ -64,101 +80,193 @@ function Dashboard() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        const docRef = doc(db, "teachers", user.uid);
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-          setTeacher(docSnap.data());
-        } else {
-          console.warn("No teacher profile found for this UID:", user.uid);
+        try {
+          const docRef = doc(db, "teachers", user.uid);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            setTeacher({ uid: user.uid, ...docSnap.data() });
+          } else {
+            toast.error("Teacher profile not found");
+            navigate("/login");
+          }
+        } catch (err) {
+          toast.error("Failed to load profile");
+          navigate("/login");
         }
       } else {
         navigate("/login");
       }
     });
-
     return () => unsubscribe();
   }, [navigate]);
 
-  // Fetch students for this teacher
+  // Fetch all dashboard data
   useEffect(() => {
-    const fetchStudents = async () => {
-      if (!teacher) return;
+    if (!teacher?.uid) return;
 
-      const q = query(collection(db, "students"));
-      const querySnapshot = await getDocs(q);
+    const fetchAllData = async () => {
+      toast.loading("Loading dashboard data...");
 
-      const studentList = querySnapshot.docs
-        .map((doc) => ({ id: doc.id, ...doc.data() }))
-        .filter((student) =>
-          student.preferredTeachers?.some(
-            (t) => t.preferredTeacherId === auth.currentUser?.uid
-          )
-        );
+      try {
+        // Fetch students
+        const studentsSnap = await getDocs(collection(db, "students"));
+        const allStudents = studentsSnap.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
 
-      setStudents(studentList);
-      setFilteredStudents(studentList);
+        const myStudents = allStudents.filter((student) => {
+          if (
+            !student.preferredTeachers ||
+            !Array.isArray(student.preferredTeachers)
+          ) {
+            return false;
+          }
+          return student.preferredTeachers.some(
+            (pt) => pt.preferredTeacherId === teacher.uid
+          );
+        });
+
+        setStudents(myStudents);
+
+        // Fetch teacher content
+        const [hwSnap, matSnap, noticeSnap] = await Promise.all([
+          getDocs(
+            query(
+              collection(db, "homework"),
+              where("teacherId", "==", teacher.uid)
+            )
+          ),
+          getDocs(
+            query(
+              collection(db, "materials"),
+              where("teacherId", "==", teacher.uid)
+            )
+          ),
+          getDocs(
+            query(
+              collection(db, "notices"),
+              where("teacherId", "==", teacher.uid)
+            )
+          ),
+        ]);
+
+        setHomework(hwSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
+        setMaterials(matSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
+
+        const noticeList = noticeSnap.docs
+          .map((d) => {
+            const data = d.data();
+            const createdAtMs = data.createdAt?.toMillis?.() ?? 0;
+            return { id: d.id, ...data, _createdAtMs: createdAtMs };
+          })
+          .sort((a, b) => b._createdAtMs - a._createdAtMs);
+
+        setNotices(noticeList);
+
+        toast.dismiss();
+        toast.success("Dashboard loaded successfully");
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+        toast.dismiss();
+        toast.error("Failed to load dashboard data");
+      }
     };
 
-    fetchStudents();
+    fetchAllData();
   }, [teacher]);
 
-  // Fetch Homework, Materials, Notices
+  // Delete student with toast feedback
+  const handleDeleteStudent = async (student) => {
+    setStudentToDelete(null); // close confirmation modal
+
+    toast.loading(`Deleting ${student.fullName}...`);
+
+    try {
+      await deleteDoc(doc(db, "students", student.id));
+
+      setStudents((prev) => prev.filter((s) => s.id !== student.id));
+      toast.dismiss();
+      toast.success(`${student.fullName} deleted successfully`);
+    } catch (error) {
+      console.error("Error deleting student:", error);
+      toast.dismiss();
+      toast.error("Failed to delete student");
+    }
+  };
+
+  // Update student status (active/pending)
+  const updateStudentStatus = async (studentId, newStatus) => {
+    toast.loading("Updating status...");
+
+    try {
+      await updateDoc(doc(db, "students", studentId), { status: newStatus });
+
+      setStudents((prev) =>
+        prev.map((s) => (s.id === studentId ? { ...s, status: newStatus } : s))
+      );
+
+      toast.dismiss();
+      toast.success(
+        `Student status updated to ${
+          newStatus === "active" ? "Active" : "Pending"
+        }`
+      );
+    } catch (error) {
+      console.error("Error updating status:", error);
+      toast.dismiss();
+      toast.error("Failed to update status");
+    }
+  };
+
+  // Filter students
   useEffect(() => {
-    const fetchData = async () => {
-      if (!teacher) return;
+    let filtered = students;
 
-      const uid = auth.currentUser?.uid;
-      if (!uid) return;
+    if (selectedGrade !== "all") {
+      filtered = filtered.filter((student) => {
+        const studentGrade = (student.grade || "")
+          .toString()
+          .trim()
+          .toLowerCase();
+        if (selectedGrade === "after-ol") {
+          return studentGrade.includes("o/l");
+        }
+        if (selectedGrade === "after-al") {
+          return studentGrade.includes("a/l");
+        }
+        return studentGrade === selectedGrade;
+      });
+    }
 
-      // Homework
-      const hwQ = query(
-        collection(db, "homework"),
-        where("teacherId", "==", uid)
+    if (searchQuery) {
+      filtered = filtered.filter(
+        (s) =>
+          s.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          s.email?.toLowerCase().includes(searchQuery.toLowerCase())
       );
-      const hwSnap = await getDocs(hwQ);
-      setHomework(hwSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+    }
 
-      // Materials
-      const matQ = query(
-        collection(db, "materials"),
-        where("teacherId", "==", uid)
-      );
-      const matSnap = await getDocs(matQ);
-      setMaterials(matSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
-
-      // Notices
-      const noticeQ = query(
-        collection(db, "notices"),
-        where("teacherId", "==", uid)
-      );
-      const noticeSnap = await getDocs(noticeQ);
-      const noticeList = noticeSnap.docs
-        .map((d) => {
-          const data = d.data();
-          const createdAtMs = data.createdAt?.toMillis?.() ?? 0;
-          return { id: d.id, ...data, _createdAtMs: createdAtMs };
-        })
-        .sort((a, b) => b._createdAtMs - a._createdAtMs);
-
-      setNotices(noticeList);
-    };
-
-    fetchData();
-  }, [teacher]);
-
-  // Handle search
-  useEffect(() => {
-    const filtered = students.filter(
-      (student) =>
-        student.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        student.email.toLowerCase().includes(searchQuery.toLowerCase())
-    );
     setFilteredStudents(filtered);
-    setCurrentPage(1); // Reset to first page on search
-  }, [searchQuery, students]);
+    setCurrentPage(1);
+  }, [students, searchQuery, selectedGrade]);
 
-  // Pagination logic
+  // Sidebar grade filtering
+  const filterByGrade = (items, selectedFilter) => {
+    if (selectedFilter === "all") return items;
+    return items.filter(
+      (item) =>
+        item.grades &&
+        Array.isArray(item.grades) &&
+        item.grades.includes(selectedFilter)
+    );
+  };
+
+  const filteredNotices = filterByGrade(notices, selectedGradeNotices);
+  const filteredMaterials = filterByGrade(materials, selectedGradeMaterials);
+  const filteredHomework = filterByGrade(homework, selectedGradeHomework);
+
+  // Pagination
   const totalPages = Math.ceil(filteredStudents.length / studentsPerPage);
   const indexOfLastStudent = currentPage * studentsPerPage;
   const indexOfFirstStudent = indexOfLastStudent - studentsPerPage;
@@ -168,9 +276,7 @@ function Dashboard() {
   );
 
   const handlePageChange = (page) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
+    if (page >= 1 && page <= totalPages) setCurrentPage(page);
   };
 
   const openModal = (student) => {
@@ -183,7 +289,7 @@ function Dashboard() {
     setIsModalOpen(false);
   };
 
-  if (!teacher)
+  if (!teacher) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-indigo-50 via-slate-50 to-white flex items-center justify-center p-6">
         <div className="flex items-center gap-3 text-slate-600 rounded-xl bg-white/80 px-4 py-3 ring-1 ring-blue-100">
@@ -192,14 +298,11 @@ function Dashboard() {
         </div>
       </div>
     );
+  }
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-indigo-50 via-slate-50 to-white">
-      {/* Soft background accents */}
-      <div className="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full bg-sky-100 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-24 -right-24 h-80 w-80 rounded-full bg-indigo-100 blur-3xl" />
-
-      {/* Top bar */}
+      {/* Header */}
       <header className="sticky top-0 z-20 border-b bg-white/80 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
@@ -239,9 +342,15 @@ function Dashboard() {
               Questions
             </button>
             <button
+              onClick={() => navigate("/teacher-feedback")}
+              className="inline-flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-200 shadow-sm transition hover:bg-slate-50"
+            >
+              <MessageCircle className="h-4 w-4 text-blue-600" />
+              Feedback
+            </button>
+            <button
               onClick={handleLogout}
-              className="inline-flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-200 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-300"
-              title="Log out"
+              className="inline-flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-200 shadow-sm transition hover:bg-slate-50"
             >
               <LogOut className="h-4 w-4" />
               Logout
@@ -252,8 +361,9 @@ function Dashboard() {
       </header>
 
       <main className="mx-auto max-w-7xl p-4 sm:p-6">
-        {/* Header cards */}
+        {/* Header Cards */}
         <section className="grid gap-6 md:grid-cols-3">
+          {/* Profile */}
           <div className="rounded-2xl border bg-white p-6 shadow-sm ring-1 ring-blue-100">
             <div className="mb-4 flex items-center gap-3">
               <BadgeCheck className="h-5 w-5 text-emerald-600" />
@@ -262,9 +372,18 @@ function Dashboard() {
               </h2>
             </div>
             <div className="flex items-start gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-sky-50 to-indigo-50 ring-1 ring-blue-100">
-                <User className="h-7 w-7 text-slate-500" />
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-sky-50 to-indigo-50 ring-1 ring-blue-100 overflow-hidden">
+                {teacher?.imageUrl ? (
+                  <img
+                    src={teacher.imageUrl}
+                    alt="Teacher profile"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <User className="h-7 w-7 text-slate-500" />
+                )}
               </div>
+
               <div className="min-w-0">
                 <p className="truncate text-lg font-semibold text-slate-900">
                   {teacher.fullName}
@@ -284,12 +403,14 @@ function Dashboard() {
                   </p>
                   <p className="flex items-center gap-2">
                     <Users className="h-4 w-4 text-slate-500" />
-                    Grade: {teacher.grade || "—"}
+                    Grades: {teacher.grades?.join(", ") || "—"}
                   </p>
                 </div>
               </div>
             </div>
           </div>
+
+          {/* Overview */}
           <div className="rounded-2xl border bg-white p-6 shadow-sm ring-1 ring-blue-100">
             <h2 className="mb-4 flex items-center gap-3 text-base font-semibold text-slate-900">
               Overview
@@ -300,6 +421,8 @@ function Dashboard() {
               <StatCard label="Notices" value={notices.length} />
             </div>
           </div>
+
+          {/* Shortcuts */}
           <div className="rounded-2xl border bg-white p-6 shadow-sm ring-1 ring-blue-100">
             <h2 className="mb-4 flex items-center gap-3 text-base font-semibold text-slate-900">
               Shortcuts
@@ -324,8 +447,9 @@ function Dashboard() {
           </div>
         </section>
 
-        {/* Students section */}
+        {/* Students + Sidebar */}
         <section className="mt-8 grid gap-6 lg:grid-cols-3">
+          {/* Students List */}
           <div className="lg:col-span-2 rounded-2xl border bg-white shadow-sm ring-1 ring-blue-100">
             <div className="flex items-center justify-between border-b bg-gradient-to-r from-white to-slate-50 px-5 py-4">
               <h3 className="flex items-center gap-2 text-base font-semibold text-slate-900">
@@ -337,8 +461,7 @@ function Dashboard() {
               </span>
             </div>
             <div className="p-6">
-              {/* Search Bar */}
-              <div className="mb-6">
+              <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="relative">
                   <input
                     type="text"
@@ -349,15 +472,30 @@ function Dashboard() {
                   />
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 </div>
+                <select
+                  value={selectedGrade}
+                  onChange={(e) => setSelectedGrade(e.target.value)}
+                  className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                >
+                  <option value="all">All Grades</option>
+                  <option value="6">Grade 6</option>
+                  <option value="7">Grade 7</option>
+                  <option value="8">Grade 8</option>
+                  <option value="9">Grade 9</option>
+                  <option value="10">Grade 10</option>
+                  <option value="11">Grade 11</option>
+                  <option value="after-ol">After O/L</option>
+                  <option value="after-al">After A/L</option>
+                </select>
               </div>
 
               {filteredStudents.length === 0 ? (
                 <div className="flex items-center gap-3 rounded-xl border border-dashed bg-gradient-to-br from-blue-50/50 via-indigo-50/40 to-sky-50/40 px-4 py-6 text-slate-600 ring-1 ring-blue-100">
                   <Users className="h-5 w-5 text-blue-600" />
                   <p className="text-sm">
-                    {searchQuery
-                      ? "No students match your search"
-                      : "No students found"}
+                    {searchQuery || selectedGrade !== "all"
+                      ? "No students match your filters"
+                      : "No students assigned yet"}
                   </p>
                 </div>
               ) : (
@@ -385,6 +523,19 @@ function Dashboard() {
                               <Mail className="h-4 w-4 inline-block mr-1 text-blue-500" />
                               {student.email}
                             </p>
+                            <p className="mt-2 text-sm text-slate-700">
+                              <GraduationCap className="h-4 w-4 inline-block mr-1 text-indigo-600" />
+                              <span className="font-medium">
+                                {student.grade
+                                  ? student.grade === "after-ol"
+                                    ? "After O/L"
+                                    : student.grade === "after-al"
+                                    ? "After A/L"
+                                    : `Grade ${student.grade}`
+                                  : "Grade not set"}
+                              </span>
+                            </p>
+
                             <div className="mt-3">
                               <p className="text-sm font-medium text-slate-700">
                                 Marks:
@@ -405,10 +556,11 @@ function Dashboard() {
                                 </ul>
                               ) : (
                                 <p className="text-sm text-slate-400">
-                                  No marks
+                                  No marks recorded
                                 </p>
                               )}
                             </div>
+
                             <div className="mt-3">
                               <p className="text-sm font-medium text-slate-700">
                                 Status:
@@ -425,74 +577,85 @@ function Dashboard() {
                                 ) : (
                                   <Clock3 className="h-3.5 w-3.5" />
                                 )}
-                                {student.status || "pending"}
+                                {student.status === "active"
+                                  ? "Active"
+                                  : "Pending"}
                               </span>
                             </div>
                           </div>
                         </div>
+
                         <div className="mt-4 flex flex-wrap gap-2">
                           <button
                             onClick={() => openModal(student)}
-                            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700"
                           >
                             <NotebookPen className="h-4 w-4" />
                             Give Marks
                           </button>
                           <button
-                            onClick={async () => {
-                              await updateDoc(doc(db, "students", student.id), {
-                                status: "active",
-                              });
-                              setStudents((prev) =>
-                                prev.map((s) =>
-                                  s.id === student.id
-                                    ? { ...s, status: "active" }
-                                    : s
-                                )
-                              );
-                              setFilteredStudents((prev) =>
-                                prev.map((s) =>
-                                  s.id === student.id
-                                    ? { ...s, status: "active" }
-                                    : s
-                                )
-                              );
-                            }}
-                            className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                            onClick={() =>
+                              updateStudentStatus(student.id, "active")
+                            }
+                            className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-700"
                           >
                             <CheckCircle2 className="h-4 w-4" />
                             Set Active
                           </button>
                           <button
-                            onClick={async () => {
-                              await updateDoc(doc(db, "students", student.id), {
-                                status: "pending",
-                              });
-                              setStudents((prev) =>
-                                prev.map((s) =>
-                                  s.id === student.id
-                                    ? { ...s, status: "pending" }
-                                    : s
-                                )
-                              );
-                              setFilteredStudents((prev) =>
-                                prev.map((s) =>
-                                  s.id === student.id
-                                    ? { ...s, status: "pending" }
-                                    : s
-                                )
-                              );
-                            }}
-                            className="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-3 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-300"
+                            onClick={() =>
+                              updateStudentStatus(student.id, "pending")
+                            }
+                            className="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-3 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-amber-600"
                           >
                             <Clock3 className="h-4 w-4" />
                             Set Pending
+                          </button>
+                          <button
+                            onClick={() => setStudentToDelete(student)}
+                            className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-red-700"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Delete
                           </button>
                         </div>
                       </div>
                     ))}
                   </div>
-                  {/* Pagination */}
+
+                  {/* Delete Confirmation Modal */}
+                  {studentToDelete && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+                        <h3 className="text-lg font-semibold text-slate-900">
+                          Delete Student
+                        </h3>
+                        <p className="mt-2 text-sm text-slate-600">
+                          Are you sure you want to delete{" "}
+                          <span className="font-medium">
+                            {studentToDelete.fullName}
+                          </span>
+                          ? This action cannot be undone.
+                        </p>
+
+                        <div className="mt-6 flex justify-end gap-3">
+                          <button
+                            onClick={() => setStudentToDelete(null)}
+                            className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => handleDeleteStudent(studentToDelete)}
+                            className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {totalPages > 1 && (
                     <div className="mt-6 flex items-center justify-between">
                       <div className="text-sm text-slate-600">
@@ -510,17 +673,17 @@ function Dashboard() {
                           Previous
                         </button>
                         <div className="flex items-center gap-1">
-                          {[...Array(totalPages)].map((_, index) => (
+                          {[...Array(totalPages)].map((_, i) => (
                             <button
-                              key={index + 1}
-                              onClick={() => handlePageChange(index + 1)}
+                              key={i + 1}
+                              onClick={() => handlePageChange(i + 1)}
                               className={`rounded-lg px-3 py-1.5 text-sm ${
-                                currentPage === index + 1
+                                currentPage === i + 1
                                   ? "bg-blue-600 text-white"
                                   : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
                               }`}
                             >
-                              {index + 1}
+                              {i + 1}
                             </button>
                           ))}
                         </div>
@@ -540,62 +703,109 @@ function Dashboard() {
             </div>
           </div>
 
-          {/* Right rail: Homework / Materials / Notices */}
+          {/* Right Sidebar - unchanged except for filtered counts */}
           <div className="space-y-6">
+            {/* Homework */}
             <div className="overflow-hidden rounded-2xl border bg-white shadow-sm ring-1 ring-sky-100">
               <div className="flex items-center justify-between border-b bg-gradient-to-r from-white to-slate-50 px-5 py-4">
                 <h3 className="flex items-center gap-2 text-base font-semibold text-slate-900">
                   <NotebookPen className="h-5 w-5 text-sky-600" />
                   Homework
                 </h3>
-                <span className="rounded-full bg-sky-50 px-2.5 py-1 text-xs font-medium text-sky-700 ring-1 ring-sky-200">
-                  {homework.length}
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="rounded-full bg-sky-50 px-2.5 py-1 text-xs font-medium text-sky-700 ring-1 ring-sky-200">
+                    {filteredHomework.length}
+                  </span>
+                  <select
+                    value={selectedGradeHomework}
+                    onChange={(e) => setSelectedGradeHomework(e.target.value)}
+                    className="rounded-lg border border-slate-200 bg-white px-3 py-1 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-300"
+                  >
+                    <option value="all">All Grades</option>
+                    <option value="Grade 6">Grade 6</option>
+                    <option value="Grade 7">Grade 7</option>
+                    <option value="Grade 8">Grade 8</option>
+                    <option value="Grade 9">Grade 9</option>
+                    <option value="Grade 10">Grade 10</option>
+                    <option value="Grade 11">Grade 11</option>
+                    <option value="Grade 12">Grade 12</option>
+                  </select>
+                </div>
               </div>
               <div className="p-5">
-                {homework.length === 0 ? (
-                  <EmptyState label="No homework assigned yet" />
+                {filteredHomework.length === 0 ? (
+                  <EmptyState label="No homework for selected grade" />
                 ) : (
                   <ul className="space-y-2">
-                    {homework.map((hw) => (
+                    {filteredHomework.map((hw) => (
                       <li
                         key={hw.id}
-                        className="rounded-lg border border-sky-100 bg-sky-50/60 px-3 py-2 text-slate-900"
+                        className="rounded-lg border border-sky-100 bg-sky-50/60 px-3 py-2 text-sm text-slate-900"
                       >
-                        {hw.task}
+                        <p>{hw.task}</p>
+                        {hw.grades && hw.grades.length > 0 && (
+                          <p className="mt-1 text-xs text-sky-600">
+                            For: {hw.grades.join(", ")}
+                          </p>
+                        )}
                       </li>
                     ))}
                   </ul>
                 )}
               </div>
             </div>
+
+            {/* Materials */}
             <div className="overflow-hidden rounded-2xl border bg-white shadow-sm ring-1 ring-indigo-100">
               <div className="flex items-center justify-between border-b bg-gradient-to-r from-white to-slate-50 px-5 py-4">
                 <h3 className="flex items-center gap-2 text-base font-semibold text-slate-900">
                   <BookOpen className="h-5 w-5 text-indigo-600" />
                   Learning Materials
                 </h3>
-                <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700 ring-1 ring-indigo-200">
-                  {materials.length}
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700 ring-1 ring-indigo-200">
+                    {filteredMaterials.length}
+                  </span>
+                  <select
+                    value={selectedGradeMaterials}
+                    onChange={(e) => setSelectedGradeMaterials(e.target.value)}
+                    className="rounded-lg border border-slate-200 bg-white px-3 py-1 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                  >
+                    <option value="all">All Grades</option>
+                    <option value="Grade 6">Grade 6</option>
+                    <option value="Grade 7">Grade 7</option>
+                    <option value="Grade 8">Grade 8</option>
+                    <option value="Grade 9">Grade 9</option>
+                    <option value="Grade 10">Grade 10</option>
+                    <option value="Grade 11">Grade 11</option>
+                    <option value="Grade 12">Grade 12</option>
+                  </select>
+                </div>
               </div>
               <div className="p-5">
-                {materials.length === 0 ? (
-                  <EmptyState label="No materials uploaded yet" />
+                {filteredMaterials.length === 0 ? (
+                  <EmptyState label="No materials for selected grade" />
                 ) : (
                   <ul className="space-y-2">
-                    {materials.map((mat) => (
+                    {filteredMaterials.map((mat) => (
                       <li key={mat.id}>
                         <a
                           href={mat.link}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="group flex items-center gap-2 rounded-lg border border-indigo-100 bg-indigo-50/40 px-3 py-2 text-slate-900 transition hover:bg-indigo-50 hover:ring-1 hover:ring-indigo-200"
+                          className="group flex flex-col gap-1 rounded-lg border border-indigo-100 bg-indigo-50/40 px-3 py-2 text-sm text-slate-900 transition hover:bg-indigo-50 hover:ring-1 hover:ring-indigo-200"
                         >
-                          <ExternalLink className="h-4 w-4 text-indigo-600" />
-                          <span className="truncate underline-offset-2 group-hover:underline">
-                            {mat.title}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <ExternalLink className="h-4 w-4 text-indigo-600" />
+                            <span className="truncate underline-offset-2 group-hover:underline">
+                              {mat.title}
+                            </span>
+                          </div>
+                          {mat.grades && mat.grades.length > 0 && (
+                            <span className="text-xs text-indigo-600">
+                              For: {mat.grades.join(", ")}
+                            </span>
+                          )}
                         </a>
                       </li>
                     ))}
@@ -603,27 +813,50 @@ function Dashboard() {
                 )}
               </div>
             </div>
+
+            {/* Notices */}
             <div className="overflow-hidden rounded-2xl border bg-white shadow-sm ring-1 ring-amber-100">
               <div className="flex items-center justify-between border-b bg-gradient-to-r from-white to-slate-50 px-5 py-4">
                 <h3 className="flex items-center gap-2 text-base font-semibold text-slate-900">
                   <Bell className="h-5 w-5 text-amber-600" />
                   Notices
                 </h3>
-                <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-200">
-                  {notices.length}
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-200">
+                    {filteredNotices.length}
+                  </span>
+                  <select
+                    value={selectedGradeNotices}
+                    onChange={(e) => setSelectedGradeNotices(e.target.value)}
+                    className="rounded-lg border border-slate-200 bg-white px-3 py-1 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-300"
+                  >
+                    <option value="all">All Grades</option>
+                    <option value="Grade 6">Grade 6</option>
+                    <option value="Grade 7">Grade 7</option>
+                    <option value="Grade 8">Grade 8</option>
+                    <option value="Grade 9">Grade 9</option>
+                    <option value="Grade 10">Grade 10</option>
+                    <option value="Grade 11">Grade 11</option>
+                    <option value="Grade 12">Grade 12</option>
+                  </select>
+                </div>
               </div>
               <div className="p-5">
-                {notices.length === 0 ? (
-                  <EmptyState label="No notices yet" />
+                {filteredNotices.length === 0 ? (
+                  <EmptyState label="No notices for selected grade" />
                 ) : (
                   <ul className="space-y-2">
-                    {notices.map((notice) => (
+                    {filteredNotices.map((notice) => (
                       <li
                         key={notice.id}
-                        className="rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-slate-800"
+                        className="rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-sm text-slate-800"
                       >
-                        {notice.content}
+                        <p>{notice.content}</p>
+                        {notice.grades && notice.grades.length > 0 && (
+                          <p className="mt-1 text-xs text-amber-700">
+                            For: {notice.grades.join(", ")}
+                          </p>
+                        )}
                       </li>
                     ))}
                   </ul>
@@ -643,6 +876,7 @@ function Dashboard() {
   );
 }
 
+/* Helper Components - unchanged */
 function TopLink({ onClick, icon, label }) {
   return (
     <button

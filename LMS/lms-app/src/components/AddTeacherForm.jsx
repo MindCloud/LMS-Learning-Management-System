@@ -1,4 +1,5 @@
-// src/components/AddTeacherForm.jsx
+// src/components/AddTeacherForm.jsx (updated with Sonner toast notifications)
+
 import React, { useEffect, useRef, useState } from "react";
 import { auth, db } from "../firebase";
 import {
@@ -11,6 +12,7 @@ import {
   where,
 } from "firebase/firestore";
 import { createUserWithEmailAndPassword } from "firebase/auth";
+import { toast } from "sonner"; // <-- Added
 
 // Icons
 import {
@@ -34,7 +36,7 @@ import {
 
 /* ----------------------------- Helpers ----------------------------- */
 const emailRx = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const phoneRx = /^(?:\+94|0)?7\d{8}$/; // SL mobile (07XXXXXXXX / +94XXXXXXXXX)
+const phoneRx = /^(?:\+94|0)?7\d{8}$/; // SL mobile
 
 const passwordChecks = (pw) => ({
   len: pw.length >= 8,
@@ -55,17 +57,18 @@ function AddTeacherForm({ onClose, onTeacherAdded }) {
     password: "",
     role: "teacher",
     subjects: "",
-    grade: "",
+    grade: "", // Note: you have a checkbox group for grades, but field is "grade"
     bio: "",
     achievements: "",
     contact: "",
     address: "",
     imageUrl: "",
+    grades: [], // <-- Added to properly track multiple grades
   });
 
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
-  const [banner, setBanner] = useState({ type: "", message: "" });
+  const [banner, setBanner] = useState({ type: "", message: "" }); // Keeping for inline feedback if desired
   const dialogRef = useRef(null);
 
   const handleChange = (e) => {
@@ -91,17 +94,19 @@ function AddTeacherForm({ onClose, onTeacherAdded }) {
     if (!form.username.trim()) e.username = "Username is required.";
     if (!form.email.trim() || !emailRx.test(form.email.trim()))
       e.email = "Enter a valid email address.";
+
     const checks = passwordChecks(form.password);
     if (!(checks.len && checks.upper && checks.num)) {
       e.password = "Min 8 chars, include an uppercase letter and a number.";
     }
+
     if (form.contact && !phoneRx.test(form.contact.trim())) {
       e.contact = "Valid SL mobile (07XXXXXXXX or +94XXXXXXXXX).";
     }
     if (form.imageUrl && !/^https?:\/\/.+/i.test(form.imageUrl))
       e.imageUrl = "Image URL must start with http(s)://";
 
-    // Uniqueness checks (teachers)
+    // Uniqueness checks
     if (!e.username) {
       const uq = query(
         collection(db, "teachers"),
@@ -128,15 +133,13 @@ function AddTeacherForm({ onClose, onTeacherAdded }) {
     setBanner({ type: "", message: "" });
 
     if (!(await validate())) {
-      setBanner({
-        type: "error",
-        message: "Please fix the errors and try again.",
-      });
+      toast.error("Please fix the highlighted errors and try again.");
       return;
     }
 
     try {
       setSubmitting(true);
+      toast.loading("Creating teacher account...");
 
       // Create Auth user
       const userCred = await createUserWithEmailAndPassword(
@@ -152,18 +155,31 @@ function AddTeacherForm({ onClose, onTeacherAdded }) {
         email: form.email.trim().toLowerCase(),
         uid: userCred.user.uid,
         role: form.role || "teacher",
+        grades: form.grades, // save selected grades array
         createdAt: new Date().toISOString(),
       });
 
-      setBanner({ type: "success", message: "Teacher added successfully!" });
+      toast.dismiss(); // remove loading
+      toast.success(`Teacher "${form.fullName}" added successfully!`);
+
       onTeacherAdded?.();
-      onClose?.();
+      setTimeout(() => onClose?.(), 800); // small delay for toast visibility
     } catch (error) {
-      console.error("Error adding teacher:", error);
-      setBanner({
-        type: "error",
-        message: error?.message || "Something went wrong. Please try again.",
-      });
+      toast.dismiss();
+
+      let message = "Failed to add teacher. Please try again.";
+
+      if (error.code === "auth/email-already-in-use") {
+        message = "This email is already registered in Firebase Auth.";
+      } else if (error.code === "auth/weak-password") {
+        message = "Password is too weak.";
+      } else {
+        console.error("Error adding teacher:", error);
+        message = error.message || message;
+      }
+
+      toast.error(message);
+      setBanner({ type: "error", message });
     } finally {
       setSubmitting(false);
     }
@@ -202,13 +218,13 @@ function AddTeacherForm({ onClose, onTeacherAdded }) {
           </button>
         </div>
 
-        {/* Banner */}
+        {/* Optional inline banner (kept for detailed error visibility) */}
         {banner.message && (
           <div
             className={`mx-6 mt-4 flex items-start gap-2 rounded-xl border px-4 py-3 text-sm ${
               banner.type === "success"
-                ? "border-blue-200 bg-blue-50 text-blue-800"
-                : "border-blue-200 bg-blue-50 text-blue-800"
+                ? "border-green-200 bg-green-50 text-green-800"
+                : "border-red-200 bg-red-50 text-red-800"
             }`}
           >
             {banner.type === "success" ? (
@@ -324,7 +340,6 @@ function AddTeacherForm({ onClose, onTeacherAdded }) {
               Professional Information
             </SectionTitle>
 
-            {/* Role */}
             <LabeledSelect
               label="Role"
               icon={<Shield className="h-4 w-4" />}
@@ -338,9 +353,8 @@ function AddTeacherForm({ onClose, onTeacherAdded }) {
               ]}
             />
 
-            {/* Subject */}
             <LabeledSelect
-              label="Subject"
+              label="Primary Subject"
               icon={<BookOpen className="h-4 w-4" />}
               name="subjects"
               value={form.subjects}
@@ -355,9 +369,9 @@ function AddTeacherForm({ onClose, onTeacherAdded }) {
               ]}
             />
 
-            {/* Grade */}
+            {/* Teaching Grades - Multi-select checkboxes */}
             <div>
-              <label className="mb-1 block text-sm font-medium text-blue-900">
+              <label className="mb-2 block text-sm font-medium text-blue-900">
                 Teaching Grades
               </label>
               <div className="flex flex-wrap gap-2">
@@ -373,27 +387,23 @@ function AddTeacherForm({ onClose, onTeacherAdded }) {
                   <label
                     key={g}
                     className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition cursor-pointer ${
-                      form.grades?.includes(g)
+                      form.grades.includes(g)
                         ? "border-blue-500 bg-blue-50 text-blue-900"
-                        : "bg-white hover:bg-blue-50 hover:border-blue-200"
+                        : "border-blue-100 bg-white hover:bg-blue-50"
                     }`}
                   >
                     <input
                       type="checkbox"
-                      name="grades"
                       value={g}
-                      checked={form.grades?.includes(g)}
+                      checked={form.grades.includes(g)}
                       onChange={(e) => {
                         const { checked, value } = e.target;
-                        let updatedGrades = form.grades || [];
-                        if (checked) {
-                          updatedGrades = [...updatedGrades, value];
-                        } else {
-                          updatedGrades = updatedGrades.filter(
-                            (grade) => grade !== value
-                          );
-                        }
-                        setForm({ ...form, grades: updatedGrades });
+                        setForm((prev) => ({
+                          ...prev,
+                          grades: checked
+                            ? [...prev.grades, value]
+                            : prev.grades.filter((grade) => grade !== value),
+                        }));
                       }}
                       className="accent-blue-600"
                     />
@@ -406,15 +416,16 @@ function AddTeacherForm({ onClose, onTeacherAdded }) {
             <Textarea
               icon={<FileText className="h-4 w-4" />}
               name="bio"
-              placeholder="Bio"
+              placeholder="Short bio"
               value={form.bio}
               onChange={handleChange}
               rows={4}
             />
+
             <Textarea
               icon={<Award className="h-4 w-4" />}
               name="achievements"
-              placeholder="Achievements"
+              placeholder="Key achievements (optional)"
               value={form.achievements}
               onChange={handleChange}
               rows={4}
@@ -424,18 +435,18 @@ function AddTeacherForm({ onClose, onTeacherAdded }) {
 
         {/* Footer */}
         <div className="sticky bottom-0 z-10 border-t bg-gradient-to-r from-white to-blue-50 px-6 py-4">
-          <div className="flex items-center justify-end gap-2">
+          <div className="flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl border border-blue-200 px-5 py-2 text-sm font-medium text-blue-800 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              className="rounded-xl border border-blue-200 px-5 py-2.5 text-sm font-medium text-blue-800 transition hover:bg-blue-50"
             >
               Cancel
             </button>
             <button
               onClick={handleAddTeacher}
               disabled={submitting}
-              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:cursor-not-allowed disabled:opacity-70"
+              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
               Add Teacher
@@ -447,7 +458,7 @@ function AddTeacherForm({ onClose, onTeacherAdded }) {
   );
 }
 
-/* ----------------------------- UI bits ----------------------------- */
+/* ----------------------------- UI Components (unchanged) ----------------------------- */
 function SectionTitle({ children, icon, blue }) {
   return (
     <h3
@@ -515,7 +526,7 @@ function LabeledSelect({ label, icon, options, ...props }) {
           className="w-full appearance-none rounded-xl border border-blue-100 bg-white px-9 py-2.5 text-slate-800 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-300"
         >
           {options.map((o) => (
-            <option key={o.value + o.label} value={o.value}>
+            <option key={o.value} value={o.value}>
               {o.label}
             </option>
           ))}
@@ -532,7 +543,7 @@ function ImagePreview({ url }) {
   if (!url) {
     return (
       <div className="mt-2 flex h-36 items-center justify-center rounded-lg border border-blue-100 bg-blue-50 text-xs text-blue-700">
-        No image URL
+        No image URL provided
       </div>
     );
   }
@@ -540,13 +551,13 @@ function ImagePreview({ url }) {
   return ok ? (
     <img
       src={url}
-      alt="Preview"
+      alt="Profile preview"
       className="mt-2 h-36 w-full rounded-lg border border-blue-100 object-cover"
       onError={() => setOk(false)}
     />
   ) : (
-    <div className="mt-2 rounded-lg border border-blue-200 bg-blue-50 p-2 text-xs text-blue-800">
-      Couldn’t load image from the provided URL.
+    <div className="mt-2 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-800">
+      Could not load image from the provided URL.
     </div>
   );
 }

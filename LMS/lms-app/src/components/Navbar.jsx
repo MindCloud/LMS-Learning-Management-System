@@ -1,6 +1,7 @@
-// src/components/Navbar.jsx
+// src/components/Navbar.jsx (updated with Sonner toast on logout)
+
 import React, { useEffect, useState } from "react";
-import logo from "../assets/logo1.jpeg"; // ensure this file exists: src/assets/logo.png
+import logo from "../assets/logo1.jpeg"; // ensure this file exists
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import {
@@ -15,14 +16,15 @@ import {
   User,
   Settings,
 } from "lucide-react";
+import { toast } from "sonner"; // <-- Added for professional feedback
 
 function Navbar() {
   const { userEmail, role, setUserEmail, setRole } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [open, setOpen] = useState(false);         // mobile nav open
-  const [menuOpen, setMenuOpen] = useState(false); // avatar menu open
+  const [open, setOpen] = useState(false); // mobile nav open
+  const [menuOpen, setMenuOpen] = useState(false); // desktop avatar menu open
   const [logoError, setLogoError] = useState(false);
 
   // Close menus on route change
@@ -39,10 +41,16 @@ function Navbar() {
   }, []);
 
   const handleLogout = () => {
+    // Clear auth context & localStorage
     setUserEmail(null);
     setRole(null);
     localStorage.removeItem("userEmail");
     localStorage.removeItem("role");
+
+    // Show success toast
+    toast.success("You have been logged out successfully.");
+
+    // Navigate to login page
     navigate("/login");
   };
 
@@ -65,7 +73,7 @@ function Navbar() {
     const parts = name.split(/[._-]/).filter(Boolean);
     const a = parts[0]?.[0] || "U";
     const b = parts[1]?.[0] || "";
-    return (a + b).toUpperCase();
+    return (a + b).toUpperCase() || "U";
   };
 
   return (
@@ -79,7 +87,7 @@ function Navbar() {
         >
           {!logoError ? (
             <img
-              src={logo}                 // ← use imported asset
+              src={logo}
               alt="EZone logo"
               className="h-8 w-auto"
               loading="eager"
@@ -87,20 +95,20 @@ function Navbar() {
               onError={() => setLogoError(true)}
             />
           ) : (
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-blue-700 text-white">
-              
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-blue-700 text-white text-lg font-bold">
+              EZ
             </span>
           )}
-          
+          <span className="hidden text-xl sm:inline">EZone</span>
         </Link>
 
-        {/* Desktop Nav (uncomment if you want it visible) */}
+        {/* Desktop Nav Links (optional – uncomment if you want them visible on large screens) */}
         {/* <div className="hidden items-center gap-6 md:flex">
           {navLinks.map(({ to, label, icon }) => (
             <Link
               key={to}
               to={to}
-              className={`inline-flex items-center gap-1 border-b-2 px-1.5 py-2 ${isActive(to)}`}
+              className={`inline-flex items-center gap-1 border-b-2 px-1.5 py-2 text-sm font-medium transition ${isActive(to)}`}
             >
               {icon}
               {label}
@@ -108,14 +116,14 @@ function Navbar() {
           ))}
         </div> */}
 
-        {/* Right side: Avatar / Account */}
+        {/* Right side: Avatar / Account (Desktop) */}
         <div className="hidden items-center gap-3 md:flex">
           <div className="relative">
             <button
               onClick={() => setMenuOpen((v) => !v)}
-              aria-haspopup="menu"
+              aria-haspopup="true"
               aria-expanded={menuOpen}
-              className="flex items-center gap-2 rounded-full border border-blue-100 bg-white/80 px-2 py-1.5 pr-2.5 shadow-sm transition hover:bg-blue-50"
+              className="flex items-center gap-2 rounded-full border border-blue-100 bg-white/80 px-2 py-1.5 pr-3 shadow-sm transition hover:bg-blue-50"
             >
               <span
                 className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-blue-700 text-white text-sm font-bold"
@@ -123,21 +131,22 @@ function Navbar() {
               >
                 {getInitials(userEmail)}
               </span>
-              <span className="hidden text-sm font-semibold text-slate-700 sm:inline">
-                {userEmail ? userEmail : "Account"}
+              <span className="hidden text-sm font-medium text-slate-700 sm:inline">
+                {userEmail ? userEmail.split("@")[0] : "Account"}
               </span>
             </button>
 
+            {/* Desktop Dropdown Menu */}
             {menuOpen && (
               <div
                 role="menu"
-                className="absolute right-0 mt-2 w-64 overflow-hidden rounded-xl border border-blue-100 bg-white shadow-lg"
+                className="absolute right-0 mt-2 w-64 overflow-hidden rounded-xl border border-blue-100 bg-white shadow-xl ring-1 ring-black/5"
               >
                 {!userEmail ? (
-                  <div className="p-2">
-                    <div className="px-3 py-2 text-xs font-medium uppercase tracking-wide text-slate-500">
+                  <div className="p-3">
+                    <p className="mb-3 text-xs font-medium uppercase tracking-wide text-slate-500">
                       Welcome to EZone
-                    </div>
+                    </p>
                     <Link
                       to="/login"
                       className="flex items-center gap-2 rounded-lg px-3 py-2 text-blue-900 ring-1 ring-blue-100 hover:bg-blue-50"
@@ -156,8 +165,8 @@ function Navbar() {
                     </Link>
                   </div>
                 ) : (
-                  <div className="p-2">
-                    <div className="px-3 py-2">
+                  <div className="p-3">
+                    <div className="mb-3">
                       <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
                         Signed in as
                       </p>
@@ -197,9 +206,11 @@ function Navbar() {
                       </Link>
                     )}
 
+                    <div className="my-2 border-t border-blue-100" />
+
                     <Link
                       to="/profile"
-                      className="mt-1 flex items-center gap-2 rounded-lg px-3 py-2 text-slate-700 hover:bg-blue-50"
+                      className="flex items-center gap-2 rounded-lg px-3 py-2 text-slate-700 hover:bg-blue-50"
                       onClick={() => setMenuOpen(false)}
                     >
                       <User className="h-4 w-4" />
@@ -214,14 +225,11 @@ function Navbar() {
                       Settings
                     </Link>
 
-                    <div className="mt-1 border-t border-blue-100" />
+                    <div className="my-2 border-t border-blue-100" />
 
                     <button
-                      onClick={() => {
-                        setMenuOpen(false);
-                        handleLogout();
-                      }}
-                      className="mt-1 flex w-full items-center justify-center gap-2 rounded-lg bg-blue-700 px-3 py-2 font-semibold text-white hover:bg-blue-800"
+                      onClick={handleLogout}
+                      className="flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 px-3 py-2 font-medium text-white hover:bg-red-700"
                     >
                       <LogOut className="h-4 w-4" />
                       Logout
@@ -233,7 +241,7 @@ function Navbar() {
           </div>
         </div>
 
-        {/* Mobile toggle */}
+        {/* Mobile Menu Toggle */}
         <button
           className="inline-flex items-center rounded-lg p-2 text-slate-700 hover:bg-slate-100 md:hidden"
           aria-label="Toggle navigation menu"
@@ -244,31 +252,35 @@ function Navbar() {
         </button>
       </nav>
 
-      {/* Mobile menu */}
+      {/* Mobile Menu Panel */}
       {open && (
-        <div className="md:hidden">
-          <div className="mx-auto max-w-7xl px-4 pb-4 sm:px-6 lg:px-8">
-            <div className="space-y-2 rounded-2xl border border-blue-100 bg-white p-3 shadow-sm">
+        <div className="md:hidden border-t border-blue-100 bg-white/95 backdrop-blur">
+          <div className="mx-auto max-w-7xl px-4 pb-6 pt-4 sm:px-6 lg:px-8">
+            <div className="space-y-1 rounded-2xl border border-blue-100 bg-white p-4 shadow-lg">
+              {/* Public Links */}
               {navLinks.map(({ to, label, icon }) => (
                 <Link
                   key={to}
                   to={to}
                   onClick={() => setOpen(false)}
-                  className={`flex items-center gap-2 rounded-lg px-3 py-2 border-b-2 ${isActive(to)}`}
+                  className={`flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition ${isActive(
+                    to
+                  )}`}
                 >
                   {icon}
                   {label}
                 </Link>
               ))}
 
-              <div className="border-t border-blue-100 pt-2" />
+              <div className="my-3 border-t border-blue-100" />
 
+              {/* Auth Section */}
               {!userEmail ? (
                 <>
                   <Link
                     to="/login"
                     onClick={() => setOpen(false)}
-                    className="flex items-center gap-2 rounded-lg px-3 py-2 text-blue-900 ring-1 ring-blue-100 hover:bg-blue-50"
+                    className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-blue-900 ring-1 ring-blue-100 hover:bg-blue-50"
                   >
                     <LogIn className="h-4 w-4" />
                     Log in
@@ -276,7 +288,7 @@ function Navbar() {
                   <Link
                     to="/signup"
                     onClick={() => setOpen(false)}
-                    className="flex items-center gap-2 rounded-lg bg-blue-700 px-3 py-2 font-semibold text-white hover:bg-blue-800"
+                    className="flex items-center gap-2 rounded-lg bg-blue-700 px-3 py-2.5 font-medium text-white hover:bg-blue-800"
                   >
                     <UserPlus className="h-4 w-4" />
                     Sign up
@@ -288,7 +300,9 @@ function Navbar() {
                     <Link
                       to="/home"
                       onClick={() => setOpen(false)}
-                      className={`flex items-center gap-2 rounded-lg px-3 py-2 border-b-2 ${isActive("/home")}`}
+                      className={`flex items-center gap-2 rounded-lg px-3 py-2.5 font-medium transition ${isActive(
+                        "/home"
+                      )}`}
                     >
                       <LayoutDashboard className="h-4 w-4" />
                       Student Dashboard
@@ -298,7 +312,9 @@ function Navbar() {
                     <Link
                       to="/dashboard"
                       onClick={() => setOpen(false)}
-                      className={`flex items-center gap-2 rounded-lg px-3 py-2 border-b-2 ${isActive("/dashboard")}`}
+                      className={`flex items-center gap-2 rounded-lg px-3 py-2.5 font-medium transition ${isActive(
+                        "/dashboard"
+                      )}`}
                     >
                       <LayoutDashboard className="h-4 w-4" />
                       Teacher Dashboard
@@ -308,28 +324,30 @@ function Navbar() {
                     <Link
                       to="/admin"
                       onClick={() => setOpen(false)}
-                      className={`flex items-center gap-2 rounded-lg px-3 py-2 border-b-2 ${isActive("/admin")}`}
+                      className={`flex items-center gap-2 rounded-lg px-3 py-2.5 font-medium transition ${isActive(
+                        "/admin"
+                      )}`}
                     >
                       <Shield className="h-4 w-4" />
                       Admin Dashboard
                     </Link>
                   )}
 
-                  <div className="flex items-center gap-3 rounded-lg bg-blue-50 px-3 py-2">
-                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-blue-700 text-white text-sm font-bold">
+                  <div className="my-3 flex items-center gap-3 rounded-lg bg-blue-50 px-3 py-3">
+                    <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-blue-700 text-white font-bold">
                       {getInitials(userEmail)}
                     </span>
-                    <span className="truncate text-sm font-semibold text-blue-900">
-                      {userEmail}
-                    </span>
+                    <div className="flex-1">
+                      <p className="text-xs text-slate-500">Signed in as</p>
+                      <p className="truncate text-sm font-semibold text-blue-900">
+                        {userEmail}
+                      </p>
+                    </div>
                   </div>
 
                   <button
-                    onClick={() => {
-                      setOpen(false);
-                      handleLogout();
-                    }}
-                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-700 px-3 py-2 font-semibold text-white hover:bg-blue-800"
+                    onClick={handleLogout}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 font-medium text-white hover:bg-red-700"
                   >
                     <LogOut className="h-4 w-4" />
                     Logout

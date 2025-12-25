@@ -1,44 +1,95 @@
+// src/components/MarkModal.jsx (updated with Sonner toast notifications)
+
 import React, { useState } from "react";
 import { db } from "../firebase";
 import { doc, updateDoc, arrayUnion } from "firebase/firestore";
+import { toast } from "sonner"; // <-- Added
 // Icons
-import { NotebookPen, X, BadgeCheck, BookOpen, Hash } from "lucide-react";
+import {
+  NotebookPen,
+  X,
+  BadgeCheck,
+  BookOpen,
+  Hash,
+  Loader2,
+} from "lucide-react";
 
-function MarkModal({ isOpen, onClose, student }) {
+function MarkModal({ isOpen, onClose, student, onMarkAdded }) {
   const [subject, setSubject] = useState("");
   const [score, setScore] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   if (!isOpen || !student) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Basic client-side validation
+    if (!subject.trim()) {
+      toast.error("Please enter a subject.");
+      return;
+    }
+    if (!score || isNaN(score) || Number(score) < 0) {
+      toast.error("Please enter a valid score.");
+      return;
+    }
+
     try {
+      setSubmitting(true);
+      toast.loading("Adding marks...");
+
       const studentRef = doc(db, "students", student.id);
       await updateDoc(studentRef, {
         marks: arrayUnion({
-          subject,
-          score,
+          subject: subject.trim(),
+          score: Number(score),
           date: new Date().toISOString(),
         }),
       });
 
-      alert("Marks added successfully!");
-      onClose();
-      window.location.reload();
+      toast.dismiss();
+      toast.success(`Marks added for ${student.fullName}!`);
+
+      // Reset form
+      setSubject("");
+      setScore("");
+
+      // Notify parent (optional callback for real-time update without reload)
+      onMarkAdded?.();
+
+      // Close modal with small delay so toast is visible
+      setTimeout(() => onClose(), 600);
     } catch (err) {
       console.error("Error adding marks:", err);
+      toast.dismiss();
+
+      let message = "Failed to add marks. Please try again.";
+
+      if (err.code === "permission-denied") {
+        message = "You don't have permission to update this student.";
+      } else if (err.code === "not-found") {
+        message = "Student record not found.";
+      }
+
+      toast.error(message);
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-labelledby="mark-modal-title"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       {/* Card */}
-      <div className="relative w-full max-w-md overflow-hidden rounded-2xl border bg-white shadow-xl ring-1 ring-blue-100">
+      <div
+        className="relative w-full max-w-md overflow-hidden rounded-2xl border bg-white shadow-xl ring-1 ring-blue-100"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Gradient Header */}
         <div className="relative">
           <div className="flex items-center justify-between px-5 py-4 text-white bg-gradient-to-r from-blue-600 via-sky-600 to-indigo-600">
@@ -55,7 +106,8 @@ function MarkModal({ isOpen, onClose, student }) {
             </div>
             <button
               onClick={onClose}
-              className="rounded-md p-1 transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/40"
+              disabled={submitting}
+              className="rounded-md p-1 transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/40 disabled:opacity-50"
               aria-label="Close"
               title="Close"
             >
@@ -107,7 +159,8 @@ function MarkModal({ isOpen, onClose, student }) {
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
                 required
-                className="w-full rounded-xl border bg-white px-9 py-2.5 text-sm text-slate-900 outline-none ring-1 ring-slate-200 transition placeholder:text-slate-400 focus:ring-2 focus:ring-blue-400"
+                disabled={submitting}
+                className="w-full rounded-xl border bg-white px-9 py-2.5 text-sm text-slate-900 outline-none ring-1 ring-slate-200 transition placeholder:text-slate-400 focus:ring-2 focus:ring-blue-400 disabled:opacity-60"
               />
             </div>
           </div>
@@ -132,7 +185,8 @@ function MarkModal({ isOpen, onClose, student }) {
                 value={score}
                 onChange={(e) => setScore(e.target.value)}
                 required
-                className="w-full rounded-xl border bg-white px-9 py-2.5 text-sm text-slate-900 outline-none ring-1 ring-slate-200 transition placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-400"
+                disabled={submitting}
+                className="w-full rounded-xl border bg-white px-9 py-2.5 text-sm text-slate-900 outline-none ring-1 ring-slate-200 transition placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-400 disabled:opacity-60"
               />
             </div>
             <p className="mt-1 text-xs text-slate-500">
@@ -145,16 +199,27 @@ function MarkModal({ isOpen, onClose, student }) {
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl border px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300"
+              disabled={submitting}
+              className="rounded-xl border px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300 disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300"
+              disabled={submitting}
+              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              <NotebookPen className="h-4 w-4" />
-              Save
+              {submitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <NotebookPen className="h-4 w-4" />
+                  Save
+                </>
+              )}
             </button>
           </div>
         </form>

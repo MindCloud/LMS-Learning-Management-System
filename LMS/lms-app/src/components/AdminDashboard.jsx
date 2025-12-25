@@ -1,3 +1,5 @@
+// src/components/AdminDashboard.jsx (updated with professional Sonner toast notifications)
+
 import React, { useEffect, useMemo, useState } from "react";
 import { auth, db } from "../firebase";
 import { collection, getDocs, deleteDoc, doc } from "firebase/firestore";
@@ -5,6 +7,7 @@ import { signOut } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import AddTeacherForm from "./AddTeacherForm";
 import UpdateTeacherForm from "./UpdateTeacherForm";
+import { toast } from "sonner"; // <-- Added for professional toasts
 
 // Icons
 import {
@@ -31,6 +34,7 @@ import {
   ArrowUpDown,
   Edit,
   Trash2,
+  Loader2,
 } from "lucide-react";
 
 function AdminDashboard() {
@@ -47,11 +51,11 @@ function AdminDashboard() {
   const [subjectFilter, setSubjectFilter] = useState("");
   const [gradeFilter, setGradeFilter] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
-  const [view, setView] = useState("grid"); // "grid" | "list"
-  const [sortKey, setSortKey] = useState("name"); // name | email | role
-  const [sortDir, setSortDir] = useState("asc"); // asc | desc
+  const [view, setView] = useState("grid");
+  const [sortKey, setSortKey] = useState("name");
+  const [sortDir, setSortDir] = useState("asc");
 
-  // Pagination (client-side)
+  // Pagination
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 9;
 
@@ -61,15 +65,24 @@ function AdminDashboard() {
     try {
       setLoading(true);
       setFetchError("");
+      toast.loading("Loading teachers list...");
+
       const querySnapshot = await getDocs(collection(db, "teachers"));
       const teachersData = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
       setTeachers(teachersData);
+
+      toast.dismiss();
+      if (teachersData.length > 0) {
+        toast.success(`Loaded ${teachersData.length} teachers`);
+      }
     } catch (error) {
       console.error("Error fetching teachers:", error);
       setFetchError("Couldn't load teachers. Please try again.");
+      toast.dismiss();
+      toast.error("Failed to load teachers list");
     } finally {
       setLoading(false);
     }
@@ -79,7 +92,7 @@ function AdminDashboard() {
     fetchTeachers();
   }, []);
 
-  // Debounce search input
+  // Debounce search
   useEffect(() => {
     const t = setTimeout(
       () => setDebouncedQuery(query.trim().toLowerCase()),
@@ -91,11 +104,12 @@ function AdminDashboard() {
   const subjects = useMemo(() => {
     const set = new Set();
     teachers
-      .map((t) => (t.subjects || "").toString())
-      .join(",")
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean)
+      .flatMap((t) =>
+        (t.subjects || "")
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      )
       .forEach((s) => set.add(s));
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [teachers]);
@@ -103,8 +117,7 @@ function AdminDashboard() {
   const grades = useMemo(() => {
     const set = new Set();
     teachers
-      .map((t) => (t.grade || "").toString())
-      .filter(Boolean)
+      .flatMap((t) => (t.grades || []).map((g) => g.trim()).filter(Boolean))
       .forEach((g) => set.add(g));
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [teachers]);
@@ -112,7 +125,7 @@ function AdminDashboard() {
   const roles = useMemo(() => {
     const set = new Set();
     teachers
-      .map((t) => (t.role || "").toString())
+      .map((t) => t.role)
       .filter(Boolean)
       .forEach((r) => set.add(r));
     return Array.from(set).sort((a, b) => a.localeCompare(b));
@@ -137,8 +150,10 @@ function AdminDashboard() {
       );
     }
     if (gradeFilter) {
-      list = list.filter(
-        (t) => String(t.grade || "").toLowerCase() === gradeFilter.toLowerCase()
+      list = list.filter((t) =>
+        (t.grades || []).some(
+          (g) => g.toLowerCase() === gradeFilter.toLowerCase()
+        )
       );
     }
     if (roleFilter) {
@@ -152,7 +167,7 @@ function AdminDashboard() {
       const getVal = (obj) => {
         if (sortKey === "email") return (obj.email || "").toLowerCase();
         if (sortKey === "role") return (obj.role || "").toLowerCase();
-        return (obj.fullName || "").toLowerCase(); // default: name
+        return (obj.fullName || "").toLowerCase();
       };
       const va = getVal(a);
       const vb = getVal(b);
@@ -179,8 +194,16 @@ function AdminDashboard() {
   );
 
   const handleSignOut = async () => {
-    await signOut(auth);
-    navigate("/login");
+    try {
+      toast.loading("Signing out...");
+      await signOut(auth);
+      toast.dismiss();
+      toast.success("Signed out successfully");
+      navigate("/login");
+    } catch (err) {
+      toast.dismiss();
+      toast.error("Failed to sign out");
+    }
   };
 
   const toggleSort = (key) => {
@@ -193,14 +216,18 @@ function AdminDashboard() {
   };
 
   const handleDelete = async (id, name) => {
-    if (window.confirm(`Are you sure you want to delete teacher "${name}"?`)) {
-      try {
-        await deleteDoc(doc(db, "teachers", id));
-        await fetchTeachers();
-      } catch (error) {
-        console.error("Error deleting teacher:", error);
-        alert("Failed to delete teacher. Please try again.");
-      }
+    if (!window.confirm(`Delete teacher "${name}" permanently?`)) return;
+
+    try {
+      toast.loading(`Deleting ${name}...`);
+      await deleteDoc(doc(db, "teachers", id));
+      await fetchTeachers();
+      toast.dismiss();
+      toast.success(`${name} deleted successfully`);
+    } catch (error) {
+      console.error("Error deleting teacher:", error);
+      toast.dismiss();
+      toast.error("Failed to delete teacher");
     }
   };
 
@@ -252,12 +279,11 @@ function AdminDashboard() {
             </button>
           </div>
         </div>
-        {/* thin brand bar */}
         <div className="h-1 w-full bg-gradient-to-r from-blue-600 via-sky-500 to-indigo-600" />
       </header>
 
       <main className="mx-auto max-w-7xl p-4 sm:p-6">
-        {/* Overview */}
+        {/* Overview Stats */}
         <section className="mb-6 grid gap-4 sm:grid-cols-3">
           <StatCard
             accent="from-blue-50 to-indigo-50"
@@ -356,7 +382,7 @@ function AdminDashboard() {
           </div>
         </section>
 
-        {/* Content */}
+        {/* Teachers List */}
         <section className="overflow-hidden rounded-2xl border bg-white shadow-sm ring-1 ring-slate-100">
           <div className="flex items-center justify-between border-b bg-gradient-to-r from-white to-blue-50/40 px-5 py-4">
             <h2 className="flex items-center gap-2 text-base font-semibold text-slate-900">
@@ -382,13 +408,12 @@ function AdminDashboard() {
             </div>
           </div>
 
-          {/* States */}
           {loading ? (
             <SkeletonGrid />
           ) : fetchError ? (
             <div className="p-6">
               <EmptyState
-                icon={<XCircle className="h-5 w-5 text-blue-500" />}
+                icon={<XCircle className="h-5 w-5 text-red-500" />}
                 text={fetchError}
               />
             </div>
@@ -396,7 +421,7 @@ function AdminDashboard() {
             <div className="p-6">
               <EmptyState
                 icon={<XCircle className="h-5 w-5 text-blue-500" />}
-                text="No matching teachers. Adjust search or filters."
+                text="No matching teachers found"
               />
             </div>
           ) : view === "grid" ? (
@@ -458,18 +483,17 @@ function AdminDashboard() {
         </section>
       </main>
 
-      {/* Add Modal */}
+      {/* Modals */}
       {showAddModal && (
         <AddTeacherForm
           onClose={() => setShowAddModal(false)}
-          onTeacherAdded={async () => {
-            await fetchTeachers();
-            setShowAddModal(false);
+          onTeacherAdded={() => {
+            fetchTeachers();
+            toast.success("New teacher added!");
           }}
         />
       )}
 
-      {/* Update Modal */}
       {showUpdateModal && selectedTeacher && (
         <UpdateTeacherForm
           teacher={selectedTeacher}
@@ -477,10 +501,9 @@ function AdminDashboard() {
             setShowUpdateModal(false);
             setSelectedTeacher(null);
           }}
-          onTeacherUpdated={async () => {
-            await fetchTeachers();
-            setShowUpdateModal(false);
-            setSelectedTeacher(null);
+          onTeacherUpdated={() => {
+            fetchTeachers();
+            toast.success("Teacher profile updated successfully");
           }}
         />
       )}
@@ -488,6 +511,7 @@ function AdminDashboard() {
   );
 }
 
+// Reusable Components (unchanged except minor toast integration where needed)
 function StatCard({ icon, label, value, accent = "from-slate-50 to-white" }) {
   return (
     <div
@@ -549,12 +573,11 @@ function SortPill({ label, current, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`inline-flex items-center gap-1 rounded-md px-2 py-1 ring-1 text-xs shadow-sm transition
-        ${
-          current
-            ? "bg-blue-50 ring-blue-200 text-blue-700"
-            : "bg-white/80 ring-slate-200 text-slate-700 hover:bg-blue-50"
-        }`}
+      className={`inline-flex items-center gap-1 rounded-md px-2 py-1 ring-1 text-xs shadow-sm transition ${
+        current
+          ? "bg-blue-50 ring-blue-200 text-blue-700"
+          : "bg-white/80 ring-slate-200 text-slate-700 hover:bg-blue-50"
+      }`}
       title={`Sort by ${label}`}
     >
       {label}
@@ -655,11 +678,11 @@ function TeacherCard({ teacher, onUpdate, onDelete }) {
             value={teacher.subjects}
           />
         )}
-        {teacher.grade && (
+        {teacher.grades?.length > 0 && (
           <Row
             icon={<Sparkles className="h-4 w-4" />}
-            label="Grade"
-            value={teacher.grade}
+            label="Grades"
+            value={teacher.grades.join(", ")}
           />
         )}
         {teacher.contact && (
@@ -733,7 +756,7 @@ function TeacherTable({ rows, sortKey, sortDir, onSort, onUpdate, onDelete }) {
             <th className="px-4 py-3">{headerBtn("Name", "name")}</th>
             <th className="px-4 py-3">{headerBtn("Email", "email")}</th>
             <th className="px-4 py-3">Subjects</th>
-            <th className="px-4 py-3">Grade</th>
+            <th className="px-4 py-3">Grades</th>
             <th className="px-4 py-3">{headerBtn("Role", "role")}</th>
             <th className="px-4 py-3">Contact</th>
             <th className="px-4 py-3">Actions</th>
@@ -774,7 +797,7 @@ function TeacherTable({ rows, sortKey, sortDir, onSort, onUpdate, onDelete }) {
                 {t.subjects || "—"}
               </td>
               <td className="px-4 py-3 text-sm text-slate-700">
-                {t.grade || "—"}
+                {t.grades?.join(", ") || "—"}
               </td>
               <td className="px-4 py-3 text-sm">
                 {t.role ? <Badge>{t.role}</Badge> : "—"}

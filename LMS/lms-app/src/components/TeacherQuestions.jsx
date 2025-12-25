@@ -1,3 +1,5 @@
+// src/pages/TeacherQuestions.jsx (or wherever it's located) - Updated with Sonner toasts
+
 import React, { useEffect, useState } from "react";
 import {
   collection,
@@ -11,6 +13,7 @@ import {
 import { db, auth } from "../firebase";
 import { Dialog } from "@headlessui/react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner"; // <-- Added
 
 // Icons
 import {
@@ -36,7 +39,11 @@ export default function TeacherQuestions() {
   useEffect(() => {
     const fetchQuestions = async () => {
       const user = auth.currentUser;
-      if (!user) return;
+      if (!user) {
+        toast.error("You must be logged in to view questions.");
+        setFetching(false);
+        return;
+      }
 
       try {
         setFetching(true);
@@ -49,9 +56,12 @@ export default function TeacherQuestions() {
           id: docSnap.id,
           ...docSnap.data(),
         }));
+
         setQuestions(questionList);
+        toast.success(`Loaded ${questionList.length} question(s)`);
       } catch (error) {
         console.error("Error fetching questions:", error);
+        toast.error("Failed to load questions. Please try again.");
       } finally {
         setFetching(false);
       }
@@ -66,10 +76,21 @@ export default function TeacherQuestions() {
     setReply(question.reply || "");
   };
 
+  // Close modal helper
+  const closeModal = () => {
+    setSelectedQuestion(null);
+    setReply("");
+  };
+
   // Send reply
   const handleSendReply = async () => {
-    if (!reply.trim()) return alert("Please type a reply.");
+    if (!reply.trim()) {
+      toast.error("Please type a reply before sending.");
+      return;
+    }
+
     setLoading(true);
+    toast.loading("Sending your reply...");
 
     try {
       await updateDoc(doc(db, "questions", selectedQuestion.id), {
@@ -78,19 +99,28 @@ export default function TeacherQuestions() {
         repliedAt: serverTimestamp(),
       });
 
-      alert("Reply sent!");
+      // Update local state optimistically
       setQuestions((prev) =>
         prev.map((q) =>
           q.id === selectedQuestion.id
-            ? { ...q, reply: reply.trim(), status: "answered" }
+            ? {
+                ...q,
+                reply: reply.trim(),
+                status: "answered",
+                repliedAt: new Date(),
+              }
             : q
         )
       );
-      setSelectedQuestion(null);
-      setReply("");
+
+      toast.dismiss();
+      toast.success("Reply sent successfully!");
+
+      closeModal();
     } catch (err) {
       console.error("Failed to send reply:", err);
-      alert("Error sending reply.");
+      toast.dismiss();
+      toast.error("Failed to send reply. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -150,6 +180,9 @@ export default function TeacherQuestions() {
           ) : questions.length === 0 ? (
             <div className="rounded-2xl border border-dashed bg-white p-10 text-center text-slate-500">
               <p className="text-sm">No questions found</p>
+              <p className="mt-2 text-xs">
+                Students haven't asked anything yet.
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -168,7 +201,7 @@ export default function TeacherQuestions() {
                       alt={q.studentName}
                       className="h-12 w-12 rounded-full object-cover ring-2 ring-white shadow"
                     />
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <h3 className="truncate text-sm font-semibold text-slate-900">
                         {q.studentName}
                       </h3>
@@ -177,7 +210,9 @@ export default function TeacherQuestions() {
                   </div>
 
                   {/* Question */}
-                  <p className="mb-4 line-clamp-4 text-slate-800">{q.question}</p>
+                  <p className="mb-4 line-clamp-4 text-slate-800">
+                    {q.question}
+                  </p>
 
                   {/* Existing reply */}
                   {q.reply && (
@@ -207,10 +242,10 @@ export default function TeacherQuestions() {
         </div>
       </div>
 
-      {/* Modal */}
+      {/* Reply Modal */}
       <Dialog
         open={!!selectedQuestion}
-        onClose={() => setSelectedQuestion(null)}
+        onClose={closeModal}
         className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
       >
         <Dialog.Panel className="w-full max-w-lg overflow-hidden rounded-2xl border bg-white shadow-xl ring-1 ring-blue-100">
@@ -220,10 +255,9 @@ export default function TeacherQuestions() {
               Reply to {selectedQuestion?.studentName}
             </Dialog.Title>
             <button
-              onClick={() => setSelectedQuestion(null)}
+              onClick={closeModal}
               className="rounded-md p-1 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-300"
               aria-label="Close"
-              title="Close"
             >
               <X className="h-5 w-5" />
             </button>
@@ -233,7 +267,7 @@ export default function TeacherQuestions() {
 
           {/* Modal body */}
           <div className="space-y-4 px-6 py-5">
-            <div className="flex items-start gap-3 rounded-xl border bg-slate-50 px-3 py-2">
+            <div className="flex items-start gap-3 rounded-xl border bg-slate-50 px-4 py-3">
               <span className="mt-0.5 text-slate-500">
                 <User className="h-5 w-5" />
               </span>
@@ -242,36 +276,44 @@ export default function TeacherQuestions() {
               </p>
             </div>
 
-            <label className="block text-sm font-medium text-slate-700">
-              Your reply
-            </label>
-            <textarea
-              value={reply}
-              onChange={(e) => setReply(e.target.value)}
-              placeholder="Type your reply here"
-              className="h-32 w-full rounded-xl border bg-white px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:ring-2 focus:ring-blue-300"
-            />
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Your reply
+              </label>
+              <textarea
+                value={reply}
+                onChange={(e) => setReply(e.target.value)}
+                placeholder="Type your helpful reply here..."
+                rows={6}
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-300 resize-none"
+              />
+            </div>
           </div>
 
           {/* Modal footer */}
-          <div className="flex items-center justify-end gap-3 border-t px-6 py-4">
+          <div className="flex items-center justify-end gap-3 border-t bg-slate-50 px-6 py-4">
             <button
-              onClick={() => setSelectedQuestion(null)}
-              className="rounded-xl border px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-300"
+              onClick={closeModal}
+              className="rounded-xl border border-slate-300 px-5 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
             >
               Cancel
             </button>
             <button
               onClick={handleSendReply}
               disabled={loading}
-              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-blue-300"
+              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Sending...
+                </>
               ) : (
-                <Reply className="h-4 w-4" />
+                <>
+                  <Reply className="h-4 w-4" />
+                  Send Reply
+                </>
               )}
-              {loading ? "Sending" : "Send Reply"}
             </button>
           </div>
         </Dialog.Panel>
@@ -287,8 +329,8 @@ function StatusChip({ status }) {
     <span
       className={`mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
         isAnswered
-          ? "bg-emerald-50 text-emerald-700"
-          : "bg-amber-50 text-amber-700"
+          ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
+          : "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
       }`}
     >
       {isAnswered ? (
@@ -296,7 +338,7 @@ function StatusChip({ status }) {
       ) : (
         <Clock3 className="h-3.5 w-3.5" />
       )}
-      {status || "pending"}
+      {isAnswered ? "Answered" : "Pending"}
     </span>
   );
 }

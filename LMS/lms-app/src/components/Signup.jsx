@@ -1,4 +1,5 @@
-// src/pages/Signup.jsx (or src/components/Signup.jsx)
+// src/pages/Signup.jsx (updated with professional Sonner toast notifications)
+
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
@@ -10,13 +11,14 @@ import {
   collection,
   getDocs,
 } from "firebase/firestore";
+import { toast } from "sonner"; // <-- Added for toast notifications
 
 function classNames(...c) {
   return c.filter(Boolean).join(" ");
 }
 
 const BG_URL =
-  "https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=1920&auto=format&fit=crop"; // campus/library vibe
+  "https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=1920&auto=format&fit=crop";
 
 const sriLankaPhone = /^(?:\+94|0)?7\d{8}$/;
 const emailRx = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -104,9 +106,7 @@ const TeacherCard = ({ t, selected, onToggle }) => (
     onClick={() => onToggle(t.id)}
     className={classNames(
       "w-full text-left rounded-lg border bg-white/90 p-4 shadow-sm backdrop-blur transition hover:shadow-md focus:outline-none focus:ring-2",
-      selected
-        ? "ring-2 ring-blue-500 border-blue-500"
-        : "focus:ring-blue-400"
+      selected ? "ring-2 ring-blue-500 border-blue-500" : "focus:ring-blue-400"
     )}
   >
     <div className="flex gap-3">
@@ -137,8 +137,8 @@ const TeacherCard = ({ t, selected, onToggle }) => (
         {t.username && <p className="text-sm text-gray-600">@{t.username}</p>}
         <p className="line-clamp-2 text-sm text-gray-700">
           <strong>Subject:</strong> {t.subjects || "—"}{" "}
-          <span className="text-gray-400">•</span>{" "}
-          <strong>Grade:</strong> {t.grade || "—"}
+          <span className="text-gray-400">•</span> <strong>Grade:</strong>{" "}
+          {t.grade || "—"}
         </p>
         {t.contact && (
           <p className="text-xs text-gray-600">
@@ -180,6 +180,7 @@ function Signup() {
   const [tQuery, setTQuery] = useState("");
   const [tGrade, setTGrade] = useState("");
   const [tSubject, setTSubject] = useState("");
+  const [teacherError, setTeacherError] = useState("");
 
   // ui state
   const [loading, setLoading] = useState(false);
@@ -194,9 +195,11 @@ function Signup() {
         const list = querySnapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
         setTeachers(list);
         setTError("");
+        toast.success("Teachers loaded successfully!");
       } catch (err) {
         console.error("Error fetching teachers:", err);
         setTError("Could not load teachers. Please try again later.");
+        toast.error("Failed to load teachers list.");
       } finally {
         setTLoading(false);
       }
@@ -223,12 +226,18 @@ function Signup() {
     });
   }, [teachers, tQuery, tGrade, tSubject]);
 
-  const toggleTeacher = (teacherId) => {
-    setSelectedTeacherIds((prev) =>
-      prev.includes(teacherId)
-        ? prev.filter((id) => id !== teacherId)
-        : [...prev, teacherId]
-    );
+  const toggleTeacher = (id) => {
+    setSelectedTeacherIds((prev) => {
+      const updated = prev.includes(id)
+        ? prev.filter((t) => t !== id)
+        : [...prev, id];
+
+      if (updated.length > 0) {
+        setTeacherError("");
+      }
+
+      return updated;
+    });
   };
 
   const validate = () => {
@@ -244,7 +253,8 @@ function Signup() {
     if (!address.trim()) e.address = "Address is required.";
     if (!birthday) e.birthday = "Birthday is required.";
     if (!school.trim()) e.school = "School is required.";
-    if (!studentImage.trim()) e.studentImage = "Please add a student image URL.";
+    if (!studentImage.trim())
+      e.studentImage = "Please add a student image URL.";
     if (!email.trim() || !emailRx.test(email.trim()))
       e.email = "Enter a valid email address.";
     const checks = passwordChecks(password);
@@ -259,13 +269,27 @@ function Signup() {
 
   const handleSignup = async (e) => {
     e.preventDefault();
-    if (!validate()) return;
+
+    // Client-side validation
+    if (!validate()) {
+      toast.error("Please fix the errors in the form before submitting.");
+      return;
+    }
+
+    // Teacher selection validation
+    if (selectedTeacherIds.length === 0) {
+      setTeacherError("Please select at least one teacher.");
+      toast.error("You must select at least one teacher.");
+      return;
+    }
+
+    setLoading(true);
+    toast.loading("Creating your account...");
 
     try {
-      setLoading(true);
       const { user } = await createUserWithEmailAndPassword(
         auth,
-        email,
+        email.trim(),
         password
       );
 
@@ -289,13 +313,39 @@ function Signup() {
         createdAt: serverTimestamp(),
       });
 
-      alert(
-        "Signup successful! Student profile created with teacher requests pending."
+      // Success feedback
+      toast.dismiss(); // remove loading toast
+      toast.success(
+        "Account created successfully! Your teacher requests are pending approval."
       );
+
+      // Navigate to login
       navigate("/login");
     } catch (err) {
       console.error(err);
-      alert(err?.message || "Signup failed. Please try again.");
+
+      let message = "Signup failed. Please try again.";
+
+      // Friendly Firebase error messages
+      switch (err.code) {
+        case "auth/email-already-in-use":
+          message = "This email is already registered. Try logging in.";
+          break;
+        case "auth/weak-password":
+          message = "Password is too weak.";
+          break;
+        case "auth/invalid-email":
+          message = "Invalid email address.";
+          break;
+        case "auth/network-request-failed":
+          message = "Network error. Check your connection and try again.";
+          break;
+        default:
+          message = err.message || message;
+      }
+
+      toast.dismiss();
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -348,17 +398,6 @@ function Signup() {
                   <p className="text-sm text-slate-600">
                     Create your EZone account and request teachers.
                   </p>
-                </div>
-                {/* Tiny progress hint */}
-                <div className="hidden sm:block">
-                  <div className="flex items-center gap-2 text-xs text-slate-600">
-                    <span className="rounded-full bg-blue-100 px-2 py-0.5 font-medium text-blue-700">
-                      Step 1
-                    </span>
-                    <span>Fill personal details</span>
-                    <span className="text-slate-400">•</span>
-                    <span>Choose teachers</span>
-                  </div>
                 </div>
               </div>
             </div>
@@ -541,7 +580,9 @@ function Signup() {
                           type="button"
                           onClick={() => setShowPw((s) => !s)}
                           className="absolute inset-y-0 right-2 top-1/2 -translate-y-1/2 text-sm text-gray-600 hover:text-gray-800"
-                          aria-label={showPw ? "Hide password" : "Show password"}
+                          aria-label={
+                            showPw ? "Hide password" : "Show password"
+                          }
                         >
                           {showPw ? "Hide" : "Show"}
                         </button>
@@ -555,6 +596,7 @@ function Signup() {
                       <input
                         type="checkbox"
                         className="rounded"
+                        required
                         checked={agree}
                         onChange={(e) => setAgree(e.target.checked)}
                       />
@@ -580,12 +622,13 @@ function Signup() {
                   >
                     Cancel
                   </button>
+
                   <button
                     type="submit"
-                    disabled={loading}
+                    disabled={loading || selectedTeacherIds.length === 0}
                     className={classNames(
                       "rounded-lg px-5 py-2 font-semibold text-white transition",
-                      loading
+                      loading || selectedTeacherIds.length === 0
                         ? "cursor-not-allowed bg-blue-400"
                         : "bg-blue-600 hover:bg-blue-700"
                     )}
@@ -599,7 +642,7 @@ function Signup() {
               <aside className="space-y-4">
                 <div className="rounded-xl border bg-white/90 p-6 shadow-sm backdrop-blur">
                   <h2 className="mb-4 text-lg font-semibold text-slate-900">
-                    Choose Teachers (optional)
+                    Choose Teachers <span className="text-red-500">*</span>
                   </h2>
 
                   <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
@@ -610,6 +653,7 @@ function Signup() {
                       onChange={(e) => setTQuery(e.target.value)}
                       className="col-span-2 rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
+
                     <select
                       value={tGrade}
                       onChange={(e) => setTGrade(e.target.value)}
@@ -622,6 +666,7 @@ function Signup() {
                         </option>
                       ))}
                     </select>
+
                     <input
                       type="text"
                       placeholder="Filter by subject (e.g., Maths)"
@@ -631,36 +676,32 @@ function Signup() {
                     />
                   </div>
 
-                  {tLoading && (
-                    <div className="space-y-3">
-                      {[...Array(3)].map((_, i) => (
-                        <div
-                          key={i}
-                          className="h-24 animate-pulse rounded-lg bg-gray-100"
-                        />
-                      ))}
-                    </div>
-                  )}
-
-                  {!tLoading && tError && (
-                    <p className="text-sm text-red-600">{tError}</p>
-                  )}
-
-                  {!tLoading && !tError && filteredTeachers.length === 0 && (
-                    <p className="text-sm text-gray-600">
-                      No teachers found. Try adjusting filters.
+                  {/* Required error */}
+                  {teacherError && (
+                    <p className="mb-2 text-sm font-medium text-red-600">
+                      {teacherError}
                     </p>
                   )}
 
                   <div className="mt-3 grid max-h-[520px] grid-cols-1 gap-3 overflow-auto pr-1">
-                    {filteredTeachers.map((t) => (
-                      <TeacherCard
-                        key={t.id}
-                        t={t}
-                        selected={selectedTeacherIds.includes(t.id)}
-                        onToggle={toggleTeacher}
-                      />
-                    ))}
+                    {tLoading ? (
+                      <p className="py-8 text-center text-gray-500">
+                        Loading teachers...
+                      </p>
+                    ) : filteredTeachers.length === 0 ? (
+                      <p className="py-8 text-center text-gray-500">
+                        No teachers found matching your filters.
+                      </p>
+                    ) : (
+                      filteredTeachers.map((t) => (
+                        <TeacherCard
+                          key={t.id}
+                          t={t}
+                          selected={selectedTeacherIds.includes(t.id)}
+                          onToggle={toggleTeacher}
+                        />
+                      ))
+                    )}
                   </div>
 
                   {selectedTeacherIds.length > 0 && (
@@ -679,8 +720,7 @@ function Signup() {
                   <p className="mb-1 font-semibold">Tip</p>
                   <p>
                     Select multiple teachers to request their classes. Your
-                    requests will be pending until approved. You can modify
-                    selections later in Settings.
+                    requests will be pending until approved.
                   </p>
                 </div>
               </aside>

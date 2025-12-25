@@ -1,3 +1,5 @@
+// src/pages/AskQuestion.jsx (or wherever this component lives) - Updated with Sonner toasts
+
 import React, { useState, useEffect } from "react";
 import {
   collection,
@@ -9,9 +11,12 @@ import {
   query,
   where,
   documentId,
+  updateDoc,
+  deleteDoc,
 } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner"; // <-- Added
 
 // Icons
 import {
@@ -23,30 +28,41 @@ import {
   MessageSquare,
   Reply,
   UserCircle2,
+  ArrowLeft,
+  Pencil,
+  Trash2,
+  Check,
+  X,
 } from "lucide-react";
 
 export default function AskQuestion() {
   const [question, setQuestion] = useState("");
-  const [teacherId, setTeacherId] = useState(""); // for sending
-  const [filterTeacherId, setFilterTeacherId] = useState(""); // for viewing
+  const [teacherId, setTeacherId] = useState("");
+  const [filterTeacherId, setFilterTeacherId] = useState("");
   const [studentData, setStudentData] = useState(null);
-  const [teachers, setTeachers] = useState([]); // only registered teachers
+  const [teachers, setTeachers] = useState([]);
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [registeredTeacherIds, setRegisteredTeacherIds] = useState([]); // new
+  const [registeredTeacherIds, setRegisteredTeacherIds] = useState([]);
+  const [editingQuestionId, setEditingQuestionId] = useState(null);
+  const [editText, setEditText] = useState("");
   const navigate = useNavigate();
 
-  // Fetch logged-in student details + their registered teachers
+  // Fetch student data + registered teachers
   useEffect(() => {
     const fetchStudentData = async () => {
       const user = auth.currentUser;
       if (!user) {
+        toast.error("You must be logged in to ask questions.");
         navigate("/login");
         return;
       }
       try {
         const snap = await getDoc(doc(db, "students", user.uid));
-        if (!snap.exists()) return;
+        if (!snap.exists()) {
+          toast.error("Student profile not found.");
+          return;
+        }
 
         const data = snap.data();
         setStudentData({
@@ -57,20 +73,23 @@ export default function AskQuestion() {
         const raw = Array.isArray(data.preferredTeachers)
           ? data.preferredTeachers
           : [];
-
         const ids = raw
           .map((t) => (typeof t === "string" ? t : t?.preferredTeacherId))
           .filter(Boolean);
-
         setRegisteredTeacherIds(ids);
+
+        if (ids.length === 0) {
+          toast.info("You haven't registered with any teachers yet.");
+        }
       } catch (err) {
         console.error("Failed to get student data:", err);
+        toast.error("Failed to load your profile.");
       }
     };
     fetchStudentData();
   }, [navigate]);
 
-  // Fetch only the teachers registered by the student
+  // Fetch teachers by registered IDs
   useEffect(() => {
     const fetchTeachersByIds = async () => {
       if (registeredTeacherIds.length === 0) {
@@ -95,17 +114,16 @@ export default function AskQuestion() {
           })
         );
 
-        const merged = results.flat();
-        setTeachers(merged);
+        setTeachers(results.flat());
       } catch (err) {
         console.error("Failed to fetch teachers:", err);
+        toast.error("Failed to load teachers.");
       }
     };
-
     fetchTeachersByIds();
   }, [registeredTeacherIds]);
 
-  // Fetch ALL questions addressed to the student's registered teachers
+  // Fetch questions
   useEffect(() => {
     const run = async () => {
       if (!registeredTeacherIds || registeredTeacherIds.length === 0) {
@@ -138,37 +156,45 @@ export default function AskQuestion() {
         for (const item of results.flat()) merged.set(item.id, item);
 
         const list = Array.from(merged.values()).sort((a, b) => {
-          const ta = a.createdAt?.toDate
-            ? a.createdAt.toDate().getTime()
-            : new Date(a.createdAt || 0).getTime();
-          const tb = b.createdAt?.toDate
-            ? b.createdAt.toDate().getTime()
-            : new Date(b.createdAt || 0).getTime();
-          return tb - ta;
+          const ta = a.createdAt?.toDate?.() ?? new Date(a.createdAt || 0);
+          const tb = b.createdAt?.toDate?.() ?? new Date(b.createdAt || 0);
+          return tb.getTime() - ta.getTime();
         });
 
         setQuestions(list);
       } catch (e) {
-        console.error("Error fetching questions by teachers:", e);
+        console.error("Error fetching questions:", e);
+        toast.error("Failed to load your questions.");
       }
     };
-
     run();
-  }, [registeredTeacherIds, filterTeacherId, db]);
+  }, [registeredTeacherIds, filterTeacherId]);
 
-  // Submit question
+  // Submit new question
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!question.trim()) return alert("Please enter your question.");
-    if (!teacherId) return alert("Please select a teacher.");
-    if (!studentData) return alert("Failed to load student details.");
+
+    if (!question.trim()) {
+      toast.error("Please enter your question.");
+      return;
+    }
+    if (!teacherId) {
+      toast.error("Please select a teacher.");
+      return;
+    }
+    if (!studentData) {
+      toast.error("Student details not loaded.");
+      return;
+    }
 
     setLoading(true);
+    toast.loading("Sending your question...");
+
     try {
       const selectedTeacher = teachers.find((t) => t.id === teacherId);
 
       const docRef = await addDoc(collection(db, "questions"), {
-        question,
+        question: question.trim(),
         studentId: auth.currentUser.uid,
         studentName: studentData.name,
         studentImage: studentData.image,
@@ -184,7 +210,7 @@ export default function AskQuestion() {
         setQuestions((prev) => [
           {
             id: docRef.id,
-            question,
+            question: question.trim(),
             studentId: auth.currentUser.uid,
             studentName: studentData.name,
             studentImage: studentData.image,
@@ -198,21 +224,97 @@ export default function AskQuestion() {
         ]);
       }
 
+      toast.dismiss();
+      toast.success("Question sent successfully!");
+
       setQuestion("");
       setTeacherId("");
     } catch (err) {
       console.error("Error sending question:", err);
-      alert("Failed to send question.");
+      toast.dismiss();
+      toast.error("Failed to send question. Try again.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
+  };
+
+  // Start editing
+  const startEdit = (q) => {
+    setEditingQuestionId(q.id);
+    setEditText(q.question);
+  };
+
+  // Save edited question
+  const saveEdit = async (qId) => {
+    if (!editText.trim()) {
+      toast.error("Question cannot be empty.");
+      return;
+    }
+
+    toast.loading("Updating question...");
+
+    try {
+      const qRef = doc(db, "questions", qId);
+      await updateDoc(qRef, { question: editText.trim() });
+
+      setQuestions((prev) =>
+        prev.map((q) =>
+          q.id === qId ? { ...q, question: editText.trim() } : q
+        )
+      );
+
+      toast.dismiss();
+      toast.success("Question updated!");
+
+      setEditingQuestionId(null);
+      setEditText("");
+    } catch (err) {
+      console.error("Error updating question:", err);
+      toast.dismiss();
+      toast.error("Failed to update question.");
+    }
+  };
+
+  // Cancel edit
+  const cancelEdit = () => {
+    setEditingQuestionId(null);
+    setEditText("");
+  };
+
+  // Delete question
+  const handleDelete = async (qId) => {
+    if (!window.confirm("Are you sure you want to delete this question?")) {
+      return;
+    }
+
+    toast.loading("Deleting question...");
+
+    try {
+      await deleteDoc(doc(db, "questions", qId));
+      setQuestions((prev) => prev.filter((q) => q.id !== qId));
+
+      toast.dismiss();
+      toast.success("Question deleted.");
+    } catch (err) {
+      console.error("Error deleting question:", err);
+      toast.dismiss();
+      toast.error("Failed to delete question.");
+    }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white py-10 px-4">
       <div className="mx-auto w-full max-w-4xl">
-        {/* Header */}
+        {/* Header with Back Button */}
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate("/home")}
+              className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-200 shadow-sm transition hover:bg-slate-50"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Home
+            </button>
             <MessageSquare className="h-6 w-6 text-slate-600" />
             <h2 className="text-2xl font-bold tracking-tight text-slate-900">
               Ask Your Teacher
@@ -235,7 +337,7 @@ export default function AskQuestion() {
           )}
         </div>
 
-        {/* Composer card */}
+        {/* Composer */}
         <div className="mb-8 rounded-2xl border bg-white shadow-sm">
           <div className="border-b px-5 py-4">
             <div className="flex items-center gap-2 text-slate-800">
@@ -245,7 +347,6 @@ export default function AskQuestion() {
           </div>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-5">
-            {/* Teacher selection */}
             <label className="text-sm font-medium text-slate-700">
               Select a teacher
             </label>
@@ -253,6 +354,7 @@ export default function AskQuestion() {
               <select
                 value={teacherId}
                 onChange={(e) => setTeacherId(e.target.value)}
+                required
                 className="w-full appearance-none rounded-xl border bg-white px-4 py-3 pr-10 text-slate-800 outline-none transition focus:ring-2 focus:ring-blue-300"
               >
                 <option value="">Select a teacher</option>
@@ -265,7 +367,6 @@ export default function AskQuestion() {
               <User className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
             </div>
 
-            {/* Question textarea */}
             <label className="text-sm font-medium text-slate-700">
               Your question
             </label>
@@ -273,10 +374,10 @@ export default function AskQuestion() {
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
               placeholder="Type your question here"
+              required
               className="min-h-32 w-full rounded-xl border bg-white px-4 py-3 text-slate-800 outline-none transition placeholder:text-slate-400 focus:ring-2 focus:ring-blue-300"
             />
 
-            {/* Submit */}
             <div className="flex items-center justify-end gap-3">
               <button
                 type="submit"
@@ -299,7 +400,7 @@ export default function AskQuestion() {
           </form>
         </div>
 
-        {/* Filters */}
+        {/* Filter */}
         <div className="mb-4 flex flex-wrap items-center gap-3">
           <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700">
             <Filter className="h-4 w-4 text-slate-500" />
@@ -335,85 +436,142 @@ export default function AskQuestion() {
             {questions.length === 0 ? (
               <div className="flex items-center gap-3 rounded-xl border border-dashed bg-slate-50 px-4 py-6 text-slate-500">
                 <MessageSquare className="h-5 w-5" />
-                <p className="text-sm">No messages yet</p>
+                <p className="text-sm">
+                  {registeredTeacherIds.length === 0
+                    ? "Register with a teacher to start asking questions."
+                    : "No questions yet. Send one above!"}
+                </p>
               </div>
             ) : (
               <ul className="space-y-4">
-                {questions.map((q) => (
-                  <li key={q.id} className="rounded-2xl border bg-slate-50 p-4">
-                    {/* Student question bubble */}
-                    <div className="flex items-start gap-3">
-                      <img
-                        src={
-                          q.studentImage ||
-                          "https://icons.veryicon.com/png/o/miscellaneous/user-avatar/user-avatar-male-5.png"
-                        }
-                        alt={q.studentName}
-                        className="h-10 w-10 rounded-full object-cover ring-2 ring-white shadow"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-sm font-semibold text-slate-900">
-                            {q.studentName}
-                          </span>
-                          <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">
-                            You
-                          </span>
-                        </div>
-                        <div className="mt-2 max-w-full rounded-2xl bg-white px-3 py-2 text-slate-800 shadow-sm">
-                          {q.question}
-                        </div>
-                      </div>
-                    </div>
+                {questions.map((q) => {
+                  const isEditing = editingQuestionId === q.id;
+                  const isOwnQuestion = q.studentId === auth.currentUser?.uid;
 
-                    {/* Teacher reply bubble */}
-                    {q.reply && (
-                      <div className="mt-4 ml-12 flex items-start gap-3">
+                  return (
+                    <li
+                      key={q.id}
+                      className="rounded-2xl border bg-slate-50 p-4"
+                    >
+                      {/* Student question */}
+                      <div className="flex items-start gap-3">
                         <img
                           src={
-                            q.teacherImage ||
-                            "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
+                            q.studentImage ||
+                            "https://icons.veryicon.com/png/o/miscellaneous/user-avatar/user-avatar-male-5.png"
                           }
-                          alt={q.teacherName}
+                          alt={q.studentName}
                           className="h-10 w-10 rounded-full object-cover ring-2 ring-white shadow"
                         />
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="text-sm font-semibold text-slate-900">
-                              {q.teacherName}
+                              {q.studentName}
                             </span>
-                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
-                              <Reply className="h-3.5 w-3.5" />
-                              Reply
+                            <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">
+                              You
                             </span>
+                            {isOwnQuestion && !isEditing && (
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => startEdit(q)}
+                                  className="rounded p-1 text-blue-600 hover:bg-blue-100 transition"
+                                  title="Edit question"
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleDelete(q.id)}
+                                  className="rounded p-1 text-red-600 hover:bg-red-100 transition"
+                                  title="Delete question"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </div>
+                            )}
                           </div>
-                          <div className="mt-2 max-w-full rounded-2xl bg-white px-3 py-2 text-slate-800 shadow-sm">
-                            {q.reply}
-                          </div>
+
+                          {isEditing ? (
+                            <div className="mt-2">
+                              <textarea
+                                value={editText}
+                                onChange={(e) => setEditText(e.target.value)}
+                                className="w-full rounded-xl border bg-white px-3 py-2 text-slate-800 outline-none focus:ring-2 focus:ring-blue-300"
+                                rows={3}
+                              />
+                              <div className="mt-2 flex gap-2">
+                                <button
+                                  onClick={() => saveEdit(q.id)}
+                                  className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700"
+                                >
+                                  <Check className="h-4 w-4" />
+                                  Save
+                                </button>
+                                <button
+                                  onClick={cancelEdit}
+                                  className="inline-flex items-center gap-2 rounded-lg bg-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-300"
+                                >
+                                  <X className="h-4 w-4" />
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="mt-2 max-w-full rounded-2xl bg-white px-3 py-2 text-slate-800 shadow-sm">
+                              {q.question}
+                            </div>
+                          )}
                         </div>
                       </div>
-                    )}
 
-                    <div className="mt-3 flex items-center justify-between">
-                      <p className="text-xs text-slate-500">
-                        Status:{" "}
-                        <span className="rounded-full bg-slate-100 px-2 py-0.5 font-medium">
-                          {q.status || "pending"}
-                        </span>
-                      </p>
-                      <div className="flex items-center gap-2 text-xs text-slate-400">
-                        <UserCircle2 className="h-4 w-4" />
-                        {q.teacherName}
+                      {/* Teacher reply */}
+                      {q.reply && (
+                        <div className="mt-4 ml-12 flex items-start gap-3">
+                          <img
+                            src={
+                              q.teacherImage ||
+                              "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
+                            }
+                            alt={q.teacherName}
+                            className="h-10 w-10 rounded-full object-cover ring-2 ring-white shadow"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="text-sm font-semibold text-slate-900">
+                                {q.teacherName}
+                              </span>
+                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                                <Reply className="h-3.5 w-3.5" />
+                                Reply
+                              </span>
+                            </div>
+                            <div className="mt-2 max-w-full rounded-2xl bg-white px-3 py-2 text-slate-800 shadow-sm">
+                              {q.reply}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
+                        <p>
+                          Status:{" "}
+                          <span className="rounded-full bg-slate-100 px-2 py-0.5 font-medium">
+                            {q.status || "pending"}
+                          </span>
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <UserCircle2 className="h-4 w-4" />
+                          {q.teacherName}
+                        </div>
                       </div>
-                    </div>
-                  </li>
-                ))}
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </div>
         </div>
 
-        {/* Footer hint */}
         <p className="mt-4 text-center text-xs text-slate-500">
           Tip: keep questions short and specific for faster replies.
         </p>

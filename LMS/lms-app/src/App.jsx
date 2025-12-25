@@ -1,12 +1,13 @@
 // src/App.jsx
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
+import { Toaster } from "sonner"; // 👈 ADD THIS
+
 import Signup from "./components/Signup";
 import Login from "./components/Login";
 import Home from "./components/Home";
 import Dashboard from "./components/Dashboard";
-import AdminDashboard from "./components/AdminDashboard"; // 👈 new
-// import Navbar from "./components/Navbar";
+import AdminDashboard from "./components/AdminDashboard";
 import LandingPage from "./components/LandingPage";
 import Notices from "./components/Notices";
 import Materials from "./components/Materials";
@@ -19,23 +20,22 @@ import TeacherProfile from "./components/TeacherProfile";
 
 // Check if user is logged in
 const isAuthenticated = () => {
-  return !!localStorage.getItem("userEmail"); // we stored userEmail in Login
+  return !!localStorage.getItem("userEmail");
 };
 
 // Get user role
 const getUserRole = () => {
-  return localStorage.getItem("role"); // stored in Login after Firestore check
+  return localStorage.getItem("role");
 };
 
 // Protected Route with role restriction
 const ProtectedRoute = ({ children, allowedRoles }) => {
   if (!isAuthenticated()) {
-    return <Navigate to="/" />;
+    return <Navigate to="/login" />;
   }
 
   const role = getUserRole();
   if (allowedRoles && !allowedRoles.includes(role)) {
-    // Role mismatch → redirect to login
     return <Navigate to="/login" />;
   }
 
@@ -45,10 +45,21 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 function App() {
   return (
     <div className="min-h-screen flex flex-col">
-      {/* <Navbar /> */}
+      {/* Global Toast Provider */}
+      <Toaster
+        position="top-right"
+        richColors
+        closeButton
+        toastOptions={{
+          style: {
+            borderRadius: "12px",
+          },
+        }}
+      />
+
       <div className="flex-1">
         <Routes>
-          {/* Default page → Landing Page */}
+          {/* Default page */}
           <Route path="/" element={<LandingPage />} />
 
           {/* Public Routes */}
@@ -92,7 +103,7 @@ function App() {
             }
           />
 
-          {/* 404 Fallback */}
+          {/* 404 */}
           <Route
             path="*"
             element={

@@ -1,22 +1,31 @@
-// src/pages/Login.jsx (or wherever you keep it)
+// src/pages/Login.jsx (updated with Sonner toast notifications)
+
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { auth, db } from "../firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+} from "firebase/firestore";
 import { FaLock, FaEye, FaEyeSlash, FaGoogle, FaGithub } from "react-icons/fa";
 import { MdEmail } from "react-icons/md";
 import { RiShieldUserFill } from "react-icons/ri";
+import { toast } from "sonner"; // <-- New import
 
 const BG_URL =
-  "https://images.unsplash.com/photo-1556761175-4b46a572b786?auto=format&fit=crop&w=1920&q=60"; // crisp campus/education look
+  "https://images.unsplash.com/photo-1556761175-4b46a572b786?auto=format&fit=crop&w=1920&q=60";
 
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(""); // We keep this for the inline error display
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -25,7 +34,11 @@ function Login() {
     setError("");
 
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
       const user = userCredential.user;
 
       let userData;
@@ -45,30 +58,40 @@ function Login() {
         if (!querySnapshot.empty) {
           userData = querySnapshot.docs[0].data();
         } else {
-          setError("No profile found in our system!");
+          toast.error("No profile found in our system!");
           setIsLoading(false);
           return;
         }
       }
 
+      // Store role & email
       localStorage.setItem("role", userData.role);
       localStorage.setItem("userEmail", user.email);
 
+      // Success toast
+      toast.success(
+        `Welcome back, ${
+          userData.role.charAt(0).toUpperCase() + userData.role.slice(1)
+        }!`
+      );
+
+      // Navigate based on role
       if (userData.role === "student") {
         navigate("/home");
-        window.location.reload();
       } else if (userData.role === "teacher") {
         navigate("/dashboard");
-        window.location.reload();
       } else if (userData.role === "admin") {
         navigate("/admin");
-        window.location.reload();
       } else {
-        setError("Role not assigned!");
+        toast.error("Invalid role assigned. Contact support.");
+        setIsLoading(false);
+        return;
       }
     } catch (err) {
       console.error(err);
-      setError(getErrorMessage(err.code));
+      const friendlyMessage = getErrorMessage(err.code);
+      setError(friendlyMessage); // Keep inline error for visibility
+      toast.error(friendlyMessage); // Also show as toast for better UX
     } finally {
       setIsLoading(false);
     }
@@ -130,7 +153,9 @@ function Login() {
                 <RiShieldUserFill className="text-3xl" />
               </div>
               <h1 className="text-xl font-bold">Welcome back to EZone</h1>
-              <p className="mt-1 text-blue-100 text-sm">Sign in to access your learning dashboard</p>
+              <p className="mt-1 text-blue-100 text-sm">
+                Sign in to access your learning dashboard
+              </p>
             </div>
 
             {/* Form */}
@@ -189,9 +214,15 @@ function Login() {
                     type="button"
                     onClick={() => setShowPassword((prev) => !prev)}
                     className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
-                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
                   >
-                    {showPassword ? <FaEyeSlash className="h-5 w-5" /> : <FaEye className="h-5 w-5" />}
+                    {showPassword ? (
+                      <FaEyeSlash className="h-5 w-5" />
+                    ) : (
+                      <FaEye className="h-5 w-5" />
+                    )}
                   </button>
                 </div>
 
@@ -231,7 +262,14 @@ function Login() {
                         viewBox="0 0 24 24"
                         aria-hidden="true"
                       >
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
                         <path
                           className="opacity-75"
                           fill="currentColor"
@@ -258,22 +296,24 @@ function Login() {
                 </div>
 
                 <div className="mt-6 grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      className="col-span-2 inline-flex w-full items-center justify-center rounded-lg border border-gray-300 bg-white px-12 py-3 text-base font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                      // onClick={handleGoogle}
-                    >
-                      <FaGoogle className="h-5 w-5 mr-2 text-red-500" />
-                      Continue with Google
-                    </button>
-                  </div>
-
+                  <button
+                    type="button"
+                    className="col-span-2 inline-flex w-full items-center justify-center rounded-lg border border-gray-300 bg-white px-12 py-3 text-base font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    // onClick={handleGoogle}
+                  >
+                    <FaGoogle className="h-5 w-5 mr-2 text-red-500" />
+                    Continue with Google
+                  </button>
+                </div>
               </div>
 
               {/* Bottom link */}
               <p className="mt-6 text-center text-sm text-gray-600">
                 Don&apos;t have an account?{" "}
-                <Link to="/signup" className="font-medium text-blue-600 hover:text-blue-500">
+                <Link
+                  to="/signup"
+                  className="font-medium text-blue-600 hover:text-blue-500"
+                >
                   Sign up
                 </Link>
               </p>

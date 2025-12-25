@@ -1,3 +1,5 @@
+// src/components/UpdateTeacherForm.jsx (updated with Sonner toast notifications)
+
 import React, { useState, useEffect, useRef } from "react";
 import { db } from "../firebase";
 import {
@@ -8,6 +10,8 @@ import {
   query,
   where,
 } from "firebase/firestore";
+import { toast } from "sonner"; // <-- Added
+
 import {
   X,
   User,
@@ -45,11 +49,13 @@ function UpdateTeacherForm({ teacher, onClose, onTeacherUpdated }) {
     address: "",
     imageUrl: "",
   });
+
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
-  const [banner, setBanner] = useState({ type: "", message: "" });
+  const [banner, setBanner] = useState({ type: "", message: "" }); // Kept for inline feedback inside modal
   const dialogRef = useRef(null);
 
+  // Populate form when teacher prop changes
   useEffect(() => {
     if (teacher) {
       setForm({
@@ -58,12 +64,11 @@ function UpdateTeacherForm({ teacher, onClose, onTeacherUpdated }) {
         email: teacher.email || "",
         role: teacher.role || "teacher",
         subjects: teacher.subjects || "",
-        grades:
-          teacher.grades || teacher.grade
-            ? Array.isArray(teacher.grades)
-              ? teacher.grades
-              : [teacher.grade]
-            : [],
+        grades: Array.isArray(teacher.grades)
+          ? teacher.grades
+          : teacher.grade
+          ? [teacher.grade]
+          : [],
         bio: teacher.bio || "",
         achievements: teacher.achievements || "",
         contact: teacher.contact || "",
@@ -104,17 +109,18 @@ function UpdateTeacherForm({ teacher, onClose, onTeacherUpdated }) {
         where("username", "==", form.username.trim())
       );
       const ur = await getDocs(uq);
-      if (!ur.empty && ur.docs.some((doc) => doc.id !== teacher.id)) {
+      if (!ur.empty && ur.docs.some((d) => d.id !== teacher.id)) {
         e.username = "This username is already in use.";
       }
     }
+
     if (!e.email) {
       const eq = query(
         collection(db, "teachers"),
         where("email", "==", form.email.trim().toLowerCase())
       );
       const er = await getDocs(eq);
-      if (!er.empty && er.docs.some((doc) => doc.id !== teacher.id)) {
+      if (!er.empty && er.docs.some((d) => d.id !== teacher.id)) {
         e.email = "This email is already registered.";
       }
     }
@@ -131,13 +137,12 @@ function UpdateTeacherForm({ teacher, onClose, onTeacherUpdated }) {
 
   const handleGradeChange = (e) => {
     const { checked, value } = e.target;
-    let updatedGrades = form.grades || [];
-    if (checked) {
-      updatedGrades = [...updatedGrades, value];
-    } else {
-      updatedGrades = updatedGrades.filter((grade) => grade !== value);
-    }
-    setForm({ ...form, grades: updatedGrades });
+    setForm((prev) => ({
+      ...prev,
+      grades: checked
+        ? [...prev.grades, value]
+        : prev.grades.filter((g) => g !== value),
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -145,30 +150,35 @@ function UpdateTeacherForm({ teacher, onClose, onTeacherUpdated }) {
     setBanner({ type: "", message: "" });
 
     if (!(await validate())) {
-      setBanner({
-        type: "error",
-        message: "Please fix the errors and try again.",
-      });
+      toast.error("Please fix the highlighted errors and try again.");
       return;
     }
 
     try {
       setSubmitting(true);
+      toast.loading("Updating teacher profile...");
+
       const teacherRef = doc(db, "teachers", teacher.id);
       await updateDoc(teacherRef, {
         ...form,
         email: form.email.trim().toLowerCase(),
         updatedAt: new Date().toISOString(),
       });
-      setBanner({ type: "success", message: "Teacher updated successfully!" });
+
+      toast.dismiss();
+      toast.success(`Teacher "${form.fullName}" updated successfully!`);
+
       onTeacherUpdated?.();
-      setTimeout(() => onClose?.(), 1000); // Auto-close after success
+      setTimeout(() => onClose?.(), 800); // Give user time to see toast
     } catch (err) {
+      toast.dismiss();
       console.error("Error updating teacher:", err);
-      setBanner({
-        type: "error",
-        message: err?.message || "Something went wrong. Please try again.",
-      });
+
+      const message =
+        err?.message || "Failed to update teacher. Please try again.";
+      toast.error(message);
+
+      setBanner({ type: "error", message });
     } finally {
       setSubmitting(false);
     }
@@ -190,30 +200,27 @@ function UpdateTeacherForm({ teacher, onClose, onTeacherUpdated }) {
         <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-gradient-to-r from-blue-50 to-white px-6 py-4">
           <div>
             <h2 className="text-lg font-semibold text-blue-900">
-              Update Teacher
+              Update Teacher Profile
             </h2>
-            <p className="text-xs text-blue-700/70">
-              Modify teacher profile details
-            </p>
+            <p className="text-xs text-blue-700/70">Modify teacher details</p>
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-2 text-blue-700/70 transition hover:bg-blue-50 hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-200"
-            aria-label="Close"
-            title="Close"
             disabled={submitting}
+            className="rounded-lg p-2 text-blue-700/70 transition hover:bg-blue-50 hover:text-blue-800 disabled:opacity-50"
+            aria-label="Close"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        {/* Banner */}
+        {/* Optional inline banner (kept for detailed context inside modal) */}
         {banner.message && (
           <div
             className={`mx-6 mt-4 flex items-start gap-2 rounded-xl border px-4 py-3 text-sm ${
               banner.type === "success"
-                ? "border-blue-200 bg-blue-50 text-blue-800"
-                : "border-blue-200 bg-blue-50 text-blue-800"
+                ? "border-green-200 bg-green-50 text-green-800"
+                : "border-red-200 bg-red-50 text-red-800"
             }`}
           >
             {banner.type === "success" ? (
@@ -283,7 +290,6 @@ function UpdateTeacherForm({ teacher, onClose, onTeacherUpdated }) {
               placeholder="Address"
               value={form.address}
               onChange={handleChange}
-              error={errors.address}
             />
 
             <div>
@@ -320,7 +326,7 @@ function UpdateTeacherForm({ teacher, onClose, onTeacherUpdated }) {
             />
 
             <LabeledSelect
-              label="Subject"
+              label="Primary Subject"
               icon={<BookOpen className="h-4 w-4" />}
               name="subjects"
               value={form.subjects}
@@ -336,7 +342,7 @@ function UpdateTeacherForm({ teacher, onClose, onTeacherUpdated }) {
             />
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-blue-900">
+              <label className="mb-2 block text-sm font-medium text-blue-900">
                 Teaching Grades
               </label>
               <div className="flex flex-wrap gap-2">
@@ -354,12 +360,11 @@ function UpdateTeacherForm({ teacher, onClose, onTeacherUpdated }) {
                     className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition cursor-pointer ${
                       form.grades.includes(g)
                         ? "border-blue-500 bg-blue-50 text-blue-900"
-                        : "bg-white hover:bg-blue-50 hover:border-blue-200"
+                        : "border-blue-100 bg-white hover:bg-blue-50"
                     }`}
                   >
                     <input
                       type="checkbox"
-                      name="grades"
                       value={g}
                       checked={form.grades.includes(g)}
                       onChange={handleGradeChange}
@@ -374,40 +379,38 @@ function UpdateTeacherForm({ teacher, onClose, onTeacherUpdated }) {
             <Textarea
               icon={<FileText className="h-4 w-4" />}
               name="bio"
-              placeholder="Bio"
+              placeholder="Short bio"
               value={form.bio}
               onChange={handleChange}
               rows={4}
-              error={errors.bio}
             />
 
             <Textarea
               icon={<Award className="h-4 w-4" />}
               name="achievements"
-              placeholder="Achievements"
+              placeholder="Key achievements (optional)"
               value={form.achievements}
               onChange={handleChange}
               rows={4}
-              error={errors.achievements}
             />
           </div>
         </form>
 
         {/* Footer */}
         <div className="sticky bottom-0 z-10 border-t bg-gradient-to-r from-white to-blue-50 px-6 py-4">
-          <div className="flex items-center justify-end gap-2">
+          <div className="flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
               disabled={submitting}
-              className="rounded-xl border border-blue-200 px-5 py-2 text-sm font-medium text-blue-800 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-200 disabled:opacity-50"
+              className="rounded-xl border border-blue-200 px-5 py-2.5 text-sm font-medium text-blue-800 transition hover:bg-blue-50 disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               onClick={handleSubmit}
               disabled={submitting}
-              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:cursor-not-allowed disabled:opacity-70"
+              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
               Update Teacher
@@ -419,7 +422,7 @@ function UpdateTeacherForm({ teacher, onClose, onTeacherUpdated }) {
   );
 }
 
-/* ----------------------------- UI bits ----------------------------- */
+/* ----------------------------- UI Components (unchanged) ----------------------------- */
 function SectionTitle({ children, icon, blue }) {
   return (
     <h3
@@ -487,7 +490,7 @@ function LabeledSelect({ label, icon, options, ...props }) {
           className="w-full appearance-none rounded-xl border border-blue-100 bg-white px-9 py-2.5 text-slate-800 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-300"
         >
           {options.map((o) => (
-            <option key={o.value + o.label} value={o.value}>
+            <option key={o.value} value={o.value}>
               {o.label}
             </option>
           ))}
@@ -504,7 +507,7 @@ function ImagePreview({ url }) {
   if (!url) {
     return (
       <div className="mt-2 flex h-36 items-center justify-center rounded-lg border border-blue-100 bg-blue-50 text-xs text-blue-700">
-        No image URL
+        No image URL provided
       </div>
     );
   }
@@ -512,13 +515,13 @@ function ImagePreview({ url }) {
   return ok ? (
     <img
       src={url}
-      alt="Preview"
+      alt="Profile preview"
       className="mt-2 h-36 w-full rounded-lg border border-blue-100 object-cover"
       onError={() => setOk(false)}
     />
   ) : (
-    <div className="mt-2 rounded-lg border border-blue-200 bg-blue-50 p-2 text-xs text-blue-800">
-      Couldn’t load image from the provided URL.
+    <div className="mt-2 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-800">
+      Could not load image from the provided URL.
     </div>
   );
 }
