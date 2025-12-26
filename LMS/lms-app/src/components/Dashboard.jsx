@@ -1,6 +1,3 @@
-// src/pages/Dashboard.jsx (or wherever your Dashboard component lives)
-// Updated with professional Sonner toast notifications
-
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
@@ -15,7 +12,7 @@ import {
   deleteDoc,
 } from "firebase/firestore";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { toast } from "sonner"; // <-- Added
+import { toast } from "sonner";
 
 import MarkModal from "./MarkModal";
 import {
@@ -101,84 +98,113 @@ function Dashboard() {
   }, [navigate]);
 
   // Fetch all dashboard data
-  useEffect(() => {
+  const fetchAllData = async () => {
     if (!teacher?.uid) return;
 
-    const fetchAllData = async () => {
-      toast.loading("Loading dashboard data...");
+    toast.loading("Loading dashboard data...");
 
-      try {
-        // Fetch students
-        const studentsSnap = await getDocs(collection(db, "students"));
-        const allStudents = studentsSnap.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+    try {
+      // Fetch students
+      const studentsSnap = await getDocs(collection(db, "students"));
+      const allStudents = studentsSnap.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
 
-        const myStudents = allStudents.filter((student) => {
-          if (
-            !student.preferredTeachers ||
-            !Array.isArray(student.preferredTeachers)
-          ) {
-            return false;
-          }
-          return student.preferredTeachers.some(
-            (pt) => pt.preferredTeacherId === teacher.uid
-          );
-        });
+      const myStudents = allStudents.filter((student) => {
+        if (
+          !student.preferredTeachers ||
+          !Array.isArray(student.preferredTeachers)
+        ) {
+          return false;
+        }
+        return student.preferredTeachers.some(
+          (pt) => pt.preferredTeacherId === teacher.uid
+        );
+      });
 
-        setStudents(myStudents);
+      setStudents(myStudents);
 
-        // Fetch teacher content
-        const [hwSnap, matSnap, noticeSnap] = await Promise.all([
-          getDocs(
-            query(
-              collection(db, "homework"),
-              where("teacherId", "==", teacher.uid)
-            )
-          ),
-          getDocs(
-            query(
-              collection(db, "materials"),
-              where("teacherId", "==", teacher.uid)
-            )
-          ),
-          getDocs(
-            query(
-              collection(db, "notices"),
-              where("teacherId", "==", teacher.uid)
-            )
-          ),
-        ]);
+      // Fetch teacher content
+      const [hwSnap, matSnap, noticeSnap] = await Promise.all([
+        getDocs(
+          query(
+            collection(db, "homework"),
+            where("teacherId", "==", teacher.uid)
+          )
+        ),
+        getDocs(
+          query(
+            collection(db, "materials"),
+            where("teacherId", "==", teacher.uid)
+          )
+        ),
+        getDocs(
+          query(
+            collection(db, "notices"),
+            where("teacherId", "==", teacher.uid)
+          )
+        ),
+      ]);
 
-        setHomework(hwSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
-        setMaterials(matSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      setHomework(hwSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      setMaterials(matSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
 
-        const noticeList = noticeSnap.docs
-          .map((d) => {
-            const data = d.data();
-            const createdAtMs = data.createdAt?.toMillis?.() ?? 0;
-            return { id: d.id, ...data, _createdAtMs: createdAtMs };
-          })
-          .sort((a, b) => b._createdAtMs - a._createdAtMs);
+      const noticeList = noticeSnap.docs
+        .map((d) => {
+          const data = d.data();
+          const createdAtMs = data.createdAt?.toMillis?.() ?? 0;
+          return { id: d.id, ...data, _createdAtMs: createdAtMs };
+        })
+        .sort((a, b) => b._createdAtMs - a._createdAtMs);
 
-        setNotices(noticeList);
+      setNotices(noticeList);
 
-        toast.dismiss();
-        toast.success("Dashboard loaded successfully");
-      } catch (error) {
-        console.error("Error fetching dashboard data:", error);
-        toast.dismiss();
-        toast.error("Failed to load dashboard data");
-      }
-    };
+      toast.dismiss();
+      toast.success("Dashboard loaded successfully");
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+      toast.dismiss();
+      toast.error("Failed to load dashboard data");
+    }
+  };
 
+  useEffect(() => {
     fetchAllData();
   }, [teacher]);
 
-  // Delete student with toast feedback
+  // Refetch students only after marks are added
+  const refreshStudents = async () => {
+    try {
+      const studentsSnap = await getDocs(collection(db, "students"));
+      const allStudents = studentsSnap.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      const myStudents = allStudents.filter((student) => {
+        if (
+          !student.preferredTeachers ||
+          !Array.isArray(student.preferredTeachers)
+        ) {
+          return false;
+        }
+        return student.preferredTeachers.some(
+          (pt) => pt.preferredTeacherId === teacher.uid
+        );
+      });
+
+      setStudents(myStudents);
+      toast.success("Marks updated successfully");
+    } catch (error) {
+      console.error("Error refreshing students:", error);
+      toast.error("Failed to refresh student data");
+    }
+  };
+
+  // Delete student
   const handleDeleteStudent = async (student) => {
-    setStudentToDelete(null); // close confirmation modal
+    setStudentToDelete(null);
 
     toast.loading(`Deleting ${student.fullName}...`);
 
@@ -195,7 +221,7 @@ function Dashboard() {
     }
   };
 
-  // Update student status (active/pending)
+  // Update student status
   const updateStudentStatus = async (studentId, newStatus) => {
     toast.loading("Updating status...");
 
@@ -251,14 +277,14 @@ function Dashboard() {
     setCurrentPage(1);
   }, [students, searchQuery, selectedGrade]);
 
-  // Sidebar grade filtering
+  // Sidebar filtering
   const filterByGrade = (items, selectedFilter) => {
     if (selectedFilter === "all") return items;
     return items.filter(
       (item) =>
         item.grades &&
         Array.isArray(item.grades) &&
-        item.grades.includes(selectedFilter)
+        item.grades.some((g) => g.includes(selectedFilter))
     );
   };
 
@@ -287,6 +313,12 @@ function Dashboard() {
   const closeModal = () => {
     setSelectedStudent(null);
     setIsModalOpen(false);
+  };
+
+  // Called from MarkModal after successful mark submission
+  const handleMarkAdded = () => {
+    closeModal();
+    refreshStudents(); // Refresh only students to show new marks
   };
 
   if (!teacher) {
@@ -871,6 +903,8 @@ function Dashboard() {
         isOpen={isModalOpen}
         onClose={closeModal}
         student={selectedStudent}
+        teacherId={teacher?.uid}
+        onMarkAdded={handleMarkAdded}
       />
     </div>
   );

@@ -1,4 +1,5 @@
-// src/pages/Home.jsx (or wherever your student dashboard is) - Updated with Sonner toast notifications
+// src/pages/Home.jsx
+// Updated: Marks filtered by teacherId, show highest per teacher in card, all marks in modal
 
 import React, { useEffect, useState, useCallback } from "react";
 import { auth, db } from "../firebase";
@@ -16,7 +17,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import TeacherModal from "../components/TeacherModal.jsx";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { toast } from "sonner"; // <-- Added
+import { toast } from "sonner";
 
 // Icons
 import {
@@ -37,13 +38,13 @@ import {
   LogOut,
   ExternalLink,
   Bot,
+  Award,
+  ChevronRight,
+  Calendar,
+  TrendingUp,
 } from "lucide-react";
 
-// ⚠️ Never ship API keys in production - move to env vars!
-const genAI = new GoogleGenerativeAI(
-  import.meta.env.VITE_GEMINI_API_KEY ||
-    "AIzaSyDk6Wr9FzQKlnVFG87fpRNawtmOOujAvSM"
-);
+const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 
 const subjectHue = (s = "") => {
   const t = s.toLowerCase();
@@ -54,27 +55,32 @@ const subjectHue = (s = "") => {
   if (t.includes("history")) return "amber";
   if (t.includes("ict") || t.includes("it") || t.includes("computer"))
     return "cyan";
+  if (t.includes("music")) return "rose";
   return "sky";
 };
 
 const badgeByHue = {
-  blue: "bg-blue-50 text-blue-700 ring-blue-200",
   indigo: "bg-indigo-50 text-indigo-700 ring-indigo-200",
-  sky: "bg-sky-50 text-sky-700 ring-sky-200",
-  violet: "bg-violet-50 text-violet-700 ring-violet-200",
-  cyan: "bg-cyan-50 text-cyan-700 ring-cyan-200",
   emerald: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+  violet: "bg-violet-50 text-violet-700 ring-violet-200",
   amber: "bg-amber-50 text-amber-700 ring-amber-200",
+  cyan: "bg-cyan-50 text-cyan-700 ring-cyan-200",
+  rose: "bg-rose-50 text-rose-700 ring-rose-200",
+  sky: "bg-sky-50 text-sky-700 ring-sky-200",
 };
 
-const chipByHue = {
-  blue: "bg-blue-50 ring-blue-200 text-blue-700",
-  indigo: "bg-indigo-50 ring-indigo-200 text-indigo-700",
-  sky: "bg-sky-50 ring-sky-200 text-sky-700",
-  violet: "bg-violet-50 ring-violet-200 text-violet-700",
-  cyan: "bg-cyan-50 ring-cyan-200 text-cyan-700",
-  emerald: "bg-emerald-50 ring-emerald-200 text-emerald-700",
-  amber: "bg-amber-50 ring-amber-200 text-amber-700",
+const getPerformanceBadge = (score) => {
+  if (score >= 90) return "bg-emerald-100 text-emerald-800 ring-emerald-300";
+  if (score >= 75) return "bg-blue-100 text-blue-800 ring-blue-300";
+  if (score >= 60) return "bg-amber-100 text-amber-800 ring-amber-300";
+  return "bg-red-100 text-red-800 ring-red-300";
+};
+
+const getPerformanceLabel = (score) => {
+  if (score >= 90) return "Excellent";
+  if (score >= 75) return "Good";
+  if (score >= 60) return "Average";
+  return "Needs Improvement";
 };
 
 function Home() {
@@ -83,15 +89,17 @@ function Home() {
   const [notices, setNotices] = useState({});
   const [homework, setHomework] = useState({});
   const [materials, setMaterials] = useState({});
-  const [marks, setMarks] = useState([]);
+  const [marks, setMarks] = useState([]); // All marks from student doc
+
   const [chatOpen, setChatOpen] = useState(false);
-  const [chatMessages, setChatMessages] = useState([
-    { sender: "bot", text: "Hi! Ask me anything about your subjects." },
-  ]);
+  const [chatMessages, setChatMessages] = useState([]); // Start empty
   const [userInput, setUserInput] = useState("");
 
   const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Marks Modal State
+  const [marksModalOpen, setMarksModalOpen] = useState(false);
 
   const navigate = useNavigate();
 
@@ -107,10 +115,22 @@ function Home() {
     document.body.style.overflow = "";
   }, []);
 
+  const openAllMarksModal = () => {
+    setMarksModalOpen(true);
+    document.body.style.overflow = "hidden";
+  };
+
+  const closeMarksModal = () => {
+    setMarksModalOpen(false);
+    document.body.style.overflow = "";
+  };
+
   const sendMessage = async () => {
     if (!userInput.trim()) return;
 
     const userMessage = userInput.trim();
+
+    // Add user message to UI immediately
     setChatMessages((prev) => [...prev, { sender: "user", text: userMessage }]);
     setUserInput("");
 
@@ -121,18 +141,29 @@ function Home() {
         .map((t) => t.subjects || t.courseName)
         .filter(Boolean)
         .join(", ");
-      const context = `The student studies: ${
-        subjects || "general subjects"
-      }. Answer briefly and helpfully.`;
 
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-      const result = await model.generateContent(
-        `${context}\n\nQ: ${userMessage}`
-      );
+      const systemPrompt = `You are a helpful, friendly, and knowledgeable study assistant.
+The student is studying: ${subjects || "various subjects"}.
+Keep responses short, clear, accurate, and educational. Use bullet points or numbered lists when helpful.`;
 
-      const reply =
-        result.response.candidates?.[0]?.content?.parts?.[0]?.text ||
-        "Sorry, I couldn't generate a response.";
+      // Use the current stable fast model (as of Dec 2025)
+      const model = genAI.getGenerativeModel({
+        model: "gemini-2.5-flash", // ← Updated model name
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+      });
+
+      // Build history from actual conversation only (no initial bot message needed)
+      const historyForAPI = chatMessages.map((msg) => ({
+        role: msg.sender === "user" ? "user" : "model",
+        parts: [{ text: msg.text }],
+      }));
+
+      const chatSession = model.startChat({
+        history: historyForAPI,
+      });
+
+      const result = await chatSession.sendMessage(userMessage);
+      const reply = result.response.text();
 
       toast.dismiss("ai-thinking");
       toast.success("Response received!");
@@ -141,13 +172,13 @@ function Home() {
     } catch (err) {
       console.error("AI Chat error:", err);
       toast.dismiss("ai-thinking");
-      toast.error("Failed to get response. Try again later.");
+      toast.error("Failed to get response. Check your API key or try again.");
 
       setChatMessages((prev) => [
         ...prev,
         {
           sender: "bot",
-          text: "Sorry, something went wrong. Try again later.",
+          text: "Sorry, I couldn't respond right now. Please try again later.",
         },
       ]);
     }
@@ -165,26 +196,25 @@ function Home() {
   };
 
   useEffect(() => {
-    const onKey = (e) => e.key === "Escape" && closeModal();
-    if (isModalOpen) window.addEventListener("keydown", onKey);
+    const onKey = (e) => {
+      if (e.key === "Escape") {
+        closeModal();
+        closeMarksModal();
+      }
+    };
+    if (isModalOpen || marksModalOpen)
+      window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [isModalOpen, closeModal]);
+  }, [isModalOpen, marksModalOpen]);
 
-  // Determine if content is visible to this student
-  const isVisibleToStudent = (item, studentGrade) => {
-    if (
-      !item.grades ||
-      !Array.isArray(item.grades) ||
-      item.grades.length === 0
-    ) {
-      return true;
-    }
-    return item.grades.includes(studentGrade);
-  };
-
-  const formatGrades = (grades) => {
-    if (!grades || grades.length === 0) return "";
-    return grades.join(", ");
+  const formatDate = (dateStr) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
   };
 
   useEffect(() => {
@@ -200,7 +230,6 @@ function Home() {
         const studentSnap = await getDoc(doc(db, "students", user.uid));
         if (!studentSnap.exists()) {
           toast.error("No student profile found.");
-          console.warn("No student profile found");
           return;
         }
 
@@ -218,7 +247,6 @@ function Home() {
         const isPending =
           (studentData.status || "").toLowerCase() === "pending";
 
-        // Get teacher IDs
         const rawTeachers = Array.isArray(studentData.preferredTeachers)
           ? studentData.preferredTeachers
           : [];
@@ -231,7 +259,6 @@ function Home() {
           return;
         }
 
-        // Fetch teachers in chunks
         let fetchedTeachers = [];
         const chunks = [];
         for (let i = 0; i < teacherIds.length; i += 10) {
@@ -267,9 +294,6 @@ function Home() {
               if (!isMounted) return;
 
               let list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-              list = list.filter((item) =>
-                isVisibleToStudent(item, studentGrade)
-              );
               list.sort(
                 (a, b) =>
                   (b.createdAt?.toMillis?.() ?? 0) -
@@ -370,7 +394,7 @@ function Home() {
       </header>
 
       <main className="mx-auto max-w-6xl p-4 sm:p-6">
-        {/* Profile Welcome */}
+        {/* Profile Section */}
         <section className="mb-6 rounded-2xl border bg-white p-6 shadow-sm ring-1 ring-blue-100 relative overflow-hidden">
           <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-cyan-100 blur-2xl" />
           <div className="pointer-events-none absolute -left-10 -bottom-10 h-32 w-32 rounded-full bg-violet-100 blur-2xl" />
@@ -424,14 +448,28 @@ function Home() {
         {/* Teachers & Content */}
         <div className="space-y-10">
           {teachers.map((teacher) => {
+            const teacherId = teacher.id;
+
+            // Filter marks by this teacher only
+            const teacherMarks = marks.filter(
+              (mark) => mark.teacherId === teacherId
+            );
+
+            // Find the highest mark
+            const highestMark =
+              teacherMarks.length > 0
+                ? teacherMarks.reduce((max, mark) =>
+                    mark.score > max.score ? mark : max
+                  )
+                : null;
+
             const hue = subjectHue(
               teacher.subjects || teacher.courseName || ""
             );
             const badge = badgeByHue[hue] || badgeByHue.sky;
-            const chip = chipByHue[hue] || chipByHue.sky;
 
             return (
-              <section key={teacher.id} className="space-y-6">
+              <section key={teacherId} className="space-y-6">
                 <div className="rounded-2xl border bg-white p-6 shadow-sm ring-1 ring-slate-100">
                   <div className="mb-4 h-1 w-full rounded-full bg-gradient-to-r from-blue-600 via-sky-500 to-indigo-600" />
                   <div className="mb-4 flex items-center justify-between">
@@ -466,10 +504,8 @@ function Home() {
                         {teacher.fullName}
                       </p>
                       <div className="mt-1 flex flex-wrap items-center gap-3 text-slate-700">
-                        <span
-                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs ring-1 ${chip}`}
-                        >
-                          <Mail className="h-3.5 w-3.5 opacity-80" />
+                        <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs ring-1 ring-slate-200">
+                          <Mail className="h-3.5 w-3.5 text-slate-500" />
                           {teacher.email}
                         </span>
                         <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs ring-1 ring-slate-200">
@@ -492,29 +528,21 @@ function Home() {
                     </p>
                   </div>
                 ) : (
-                  <div className="grid gap-6 lg:grid-cols-3">
+                  <div className="grid gap-6 lg:grid-cols-4">
                     {/* Homework */}
                     <div className="rounded-2xl border bg-white p-6 shadow-sm ring-1 ring-sky-100">
                       <h4 className="mb-4 flex items-center gap-2 text-base font-semibold text-slate-900">
                         <NotebookPen className="h-5 w-5 text-sky-600" />
                         Homework
                       </h4>
-                      {homework[teacher.id]?.length > 0 ? (
+                      {homework[teacherId]?.length > 0 ? (
                         <ul className="space-y-3">
-                          {homework[teacher.id].map((hw) => (
+                          {homework[teacherId].slice(0, 3).map((hw) => (
                             <li
                               key={hw.id}
-                              className="rounded-lg border border-sky-100 bg-sky-50/70 px-4 py-3"
+                              className="rounded-lg border border-sky-100 bg-sky-50/70 px-4 py-3 text-sm"
                             >
-                              <p className="text-sm text-slate-900">
-                                {hw.task}
-                              </p>
-                              {hw.grades && hw.grades.length > 0 && (
-                                <p className="mt-2 text-xs text-sky-600">
-                                  For:{" "}
-                                  <strong>{formatGrades(hw.grades)}</strong>
-                                </p>
-                              )}
+                              {hw.task}
                             </li>
                           ))}
                         </ul>
@@ -523,7 +551,7 @@ function Home() {
                           icon={
                             <NotebookPen className="h-5 w-5 text-sky-600" />
                           }
-                          label="No homework for your grade"
+                          label="No homework"
                         />
                       )}
                     </div>
@@ -532,33 +560,22 @@ function Home() {
                     <div className="rounded-2xl border bg-white p-6 shadow-sm ring-1 ring-indigo-100">
                       <h4 className="mb-4 flex items-center gap-2 text-base font-semibold text-slate-900">
                         <BookOpen className="h-5 w-5 text-indigo-600" />
-                        Learning Materials
+                        Materials
                       </h4>
-                      {materials[teacher.id]?.length > 0 ? (
+                      {materials[teacherId]?.length > 0 ? (
                         <ul className="space-y-3">
-                          {materials[teacher.id].map((m) => (
+                          {materials[teacherId].slice(0, 3).map((m) => (
                             <li key={m.id}>
                               <a
                                 href={m.link}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="block rounded-lg border border-indigo-100 bg-indigo-50/60 px-4 py-3 transition hover:bg-indigo-50 hover:ring-1 hover:ring-indigo-200"
+                                className="block rounded-lg border border-indigo-100 bg-indigo-50/60 px-4 py-3 text-sm truncate hover:bg-indigo-100"
                               >
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center gap-2">
-                                    <LinkIcon className="h-4 w-4 text-indigo-600" />
-                                    <span className="text-sm font-medium text-slate-900 truncate">
-                                      {m.title}
-                                    </span>
-                                  </div>
-                                  <ExternalLink className="h-4 w-4 text-slate-400" />
+                                <div className="flex items-center gap-2">
+                                  <LinkIcon className="h-4 w-4 text-indigo-600 flex-shrink-0" />
+                                  <span className="truncate">{m.title}</span>
                                 </div>
-                                {m.grades && m.grades.length > 0 && (
-                                  <p className="mt-2 text-xs text-indigo-600">
-                                    For:{" "}
-                                    <strong>{formatGrades(m.grades)}</strong>
-                                  </p>
-                                )}
                               </a>
                             </li>
                           ))}
@@ -568,7 +585,7 @@ function Home() {
                           icon={
                             <BookOpen className="h-5 w-5 text-indigo-600" />
                           }
-                          label="No materials for your grade"
+                          label="No materials"
                         />
                       )}
                     </div>
@@ -579,21 +596,14 @@ function Home() {
                         <Bell className="h-5 w-5 text-amber-600" />
                         Notices
                       </h4>
-                      {notices[teacher.id]?.length > 0 ? (
+                      {notices[teacherId]?.length > 0 ? (
                         <ul className="space-y-3">
-                          {notices[teacher.id].map((n) => (
+                          {notices[teacherId].slice(0, 3).map((n) => (
                             <li
                               key={n.id}
-                              className="rounded-lg border border-amber-100 bg-amber-50/70 px-4 py-3"
+                              className="rounded-lg border border-amber-100 bg-amber-50/70 px-4 py-3 text-sm"
                             >
-                              <p className="text-sm text-slate-900">
-                                {n.content}
-                              </p>
-                              {n.grades && n.grades.length > 0 && (
-                                <p className="mt-2 text-xs text-amber-700">
-                                  For: <strong>{formatGrades(n.grades)}</strong>
-                                </p>
-                              )}
+                              {n.content}
                             </li>
                           ))}
                         </ul>
@@ -602,10 +612,56 @@ function Home() {
                           icon={
                             <Megaphone className="h-5 w-5 text-amber-600" />
                           }
-                          label="No notices for your grade"
+                          label="No notices"
                         />
                       )}
                     </div>
+
+                    {/* Highest Mark by This Teacher */}
+                    <button
+                      onClick={openAllMarksModal}
+                      disabled={teacherMarks.length === 0}
+                      className="rounded-2xl border bg-white p-6 shadow-sm ring-1 ring-purple-100 transition hover:shadow-md hover:ring-purple-300 focus:outline-none focus:ring-4 focus:ring-purple-200 disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="flex items-center gap-2 text-base font-semibold text-slate-900">
+                          <Award className="h-5 w-5 text-purple-600" />
+                          Best Mark
+                        </h4>
+                        <ChevronRight className="h-5 w-5 text-purple-500" />
+                      </div>
+
+                      {highestMark ? (
+                        <div className="space-y-4">
+                          <div className="flex flex-col items-center justify-center py-4">
+                            <div className="text-4xl font-bold text-purple-700">
+                              {highestMark.score}
+                              <span className="text-xl text-slate-500">
+                                /100
+                              </span>
+                            </div>
+                            <span
+                              className={`mt-2 inline-flex rounded-full px-4 py-1.5 text-sm font-medium ring-1 ${getPerformanceBadge(
+                                highestMark.score
+                              )}`}
+                            >
+                              {getPerformanceLabel(highestMark.score)}
+                            </span>
+                            <p className="mt-3 text-sm font-medium text-slate-700">
+                              {highestMark.subject}
+                            </p>
+                            <p className="mt-1 text-xs text-slate-500">
+                              {formatDate(highestMark.date)}
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <EmptyState
+                          icon={<Award className="h-5 w-5 text-purple-600" />}
+                          label="No marks yet"
+                        />
+                      )}
+                    </button>
                   </div>
                 )}
               </section>
@@ -632,34 +688,54 @@ function Home() {
       <button
         onClick={() => setChatOpen(true)}
         className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-2xl transition hover:scale-110 focus:outline-none focus:ring-4 focus:ring-blue-300"
-        aria-label="Open AI Chat"
-        title="Ask AI Assistant"
+        aria-label="Open AI Assistant"
       >
         <Bot className="h-7 w-7" />
         <span className="absolute -top-1 -right-1 h-4 w-4 animate-ping rounded-full bg-blue-400 opacity-75"></span>
+        <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-blue-400"></span>
       </button>
 
-      {/* Chat Widget */}
+      {/* AI Chat Widget */}
       {chatOpen && (
-        <div className="fixed bottom-24 right-6 z-50 w-[22rem] overflow-hidden rounded-2xl border bg-white shadow-2xl ring-1 ring-blue-100">
-          <div className="flex items-center justify-between bg-gradient-to-r from-blue-600 via-sky-600 to-indigo-600 px-4 py-3 text-white">
-            <div className="flex items-center gap-2 font-semibold">
-              <Bot className="h-5 w-5" />
-              AI Assistant
+        <div className="fixed bottom-24 right-6 z-50 w-96 max-w-[calc(100vw-3rem)] overflow-hidden rounded-2xl border bg-white shadow-2xl ring-1 ring-blue-100">
+          {/* Header */}
+          <div className="flex items-center justify-between bg-gradient-to-r from-blue-600 via-sky-600 to-indigo-600 px-5 py-4 text-white">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20">
+                <Bot className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="font-semibold">AI Study Assistant</p>
+                <p className="text-xs opacity-90">
+                  Ask anything about your lessons
+                </p>
+              </div>
             </div>
             <button
               onClick={() => setChatOpen(false)}
-              className="rounded p-1 hover:bg-white/10"
+              className="rounded-lg p-2 transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/30"
+              aria-label="Close chat"
             >
               <X className="h-5 w-5" />
             </button>
           </div>
 
-          <div className="flex max-h-80 flex-col gap-3 overflow-y-auto p-4">
+          {/* Messages Area */}
+          <div className="flex max-h-96 flex-col gap-4 overflow-y-auto p-5">
+            {/* Welcome Message - Always shown first */}
+            <div className="max-w-[85%] self-start rounded-2xl bg-gray-100 px-4 py-3 text-sm text-slate-800 shadow-sm">
+              <p>Hi! I'm your personal study assistant. 👋</p>
+              <p className="mt-1">
+                Ask me anything about your subjects, homework, or concepts
+                you're learning!
+              </p>
+            </div>
+
+            {/* Conversation Messages */}
             {chatMessages.map((msg, i) => (
               <div
                 key={i}
-                className={`max-w-[85%] rounded-2xl px-4 py-2 text-sm ${
+                className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-sm transition-all ${
                   msg.sender === "user"
                     ? "self-end bg-blue-600 text-white"
                     : "self-start bg-gray-100 text-slate-800"
@@ -670,29 +746,129 @@ function Home() {
             ))}
           </div>
 
-          <div className="border-t p-3">
-            <div className="flex gap-2">
+          {/* Input Area */}
+          <div className="border-t bg-gray-50 px-4 py-4">
+            <div className="flex gap-3">
               <input
+                type="text"
                 value={userInput}
                 onChange={(e) => setUserInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                placeholder="Ask about your lessons..."
-                className="flex-1 rounded-xl border px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-300"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                  }
+                }}
+                placeholder="Type your question..."
+                className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-slate-400"
+                disabled={false} // You can add a loading state here if needed
               />
               <button
                 onClick={sendMessage}
-                className="rounded-xl bg-blue-600 px-5 py-2 text-white hover:bg-blue-700"
+                disabled={!userInput.trim()}
+                className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-300"
               >
                 Send
               </button>
             </div>
+            <p className="mt-2 text-center text-xs text-slate-500">
+              Powered by Gemini • Responses may vary
+            </p>
           </div>
         </div>
       )}
-
       {/* Teacher Modal */}
       {isModalOpen && selectedTeacher && (
         <TeacherModal teacher={selectedTeacher} onClose={closeModal} />
+      )}
+
+      {/* Global All Marks Modal (shows marks from ALL teachers) */}
+      {marksModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 overflow-y-auto">
+          <div className="my-8 w-full max-w-4xl rounded-2xl bg-white shadow-2xl">
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-gradient-to-r from-purple-600 to-indigo-600 px-8 py-6 text-white rounded-t-2xl">
+              <div>
+                <h3 className="text-2xl font-bold">Academic Performance</h3>
+                <p className="mt-1 text-sm opacity-90">
+                  {profile.fullName} • Grade {profile.grade || profile.course}
+                </p>
+              </div>
+              <button
+                onClick={closeMarksModal}
+                className="rounded-lg p-3 hover:bg-white/10 transition"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="p-8">
+              {marks.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b-2 border-purple-200 text-sm font-medium text-slate-700">
+                        <th className="pb-4 pr-8">Subject</th>
+                        <th className="pb-4 pr-8 text-center">Score</th>
+                        <th className="pb-4 pr-8 text-center">Performance</th>
+                        <th className="pb-4">Date</th>
+                        <th className="pb-4">Teacher</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[...marks]
+                        .sort((a, b) => new Date(b.date) - new Date(a.date))
+                        .map((mark, index) => (
+                          <tr
+                            key={index}
+                            className="border-b hover:bg-purple-50/50 transition last:border-0"
+                          >
+                            <td className="py-5 pr-8 font-medium text-slate-900">
+                              {mark.subject}
+                            </td>
+                            <td className="py-5 pr-8 text-center">
+                              <span className="text-2xl font-bold text-purple-700">
+                                {mark.score}
+                              </span>
+                              <span className="ml-2 text-sm text-slate-500">
+                                /100
+                              </span>
+                            </td>
+                            <td className="py-5 pr-8 text-center">
+                              <span
+                                className={`inline-flex rounded-full px-4 py-1.5 text-sm font-medium ring-1 ${getPerformanceBadge(
+                                  mark.score
+                                )}`}
+                              >
+                                {getPerformanceLabel(mark.score)}
+                              </span>
+                            </td>
+                            <td className="py-5 text-sm text-slate-600 flex items-center gap-2">
+                              <Calendar className="h-4 w-4 text-slate-400" />
+                              {formatDate(mark.date)}
+                            </td>
+                            <td className="py-5 text-sm text-slate-600">
+                              {/* Optional: Show teacher name if you fetch it, otherwise just ID */}
+                              {mark.teacherId?.slice(0, 8)}...
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="py-16 text-center">
+                  <Award className="mx-auto h-16 w-16 text-purple-300" />
+                  <h4 className="mt-4 text-lg font-medium text-slate-700">
+                    No marks recorded yet
+                  </h4>
+                  <p className="mt-2 text-slate-500">
+                    Marks will appear here once assessments are completed.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
