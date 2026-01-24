@@ -1,56 +1,37 @@
-// src/pages/Login.jsx (updated with Sonner toast notifications)
-
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { auth, db } from "../firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import {
-  doc,
-  getDoc,
-  collection,
-  query,
-  where,
-  getDocs,
-} from "firebase/firestore";
-import { FaLock, FaEye, FaEyeSlash, FaGoogle, FaGithub } from "react-icons/fa";
+import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { FaLock, FaEye, FaEyeSlash, FaGoogle } from "react-icons/fa";
 import { MdEmail } from "react-icons/md";
-import { RiShieldUserFill } from "react-icons/ri";
-import { toast } from "sonner"; // <-- New import
+import { toast } from "sonner";
+import { motion } from "framer-motion"; // Suggest adding: npm install framer-motion
 
-const BG_URL =
-  "https://images.unsplash.com/photo-1556761175-4b46a572b786?auto=format&fit=crop&w=1920&q=60";
+const BG_URL = "https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&w=1920&q=80";
 
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(""); // We keep this for the inline error display
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setError("");
 
     try {
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
       let userData;
-
-      // 1) Try "students" by UID
-      let docRef = doc(db, "students", user.uid);
-      let docSnap = await getDoc(docRef);
+      const docRef = doc(db, "students", user.uid);
+      const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
         userData = docSnap.data();
       } else {
-        // 2) Fallback "teachers" by email
         const teachersRef = collection(db, "teachers");
         const q = query(teachersRef, where("email", "==", user.email));
         const querySnapshot = await getDocs(q);
@@ -58,274 +39,124 @@ function Login() {
         if (!querySnapshot.empty) {
           userData = querySnapshot.docs[0].data();
         } else {
-          toast.error("No profile found in our system!");
+          toast.error("No profile found!");
           setIsLoading(false);
           return;
         }
       }
 
-      // Store role & email
       localStorage.setItem("role", userData.role);
-      localStorage.setItem("userEmail", user.email);
+      toast.success(`Welcome back, ${userData.role}!`);
+      
+      const routes = { student: "/home", teacher: "/dashboard", admin: "/admin" };
+      navigate(routes[userData.role] || "/");
 
-      // Success toast
-      toast.success(
-        `Welcome back, ${
-          userData.role.charAt(0).toUpperCase() + userData.role.slice(1)
-        }!`
-      );
-
-      // Navigate based on role
-      if (userData.role === "student") {
-        navigate("/home");
-      } else if (userData.role === "teacher") {
-        navigate("/dashboard");
-      } else if (userData.role === "admin") {
-        navigate("/admin");
-      } else {
-        toast.error("Invalid role assigned. Contact support.");
-        setIsLoading(false);
-        return;
-      }
     } catch (err) {
-      console.error(err);
-      const friendlyMessage = getErrorMessage(err.code);
-      setError(friendlyMessage); // Keep inline error for visibility
-      toast.error(friendlyMessage); // Also show as toast for better UX
+      toast.error(err.message || "Login failed");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const getErrorMessage = (code) => {
-    switch (code) {
-      case "auth/invalid-email":
-        return "Please enter a valid email address.";
-      case "auth/user-disabled":
-        return "This account has been disabled. Contact support.";
-      case "auth/user-not-found":
-        return "No account found. Please check your email or sign up.";
-      case "auth/wrong-password":
-        return "Incorrect password. Try again.";
-      case "auth/too-many-requests":
-        return "Too many failed attempts. Please try again later.";
-      default:
-        return "Something went wrong. Please try again.";
-    }
-  };
-
   return (
-    <main className="relative min-h-screen">
-      {/* Background image + overlay */}
-      <div
-        className="absolute inset-0 -z-10 bg-cover bg-center"
-        style={{ backgroundImage: `url(${BG_URL})` }}
-        aria-hidden="true"
-      />
-      <div className="absolute inset-0 -z-10 bg-gradient-to-br from-blue-900/60 via-blue-800/50 to-blue-600/50" />
-
-      {/* Top bar */}
-      <div className="absolute left-0 right-0 top-0 mx-auto flex max-w-7xl items-center justify-between px-4 py-4 text-white">
-        <Link
-          to="/#home"
-          className="inline-flex items-center gap-2 text-sm font-semibold hover:opacity-90"
-        >
-          <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white/15 ring-1 ring-white/20">
-            EZ
-          </span>
-          <span className="hidden sm:inline">EZone </span>
-        </Link>
-        <Link
-          to="/"
-          className="rounded-lg bg-white/10 px-3 py-1.5 text-xs font-semibold ring-1 ring-white/20 backdrop-blur hover:bg-white/20"
-        >
-          ← Back to Home
-        </Link>
+    <main className="relative min-h-screen flex items-center justify-center font-sans selection:bg-indigo-100 selection:text-indigo-700">
+      {/* Dynamic Background */}
+      <div className="fixed inset-0 -z-10">
+        <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500/20 via-white to-blue-500/20" />
+        <div 
+          className="absolute inset-0 opacity-30 mix-blend-multiply filter blur-3xl"
+          style={{ background: `radial-gradient(circle at 50% 50%, #4f46e5, transparent)` }}
+        />
       </div>
 
-      {/* Centered card */}
-      <div className="mx-auto flex min-h-screen max-w-7xl items-center justify-center px-4 py-16">
-        <div className="w-full max-w-md">
-          <div className="rounded-2xl bg-white/90 p-1 shadow-2xl ring-1 ring-slate-200 backdrop-blur">
-            {/* Header */}
-            <div className="rounded-xl bg-gradient-to-r from-blue-700 to-indigo-700 p-6 text-center text-white">
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-white/25">
-                <RiShieldUserFill className="text-3xl" />
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-[440px] px-6"
+      >
+        <div className="mb-8 text-center">
+          <Link to="/" className="inline-flex items-center gap-2 mb-6 group">
+            <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-indigo-600 text-white font-bold shadow-lg shadow-indigo-200 group-hover:scale-110 transition-transform">
+              EZ
+            </div>
+            <span className="text-2xl font-bold tracking-tight text-slate-900">EZone</span>
+          </Link>
+          <h1 className="text-3xl font-bold text-slate-900">Sign in</h1>
+          <p className="text-slate-500 mt-2">Enter your details to access your account</p>
+        </div>
+
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-white/20">
+          <form onSubmit={handleLogin} className="space-y-5">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5 ml-1">Email Address</label>
+              <div className="relative group">
+                <MdEmail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full bg-slate-50 border-0 ring-1 ring-slate-200 rounded-xl py-3 pl-11 pr-4 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  placeholder="name@company.com"
+                  required
+                />
               </div>
-              <h1 className="text-xl font-bold">Welcome back to EZone</h1>
-              <p className="mt-1 text-blue-100 text-sm">
-                Sign in to access your learning dashboard
-              </p>
             </div>
 
-            {/* Form */}
-            <div className="p-6 sm:p-8">
-              {error && (
-                <div
-                  className="mb-6 rounded-lg border-l-4 border-red-500 bg-red-50 p-4 text-red-700"
-                  role="alert"
-                  aria-live="polite"
-                >
-                  <p className="font-semibold">Login failed</p>
-                  <p className="mt-1 text-sm">{error}</p>
-                </div>
-              )}
-
-              <form onSubmit={handleLogin} className="space-y-5">
-                {/* Email */}
-                <div className="relative">
-                  <label htmlFor="email" className="sr-only">
-                    Email
-                  </label>
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <MdEmail className="text-gray-400" />
-                  </div>
-                  <input
-                    id="email"
-                    type="email"
-                    placeholder="Email address"
-                    autoComplete="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="w-full rounded-lg border border-gray-300 py-3 pl-10 pr-4 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                {/* Password */}
-                <div className="relative">
-                  <label htmlFor="password" className="sr-only">
-                    Password
-                  </label>
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <FaLock className="text-gray-400" />
-                  </div>
-                  <input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Password"
-                    autoComplete="current-password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="w-full rounded-lg border border-gray-300 py-3 pl-10 pr-12 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((prev) => !prev)}
-                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
-                    aria-label={
-                      showPassword ? "Hide password" : "Show password"
-                    }
-                  >
-                    {showPassword ? (
-                      <FaEyeSlash className="h-5 w-5" />
-                    ) : (
-                      <FaEye className="h-5 w-5" />
-                    )}
-                  </button>
-                </div>
-
-                {/* Row */}
-                <div className="flex items-center justify-between">
-                  <label className="inline-flex items-center gap-2 text-sm text-gray-700">
-                    <input
-                      id="remember-me"
-                      name="remember-me"
-                      type="checkbox"
-                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    Remember me
-                  </label>
-                  <Link
-                    to="/forgot-password"
-                    className="text-sm font-medium text-blue-600 hover:text-blue-500"
-                  >
-                    Forgot password?
-                  </Link>
-                </div>
-
-                {/* Submit */}
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className={`w-full rounded-lg bg-blue-600 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                    isLoading ? "cursor-not-allowed opacity-80" : ""
-                  }`}
-                >
-                  {isLoading ? (
-                    <span className="inline-flex items-center">
-                      <svg
-                        className="mr-3 h-5 w-5 animate-spin text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        aria-hidden="true"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                      Signing in…
-                    </span>
-                  ) : (
-                    "Sign in"
-                  )}
-                </button>
-              </form>
-
-              {/* Divider */}
-              <div className="mt-6">
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-gray-300"></div>
-                  </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="bg-white px-2 text-gray-500">Or </span>
-                  </div>
-                </div>
-
-                <div className="mt-6 grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    className="col-span-2 inline-flex w-full items-center justify-center rounded-lg border border-gray-300 bg-white px-12 py-3 text-base font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                    // onClick={handleGoogle}
-                  >
-                    <FaGoogle className="h-5 w-5 mr-2 text-red-500" />
-                    Continue with Google
-                  </button>
-                </div>
-              </div>
-
-              {/* Bottom link */}
-              <p className="mt-6 text-center text-sm text-gray-600">
-                Don&apos;t have an account?{" "}
-                <Link
-                  to="/signup"
-                  className="font-medium text-blue-600 hover:text-blue-500"
-                >
-                  Sign up
+            <div>
+              <div className="flex justify-between mb-1.5 ml-1">
+                <label className="text-sm font-medium text-slate-700">Password</label>
+                <Link to="/forgot-password" size="sm" className="text-sm text-indigo-600 hover:text-indigo-500 font-semibold">
+                  Forgot?
                 </Link>
-              </p>
+              </div>
+              <div className="relative group">
+                <FaLock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full bg-slate-50 border-0 ring-1 ring-slate-200 rounded-xl py-3 pl-11 pr-12 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  placeholder="••••••••"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600"
+                >
+                  {showPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
+                </button>
+              </div>
             </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-slate-200 transition-all active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100 mt-2"
+            >
+              {isLoading ? "Authenticating..." : "Sign in to Dashboard"}
+            </button>
+          </form>
+
+          <div className="relative my-8">
+            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100"></div></div>
+            <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-4 text-slate-400 tracking-widest font-medium">Or continue with</span></div>
           </div>
 
-          {/* Small footnote */}
-          <p className="mt-6 text-center text-xs text-white/90">
-            © {new Date().getFullYear()} EZone Institute — Learn. Build. Excel.
-          </p>
+          <button className="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 py-3 rounded-xl font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+            <FaGoogle className="text-red-500" />
+            Google Account
+          </button>
         </div>
-      </div>
+
+        <p className="mt-8 text-center text-slate-600">
+          New to EZone?{" "}
+          <Link to="/signup" className="text-indigo-600 font-bold hover:underline underline-offset-4">
+            Create account
+          </Link>
+        </p>
+      </motion.div>
     </main>
   );
 }

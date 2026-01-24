@@ -4,8 +4,8 @@ import { Link } from "react-router-dom";
 import { collection, getDocs, query, limit } from "firebase/firestore";
 import { db } from "../firebase";
 // src/components/LandingPage.jsx
-import HERO_BG_360 from "../assets/landing.jpeg"; // <-- adjust path/name as needed
-import logo from "../assets/logo1.jpeg";
+import HERO_BG_360 from "../assets/landing.png"; // <-- adjust path/name as needed
+import logo from "../assets/logo.jpg";
 
 // Icons
 import {
@@ -157,10 +157,10 @@ const courses = [
     instructor: "Chamindu Madushan",
     duration: "6 weeks",
     level: "Beginner",
-    students: 120,
+    students: 60,
     rating: 4.9,
     ratingCount: 35,
-    price: 15000,
+    price: 0,
     category: "Productivity",
     badge: "Popular",
     image:
@@ -176,11 +176,11 @@ const courses = [
     students: 95,
     rating: 4.8,
     ratingCount: 28,
-    price: 25000,
+    price: 0,
     category: "Design",
     badge: "Hands-On",
     image:
-      "https://nise.org.pk/wp-content/uploads/2017/02/Graphic-Designing1-1024x614.jpg",
+      "https://blog-frontend.envato.com/cdn-cgi/image/width=4800,quality=75,format=auto/uploads/sites/2/2022/05/graphic-design-tools.png",
   },
   {
     id: 3,
@@ -192,7 +192,7 @@ const courses = [
     students: 80,
     rating: 4.7,
     ratingCount: 21,
-    price: 20000,
+    price: 0,
     category: "Media",
     badge: "Practical",
     image:
@@ -208,7 +208,7 @@ const courses = [
     students: 105,
     rating: 4.8,
     ratingCount: 30,
-    price: 30000,
+    price: 0,
     category: "Web",
     badge: "Career-Ready",
     image:
@@ -224,7 +224,7 @@ const courses = [
     students: 70,
     rating: 4.6,
     ratingCount: 18,
-    price: 18000,
+    price: 0,
     category: "Content",
     badge: "Trending",
     image:
@@ -324,7 +324,7 @@ function LandingPage() {
               <h1 className="mt-4 text-4xl font-extrabold leading-tight text-white md:text-5xl lg:text-6xl">
                 අනුරාධ උසස් අධ්‍යාපන ආයතනය මොරවක​
                 <br />
-                <span className="text-blue-300">EZone ICT</span>
+                <span className="text-blue-300">Powerd by Ezone </span>
               </h1>
               <p className="mt-4 text-lg text-blue-100 md:text-xl">
                 The modern LMS for students, educators, and institutions. Learn
@@ -336,13 +336,13 @@ function LandingPage() {
                   to="/signup"
                   className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white shadow-lg transition hover:scale-[1.02] hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-white/40"
                 >
-                  Get Started Free <FaPlay className="text-sm" />
+                  ලියාපදිංචි වන්න  <FaPlay className="text-sm" />
                 </Link>
                 <Link
                   to="/login"
                   className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 font-semibold text-blue-800 shadow-sm transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-white/40"
                 >
-                  I have an account
+                  පිවිසෙන්න( ලියාපදිංචි සිසුන් වෙනුවෙන් )
                 </Link>
               </div>
 
@@ -401,9 +401,10 @@ function LandingPage() {
             <h2 className="text-3xl font-bold text-blue-900 sm:text-4xl">
               Meet Our Top Tutors
             </h2>
-            <p className="mt-2 text-slate-600">
-              Handpicked experts across key subjects
-            </p>
+            <h3 className="mt-1 text-2xl font-bold text-slate-700">
+            හොදම ගුරුවරු එකම තැනකින්
+            </h3>
+
           </div>
 
           <div className="grid gap-8 md:grid-cols-2">
@@ -533,13 +534,11 @@ function LandingPage() {
               </span>
 
               <h2 className="mt-4 text-3xl font-bold text-blue-900 sm:text-4xl">
-                EZone ICT — Where ambition becomes achievement
+                EZone ICT — අභිලාෂයන් ජයග්‍රහණ බවට පත්කරන තැන.
               </h2>
               <p className="mt-3 text-lg leading-relaxed text-slate-700">
-                EZone is a modern learning institute focused on outcomes. We
-                blend expert instruction, practical projects, and data-driven
-                feedback to help learners move from <em>potential</em> to{" "}
-                <em>proof</em>.
+                EZone යනු ප්‍රතිඵල කේන්ද්‍ර කරගත් නවීන අධ්‍යාපන ආයතනයකි. අපි විෂය ප්‍රවීණයන්ගේ මඟපෙන්වීම, ප්‍රායෝගික ව්‍යාපෘති සහ දත්ත මත පදනම් වූ නිවැරදි ඇගයීම් තුළින් ශිෂ්‍යයන් සතු විභවතාවයන් සැබෑ දක්ෂතාවයන් බවට පරිවර්තනය කරමු.  
+                
               </p>
 
               <div className="mt-5 inline-flex items-center gap-2 rounded-xl bg-blue-50 px-3 py-2 text-blue-800 ring-1 ring-blue-100">
@@ -558,9 +557,7 @@ function LandingPage() {
                     Our Vision
                   </h3>
                   <p className="mt-1 text-slate-600">
-                    To be Sri Lanka’s most trusted path from learning to
-                    livelihood—equipping every student to thrive in a digital
-                    world.
+                    තාක්ෂණික ලෝකයේ සාර්ථක වීමට අවශ්‍ය දැනුමෙන් සෑම සිසුවෙකුම සන්නද්ධ කරමින්, ශ්‍රී ලංකාවේ ඉගෙනීමේ සිට ජීවනෝපාය දක්වා වූ වඩාත්ම විශ්වාසදායක මාවත බවට පත්වීම.
                   </p>
                 </div>
                 <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-blue-100">
@@ -571,8 +568,7 @@ function LandingPage() {
                     Our Mission
                   </h3>
                   <p className="mt-1 text-slate-600">
-                    Deliver relevant, high-quality education with expert mentors
-                    and practical projects—so learners gain skills that stick.
+                    පළපුරුදු ගුරුවරුන් සහ ප්‍රායෝගික ව්‍යාපෘති හරහා අදාළ සහ උසස් තත්ත්වයේ අධ්‍යාපනයක් ලබා දීම—එමඟින් සිසුන්ට රැකියා වෙළඳපොළට අවශ්‍ය සැබෑ කුසලතා ලබා දීම.
                   </p>
                 </div>
               </div>
@@ -684,7 +680,7 @@ function LandingPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto mb-12 max-w-2xl text-center">
             <h2 className="text-3xl font-bold text-blue-900 sm:text-4xl">
-              Available Courses
+              අපගේ පාඨමාලාවන්
             </h2>
             <p className="mt-3 text-lg text-slate-600">
               Explore instructor-led, project-based courses designed for
@@ -760,9 +756,10 @@ function LandingPage() {
                       </span>
                     </div>
                     <div className="text-right">
-                      <div className="text-lg font-bold text-blue-900">
+                      {/* <div className="text-lg font-bold text-blue-900">
                         LKR {formatPrice(c.price)}
-                      </div>
+                      // </div> */} 
+                      {/* removed lkr in first relese */}
                       {c.oldPrice && (
                         <div className="text-xs text-slate-500 line-through">
                           LKR {formatPrice(c.oldPrice)}
@@ -778,12 +775,29 @@ function LandingPage() {
                     >
                       Enroll now <FiChevronRight />
                     </Link>
-                    <Link
+                    {/* <Link
                       to={`/courses/${c.slug}#syllabus`}
                       className="inline-flex items-center text-sm font-semibold text-blue-700 hover:underline"
                     >
-                      View syllabus
-                    </Link>
+                      Ask Whatsapp
+                    </Link> */}
+                 <a
+  href="https://wa.me/94740172552"
+  target="_blank"
+  rel="noopener noreferrer"
+  className="inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:underline"
+>
+  Ask WhatsApp
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className="w-5 h-5 text-green-500"
+  >
+    <path d="M20.52 3.48A11.91 11.91 0 0012.01 0C5.38 0 .01 5.37.01 12c0 2.11.55 4.17 1.6 5.99L0 24l6.18-1.62a11.94 11.94 0 005.83 1.49h.01c6.63 0 12-5.37 12-12 0-3.2-1.25-6.21-3.5-8.39zM12.01 21.54a9.55 9.55 0 01-4.88-1.34l-.35-.21-3.67.96.98-3.58-.23-.37a9.53 9.53 0 118.15 4.54zm5.52-7.26c-.3-.15-1.77-.87-2.04-.97-.27-.1-.47-.15-.66.15-.2.3-.76.97-.93 1.17-.17.2-.34.22-.64.07-.3-.15-1.25-.46-2.38-1.47-.88-.79-1.47-1.77-1.64-2.07-.17-.3-.02-.46.13-.61.14-.14.3-.34.45-.5.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.66-1.6-.9-2.2-.24-.58-.48-.5-.66-.5h-.57c-.2 0-.52.07-.8.37-.27.3-1.05 1.03-1.05 2.5s1.08 2.9 1.23 3.1c.15.2 2.12 3.24 5.14 4.55.72.31 1.28.5 1.72.64.72.23 1.37.2 1.88.12.57-.09 1.77-.72 2.02-1.42.25-.7.25-1.3.17-1.42-.07-.12-.27-.2-.57-.35z"/>
+  </svg>
+</a>
+
                   </div>
                 </div>
               </article>
@@ -885,12 +899,12 @@ function LandingPage() {
               >
                 Start Learning Today — It’s Free!
               </Link>
-              <Link
+              {/* <Link
                 to="/pricing"
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-8 py-3 font-semibold text-white shadow-lg transition hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-white/40"
               >
                 View Pricing
-              </Link>
+              </Link> */}
             </div>
           </div>
         </div>
@@ -951,10 +965,10 @@ function Navbar({
         {/* Desktop nav */}
         <nav className="hidden items-center gap-2 md:flex">
           <NavButton id="home">Home</NavButton>
-          <NavButton id="tutors">Tutors</NavButton>
-          <NavButton id="courses">Courses</NavButton>
-          <NavButton id="about">About</NavButton>
-          <NavButton id="testimonials">Feedbacks</NavButton>
+          <NavButton id="tutors">අපෙගේ ඇදුරු මඩුල්ල </NavButton>
+          <NavButton id="courses">පාඨමාලා</NavButton>
+          <NavButton id="about">අපි ගැන විස්තර </NavButton>
+          <NavButton id="testimonials">ප්‍රතිචාර</NavButton>
         </nav>
 
         {/* Right side: Auth */}
@@ -1122,12 +1136,12 @@ function Navbar({
             </div>
 
             {/* External quick link (example) */}
-            <Link
+            {/* <Link
               to="/pricing"
               className="mt-1 inline-block rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white"
             >
               Pricing
-            </Link>
+            </Link> */}
           </div>
         </div>
       )}
@@ -1177,11 +1191,11 @@ function Footer() {
                   Courses
                 </a>
               </li>
-              <li>
+              {/* <li>
                 <Link to="/pricing" className="hover:text-white">
                   Pricing
                 </Link>
-              </li>
+              </li> */}
               <li>
                 <a
                   href="#about"
