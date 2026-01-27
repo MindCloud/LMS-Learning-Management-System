@@ -8,6 +8,8 @@ import { useNavigate } from "react-router-dom";
 import AddTeacherForm from "./AddTeacherForm";
 import UpdateTeacherForm from "./UpdateTeacherForm";
 import { toast } from "sonner"; // <-- Added for professional toasts
+import AddSpecialNoticeModal from "../components/AddSpecialNotice";
+import AddTopStudentModal from "../components/AddTopStudentModal";
 
 // Icons
 import {
@@ -44,6 +46,8 @@ function AdminDashboard() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState(null);
+  const [showNoticeModal, setShowNoticeModal] = useState(false);
+  const [showTopStudentModal, setShowTopStudentModal] = useState(false);
 
   // UI / filters
   const [query, setQuery] = useState("");
@@ -96,7 +100,7 @@ function AdminDashboard() {
   useEffect(() => {
     const t = setTimeout(
       () => setDebouncedQuery(query.trim().toLowerCase()),
-      250
+      250,
     );
     return () => clearTimeout(t);
   }, [query]);
@@ -108,7 +112,7 @@ function AdminDashboard() {
         (t.subjects || "")
           .split(",")
           .map((s) => s.trim())
-          .filter(Boolean)
+          .filter(Boolean),
       )
       .forEach((s) => set.add(s));
     return Array.from(set).sort((a, b) => a.localeCompare(b));
@@ -146,19 +150,19 @@ function AdminDashboard() {
       list = list.filter((t) =>
         String(t.subjects || "")
           .toLowerCase()
-          .includes(subjectFilter.toLowerCase())
+          .includes(subjectFilter.toLowerCase()),
       );
     }
     if (gradeFilter) {
       list = list.filter((t) =>
         (t.grades || []).some(
-          (g) => g.toLowerCase() === gradeFilter.toLowerCase()
-        )
+          (g) => g.toLowerCase() === gradeFilter.toLowerCase(),
+        ),
       );
     }
     if (roleFilter) {
       list = list.filter(
-        (t) => String(t.role || "").toLowerCase() === roleFilter.toLowerCase()
+        (t) => String(t.role || "").toLowerCase() === roleFilter.toLowerCase(),
       );
     }
 
@@ -190,7 +194,7 @@ function AdminDashboard() {
   const pageSafe = Math.min(page, totalPages);
   const pageData = filtered.slice(
     (pageSafe - 1) * PAGE_SIZE,
-    pageSafe * PAGE_SIZE
+    pageSafe * PAGE_SIZE,
   );
 
   const handleSignOut = async () => {
@@ -262,6 +266,7 @@ function AdminDashboard() {
               <RefreshCw className="h-4 w-4 text-blue-600" />
               Refresh
             </button>
+
             <button
               onClick={() => setShowAddModal(true)}
               className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:from-blue-700 hover:to-indigo-700"
@@ -269,6 +274,24 @@ function AdminDashboard() {
               <Plus className="h-4 w-4" />
               Add Teacher
             </button>
+
+            <button
+              onClick={() => setShowNoticeModal(true)}
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:from-emerald-700 hover:to-teal-700"
+            >
+              <Plus className="h-4 w-4" />
+              Add Notice
+            </button>
+
+            {/* ✅ New Top Students Button */}
+            <button
+              onClick={() => setShowTopStudentModal(true)}
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:from-purple-700 hover:to-pink-700"
+            >
+              <Plus className="h-4 w-4" />
+              Add Top Student
+            </button>
+
             <button
               onClick={handleSignOut}
               className="inline-flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-200 shadow-sm transition hover:bg-blue-50/40 hover:ring-blue-200"
@@ -279,6 +302,7 @@ function AdminDashboard() {
             </button>
           </div>
         </div>
+
         <div className="h-1 w-full bg-gradient-to-r from-blue-600 via-sky-500 to-indigo-600" />
       </header>
 
@@ -491,6 +515,18 @@ function AdminDashboard() {
             fetchTeachers();
             toast.success("New teacher added!");
           }}
+        />
+      )}
+
+      <AddSpecialNoticeModal
+        open={showNoticeModal}
+        onClose={() => setShowNoticeModal(false)}
+      />
+
+      {showTopStudentModal && (
+        <AddTopStudentModal
+          open={showTopStudentModal}
+          onClose={() => setShowTopStudentModal(false)}
         />
       )}
 

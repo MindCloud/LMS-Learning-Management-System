@@ -2,6 +2,7 @@
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "sonner"; // 👈 ADD THIS
+import { auth } from "./firebase";
 
 import Signup from "./components/Signup";
 import Login from "./components/Login";
@@ -20,7 +21,7 @@ import TeacherProfile from "./components/TeacherProfile";
 
 // Check if user is logged in
 const isAuthenticated = () => {
-  return !!localStorage.getItem("userEmail");
+  return auth.currentUser !== null;
 };
 
 // Get user role

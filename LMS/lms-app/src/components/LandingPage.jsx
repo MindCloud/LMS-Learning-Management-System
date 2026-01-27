@@ -1,7 +1,14 @@
 // src/components/LandingPage.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { collection, getDocs, query, limit } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  query,
+  limit,
+  onSnapshot,
+  orderBy,
+} from "firebase/firestore";
 import { db } from "../firebase";
 // src/components/LandingPage.jsx
 import HERO_BG_360 from "../assets/landing.png"; // <-- adjust path/name as needed
@@ -40,34 +47,7 @@ import "swiper/css/pagination";
 
 // const HERO_BG_360 = "https://royalinstitute.org/wp-content/uploads/2021/03/Gampaha-RGB.jpg";
 
-// spectial notice data
-const specialNotices = [
-  {
-    id: "n1",
-    title: "2026 නව පන්ති ආරම්භය",
-    description:
-      "2026 පෙබරවාරි මාසයේ නව ICT සහ Graphic Design  ආරම්භ වේ.",
-    postedAt: "2026-01-20 10:30 AM",
-  },
-  {
-    id: "n2",
-    title: "නව Web Design පාඨමාලාව",
-    description:
-      "Beginner සිට Intermediate දක්වා Web Design & Development නව පාඨමාලාවක්.",
-    postedAt: "2026-01-22 02:00 PM",
-  },
-  {
-    id: "n3",
-    title: "Free Seminar",
-    description:
-      "සිසුන් සඳහා නොමිලේ ICT දැනුවත් කිරීමේ සම්මන්ත්‍රණය.",
-    postedAt: "2026-01-24 09:15 AM",
-  },
-];
-
-
-
-// sample top students data 
+// sample top students data
 const topStudents = [
   {
     id: "s1",
@@ -75,8 +55,7 @@ const topStudents = [
     subject: "Mathematics",
     marks: 98,
     instructor: "John Silva",
-    image:
-      "https://randomuser.me/api/portraits/men/32.jpg",
+    image: "https://randomuser.me/api/portraits/men/32.jpg",
   },
   {
     id: "s2",
@@ -84,8 +63,7 @@ const topStudents = [
     subject: "Science",
     marks: 96,
     instructor: "Nimali Perera",
-    image:
-      "https://randomuser.me/api/portraits/women/44.jpg",
+    image: "https://randomuser.me/api/portraits/women/44.jpg",
   },
   {
     id: "s3",
@@ -93,8 +71,7 @@ const topStudents = [
     subject: "ICT",
     marks: 95,
     instructor: "Tharindu Peris",
-    image:
-      "https://randomuser.me/api/portraits/men/54.jpg",
+    image: "https://randomuser.me/api/portraits/men/54.jpg",
   },
   {
     id: "s4",
@@ -102,8 +79,7 @@ const topStudents = [
     subject: "Physics",
     marks: 94,
     instructor: "Amara De Silva",
-    image:
-      "https://randomuser.me/api/portraits/women/68.jpg",
+    image: "https://randomuser.me/api/portraits/women/68.jpg",
   },
   {
     id: "s5",
@@ -111,8 +87,7 @@ const topStudents = [
     subject: "Chemistry",
     marks: 93,
     instructor: "Ruwan Jayasuriya",
-    image:
-      "https://randomuser.me/api/portraits/men/61.jpg",
+    image: "https://randomuser.me/api/portraits/men/61.jpg",
   },
   {
     id: "s6",
@@ -120,8 +95,7 @@ const topStudents = [
     subject: "English",
     marks: 92,
     instructor: "Ishara Fernando",
-    image:
-      "https://randomuser.me/api/portraits/women/71.jpg",
+    image: "https://randomuser.me/api/portraits/women/71.jpg",
   },
   {
     id: "s7",
@@ -129,11 +103,9 @@ const topStudents = [
     subject: "Web Development",
     marks: 91,
     instructor: "Chamindu Madushan",
-    image:
-      "https://randomuser.me/api/portraits/men/77.jpg",
+    image: "https://randomuser.me/api/portraits/men/77.jpg",
   },
 ];
-
 
 /* ---------- Shared data ---------- */
 const defaultTutors = [
@@ -200,47 +172,47 @@ const features = [
   },
 ];
 
-const defaultFeedbacks = [
-  {
-    id: "1",
-    fullName: "Nimali Perera",
-    role: "Teacher",
-    subject: "Science",
-    imageUrl:
-      "https://gsep.pepperdine.edu/blog/images/how-much-could-a-masters-degree-increase-your-teaching-salary.png",
-    feedback: "EZone is amazing! My students love the interactive lessons.",
-    rating: 5,
-  },
-  {
-    id: "2",
-    fullName: "John Silva",
-    role: "Math Teacher",
-    subject: "Mathematics",
-    imageUrl: "https://randomuser.me/api/portraits/men/45.jpg",
-    feedback:
-      "A great platform for both teachers and students to collaborate and grow.",
-    rating: 4,
-  },
-  {
-    id: "3",
-    fullName: "Amara De Silva",
-    role: "Student",
-    subject: "Physics",
-    imageUrl: "https://randomuser.me/api/portraits/women/65.jpg",
-    feedback: "I love how easy it is to track progress and improve my grades!",
-    rating: 5,
-  },
-  {
-    id: "4",
-    fullName: "Ruwan Jayasuriya",
-    role: "Parent",
-    subject: "—",
-    imageUrl: "https://randomuser.me/api/portraits/men/52.jpg",
-    feedback:
-      "The parent dashboard helps me stay informed about my child’s learning.",
-    rating: 5,
-  },
-];
+// const defaultFeedbacks = [
+//   {
+//     id: "1",
+//     fullName: "Nimali Perera",
+//     role: "Teacher",
+//     subject: "Science",
+//     imageUrl:
+//       "https://gsep.pepperdine.edu/blog/images/how-much-could-a-masters-degree-increase-your-teaching-salary.png",
+//     feedback: "EZone is amazing! My students love the interactive lessons.",
+//     rating: 5,
+//   },
+//   {
+//     id: "2",
+//     fullName: "John Silva",
+//     role: "Math Teacher",
+//     subject: "Mathematics",
+//     imageUrl: "https://randomuser.me/api/portraits/men/45.jpg",
+//     feedback:
+//       "A great platform for both teachers and students to collaborate and grow.",
+//     rating: 4,
+//   },
+//   {
+//     id: "3",
+//     fullName: "Amara De Silva",
+//     role: "Student",
+//     subject: "Physics",
+//     imageUrl: "https://randomuser.me/api/portraits/women/65.jpg",
+//     feedback: "I love how easy it is to track progress and improve my grades!",
+//     rating: 5,
+//   },
+//   {
+//     id: "4",
+//     fullName: "Ruwan Jayasuriya",
+//     role: "Parent",
+//     subject: "—",
+//     imageUrl: "https://randomuser.me/api/portraits/men/52.jpg",
+//     feedback:
+//       "The parent dashboard helps me stay informed about my child’s learning.",
+//     rating: 5,
+//   },
+// ];
 
 const formatPrice = (n) => n.toLocaleString("en-LK");
 
@@ -331,7 +303,7 @@ const courses = [
 function StarRating({ rating = 5 }) {
   const stars = useMemo(
     () => Array.from({ length: 5 }, (_, i) => i < rating),
-    [rating]
+    [rating],
   );
   return (
     <div
@@ -349,6 +321,8 @@ function StarRating({ rating = 5 }) {
 function LandingPage() {
   const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [notices, setNotices] = useState([]);
+  const [students, setStudents] = useState([]);
 
   // Tutors state
   const [tutors, setTutors] = useState([]);
@@ -362,7 +336,7 @@ function LandingPage() {
       if (el) {
         setTimeout(
           () => el.scrollIntoView({ behavior: "smooth", block: "start" }),
-          0
+          0,
         );
       }
     }
@@ -399,6 +373,41 @@ function LandingPage() {
     fetchTutors();
   }, []);
 
+  useEffect(() => {
+    // Firestore query: collection "SpecialNotices" ordered by postedAt descending
+    const q = query(
+      collection(db, "SpecialNotices"),
+      orderBy("postedAt", "desc"),
+    );
+
+    const unsub = onSnapshot(q, (snapshot) => {
+      setNotices(
+        snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+          postedAt: doc.data().postedAt?.toDate().toLocaleString(), // format Firestore timestamp
+        })),
+      );
+    });
+
+    return () => unsub(); // cleanup listener on unmount
+  }, []);
+
+  useEffect(() => {
+    // Query Firestore: TopStudents collection, order by marks descending
+    const q = query(collection(db, "TopStudents"), orderBy("marks", "desc"));
+    const unsub = onSnapshot(q, (snapshot) => {
+      setStudents(
+        snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })),
+      );
+    });
+
+    return () => unsub();
+  }, []);
+
   return (
     <div className="bg-white text-slate-900">
       <Navbar />
@@ -431,7 +440,7 @@ function LandingPage() {
                   to="/signup"
                   className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white shadow-lg transition hover:scale-[1.02] hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-white/40"
                 >
-                  ලියාපදිංචි වන්න  <FaPlay className="text-sm" />
+                  ලියාපදිංචි වන්න <FaPlay className="text-sm" />
                 </Link>
                 <Link
                   to="/login"
@@ -456,137 +465,137 @@ function LandingPage() {
             </div>
 
             <div className="relative">
-  <div className="mx-auto w-full max-w-xl rounded-3xl border border-white/20 bg-white/95 p-6 shadow-2xl backdrop-blur">
-    
-    {/* Header */}
-    <div className="mb-5 flex items-center gap-4">
-      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-600 text-white text-xl">
-        📢
-      </div>
-      <div>
-        <p className="text-lg font-bold text-slate-900">
-          ආයතනික විශේෂ දැන්වීම්
-        </p>
-        <p className="text-sm text-slate-600">
-          Institute Special Notices
-        </p>
-      </div>
-    </div>
+              <div className="mx-auto w-full max-w-xl rounded-3xl border border-white/20 bg-white/95 p-6 shadow-2xl backdrop-blur">
+                {/* Header */}
+                <div className="mb-5 flex items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-600 text-white text-xl">
+                    📢
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold text-slate-900">
+                      ආයතනික විශේෂ දැන්වීම්
+                    </p>
+                    <p className="text-sm text-slate-600">
+                      Institute Special Notices
+                    </p>
+                  </div>
+                </div>
 
-    {/* Notices */}
-    <ul className="space-y-4">
-      {specialNotices.map((n) => (
-        <li
-          key={n.id}
-          className="rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm"
-        >
-          <p className="text-base font-semibold text-blue-900">
-            {n.title}
-          </p>
-
-          <p className="mt-2 text-sm leading-relaxed text-slate-700">
-            {n.description}
-          </p>
-
-          <p className="mt-3 text-xs font-medium text-slate-500">
-            🕒 Posted on {n.postedAt}
-          </p>
-        </li>
-      ))}
-    </ul>
-
-  </div>
-</div>
-
+                {/* Notices */}
+                <ul className="space-y-4">
+                  {notices.map((n) => (
+                    <li
+                      key={n.id}
+                      className="rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm"
+                    >
+                      <p className="text-base font-semibold text-blue-900">
+                        {n.title}
+                      </p>
+                      <p className="mt-2 text-sm leading-relaxed text-slate-700">
+                        {n.description}
+                      </p>
+                      <p className="mt-3 text-xs font-medium text-slate-500">
+                        🕒 Posted on {n.postedAt || "N/A"}
+                      </p>
+                    </li>
+                  ))}
+                  {notices.length === 0 && (
+                    <p className="text-center text-slate-400 text-sm">
+                      No notices found.
+                    </p>
+                  )}
+                </ul>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Top Students */}
-<section
-  id="top-students"
-  className="relative overflow-hidden bg-gradient-to-b from-white to-blue-50 py-20 scroll-mt-24"
->
-  {/* Background glow */}
-  <div className="pointer-events-none absolute inset-0">
-    <div className="absolute -top-24 left-1/3 h-72 w-72 rounded-full bg-blue-200/40 blur-3xl" />
-    <div className="absolute -bottom-24 right-1/4 h-72 w-72 rounded-full bg-blue-100/60 blur-3xl" />
-  </div>
+      <section
+        id="top-students"
+        className="relative overflow-hidden bg-gradient-to-b from-white to-blue-50 py-20 scroll-mt-24"
+      >
+        {/* Background glow */}
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute -top-24 left-1/3 h-72 w-72 rounded-full bg-blue-200/40 blur-3xl" />
+          <div className="absolute -bottom-24 right-1/4 h-72 w-72 rounded-full bg-blue-100/60 blur-3xl" />
+        </div>
 
-  <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-    <div className="mb-12 text-center">
-      <h2 className="text-3xl font-bold text-blue-900 sm:text-4xl">
-         Top Students
-      </h2>
-      <p className="mt-3 text-lg text-slate-600">
-        අපගේ ඉහළම ප්‍රතිඵල ලබාගත් සිසුන් – ප්‍රතිඵල මඟින්ම විශ්වාසය
-      </p>
-    </div>
-
-    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {topStudents.map((s, index) => (
-        <article
-          key={s.id}
-          className="group relative overflow-hidden rounded-3xl bg-white p-6 shadow-sm ring-1 ring-blue-100 transition hover:-translate-y-1 hover:shadow-xl"
-        >
-         
-
-          {/* Student info */}
-          <div className="flex items-center gap-4">
-            <img
-  src={s.image}
-  alt={s.name}
-  className="h-24 w-24 rounded-full object-cover ring-4 ring-blue-200 shadow-lg group-hover:scale-105 transition"
-  loading="lazy"
-/>
-            <div>
-              <h3 className="text-lg font-semibold text-blue-900">
-                {s.name}
-              </h3>
-              <p className="text-sm text-slate-600">
-                Subject: {s.subject}
-              </p>
-            </div>
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-12 text-center">
+            <h2 className="text-3xl font-bold text-blue-900 sm:text-4xl">
+              Top Students
+            </h2>
+            <p className="mt-3 text-lg text-slate-600">
+              අපගේ ඉහළම ප්‍රතිඵල ලබාගත් සිසුන් – ප්‍රතිඵල මඟින්ම විශ්වාසය
+            </p>
           </div>
 
-          {/* Marks */}
-          <div className="mt-5 flex items-center justify-between rounded-2xl bg-blue-50 px-4 py-3">
-            <div>
-              <p className="text-xs uppercase tracking-wide text-slate-500">
-                Marks
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {students.length === 0 && (
+              <p className="text-center text-slate-400 col-span-full">
+                No top students found.
               </p>
-              <p className="text-2xl font-bold text-blue-800">
-                {s.marks}%
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-xs uppercase tracking-wide text-slate-500">
-                Instructor
-              </p>
-              <p className="text-sm font-semibold text-slate-700">
-                {s.instructor}
-              </p>
-            </div>
+            )}
+
+            {students.map((s) => (
+              <article
+                key={s.id}
+                className="group relative overflow-hidden rounded-3xl bg-white p-6 shadow-sm ring-1 ring-blue-100 transition hover:-translate-y-1 hover:shadow-xl"
+              >
+                {/* Student info */}
+                <div className="flex items-center gap-4">
+                  <img
+                    src={s.image}
+                    alt={s.name}
+                    className="h-24 w-24 rounded-full object-cover ring-4 ring-blue-200 shadow-lg group-hover:scale-105 transition"
+                    loading="lazy"
+                  />
+                  <div>
+                    <h3 className="text-lg font-semibold text-blue-900">
+                      {s.name}
+                    </h3>
+                    <p className="text-sm text-slate-600">
+                      Subject: {s.subject}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Marks and instructor */}
+                <div className="mt-5 flex items-center justify-between rounded-2xl bg-blue-50 px-4 py-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-slate-500">
+                      Marks
+                    </p>
+                    <p className="text-2xl font-bold text-blue-800">
+                      {s.marks}%
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs uppercase tracking-wide text-slate-500">
+                      Instructor
+                    </p>
+                    <p className="text-sm font-semibold text-slate-700">
+                      {s.instructor}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Progress bar */}
+                <div className="mt-4">
+                  <div className="h-2 w-full rounded-full bg-blue-100">
+                    <div
+                      className="h-2 rounded-full bg-blue-600 transition-all"
+                      style={{ width: `${s.marks}%` }}
+                    />
+                  </div>
+                </div>
+              </article>
+            ))}
           </div>
-
-          {/* Progress bar */}
-          <div className="mt-4">
-            <div className="h-2 w-full rounded-full bg-blue-100">
-              <div
-                className="h-2 rounded-full bg-blue-600 transition-all"
-                style={{ width: `${s.marks}%` }}
-              />
-            </div>
-          </div>
-        </article>
-      ))}
-    </div>
-  </div>
-</section>
-
-
-
-
+        </div>
+      </section>
       {/* Tutors Section */}
       <section
         id="tutors"
@@ -603,9 +612,8 @@ function LandingPage() {
               Meet Our Top Tutors
             </h2>
             <h3 className="mt-1 text-2xl font-bold text-slate-700">
-            හොදම ගුරුවරු එකම තැනකින්
+              හොදම ගුරුවරු එකම තැනකින්
             </h3>
-
           </div>
 
           <div className="grid gap-8 md:grid-cols-2">
@@ -645,8 +653,8 @@ function LandingPage() {
                   <div className="flex flex-1 flex-col justify-between p-5">
                     <div>
                       <h4 className="text-2xl font-semibold text-blue-900 line-clamp-1">
-  {t.fullName}
-</h4>
+                        {t.fullName}
+                      </h4>
                       <p className="mt-1 text-sm text-slate-600 line-clamp-1">
                         {subjects.join(" • ")}
                       </p>
@@ -700,7 +708,7 @@ function LandingPage() {
                         </Link>
                         <Link
                           to={`/courses?instructor=${encodeURIComponent(
-                            t.fullName
+                            t.fullName,
                           )}`}
                           className="inline-flex items-center justify-center rounded-lg bg-white px-4 py-2 text-sm font-semibold text-blue-800 ring-1 ring-blue-200 transition hover:bg-blue-50"
                         >
@@ -738,8 +746,10 @@ function LandingPage() {
                 EZone ICT — අභිලාෂයන් ජයග්‍රහණ බවට පත්කරන තැන.
               </h2>
               <p className="mt-3 text-lg leading-relaxed text-slate-700">
-                EZone යනු ප්‍රතිඵල කේන්ද්‍ර කරගත් නවීන අධ්‍යාපන ආයතනයකි. අපි විෂය ප්‍රවීණයන්ගේ මඟපෙන්වීම, ප්‍රායෝගික ව්‍යාපෘති සහ දත්ත මත පදනම් වූ නිවැරදි ඇගයීම් තුළින් ශිෂ්‍යයන් සතු විභවතාවයන් සැබෑ දක්ෂතාවයන් බවට පරිවර්තනය කරමු.  
-                
+                EZone යනු ප්‍රතිඵල කේන්ද්‍ර කරගත් නවීන අධ්‍යාපන ආයතනයකි. අපි
+                විෂය ප්‍රවීණයන්ගේ මඟපෙන්වීම, ප්‍රායෝගික ව්‍යාපෘති සහ දත්ත මත
+                පදනම් වූ නිවැරදි ඇගයීම් තුළින් ශිෂ්‍යයන් සතු විභවතාවයන් සැබෑ
+                දක්ෂතාවයන් බවට පරිවර්තනය කරමු.
               </p>
 
               <div className="mt-5 inline-flex items-center gap-2 rounded-xl bg-blue-50 px-3 py-2 text-blue-800 ring-1 ring-blue-100">
@@ -758,7 +768,9 @@ function LandingPage() {
                     Our Vision
                   </h3>
                   <p className="mt-1 text-slate-600">
-                    තාක්ෂණික ලෝකයේ සාර්ථක වීමට අවශ්‍ය දැනුමෙන් සෑම සිසුවෙකුම සන්නද්ධ කරමින්, ශ්‍රී ලංකාවේ ඉගෙනීමේ සිට ජීවනෝපාය දක්වා වූ වඩාත්ම විශ්වාසදායක මාවත බවට පත්වීම.
+                    තාක්ෂණික ලෝකයේ සාර්ථක වීමට අවශ්‍ය දැනුමෙන් සෑම සිසුවෙකුම
+                    සන්නද්ධ කරමින්, ශ්‍රී ලංකාවේ ඉගෙනීමේ සිට ජීවනෝපාය දක්වා වූ
+                    වඩාත්ම විශ්වාසදායක මාවත බවට පත්වීම.
                   </p>
                 </div>
                 <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-blue-100">
@@ -769,7 +781,9 @@ function LandingPage() {
                     Our Mission
                   </h3>
                   <p className="mt-1 text-slate-600">
-                    පළපුරුදු ගුරුවරුන් සහ ප්‍රායෝගික ව්‍යාපෘති හරහා අදාළ සහ උසස් තත්ත්වයේ අධ්‍යාපනයක් ලබා දීම—එමඟින් සිසුන්ට රැකියා වෙළඳපොළට අවශ්‍ය සැබෑ කුසලතා ලබා දීම.
+                    පළපුරුදු ගුරුවරුන් සහ ප්‍රායෝගික ව්‍යාපෘති හරහා අදාළ සහ උසස්
+                    තත්ත්වයේ අධ්‍යාපනයක් ලබා දීම—එමඟින් සිසුන්ට රැකියා වෙළඳපොළට
+                    අවශ්‍ය සැබෑ කුසලතා ලබා දීම.
                   </p>
                 </div>
               </div>
@@ -959,7 +973,7 @@ function LandingPage() {
                     <div className="text-right">
                       {/* <div className="text-lg font-bold text-blue-900">
                         LKR {formatPrice(c.price)}
-                      // </div> */} 
+                      // </div> */}
                       {/* removed lkr in first relese */}
                       {c.oldPrice && (
                         <div className="text-xs text-slate-500 line-through">
@@ -982,23 +996,22 @@ function LandingPage() {
                     >
                       Ask Whatsapp
                     </Link> */}
-                 <a
-  href="https://wa.me/94740172552"
-  target="_blank"
-  rel="noopener noreferrer"
-  className="inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:underline"
->
-  Ask WhatsApp
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="currentColor"
-    className="w-5 h-5 text-green-500"
-  >
-    <path d="M20.52 3.48A11.91 11.91 0 0012.01 0C5.38 0 .01 5.37.01 12c0 2.11.55 4.17 1.6 5.99L0 24l6.18-1.62a11.94 11.94 0 005.83 1.49h.01c6.63 0 12-5.37 12-12 0-3.2-1.25-6.21-3.5-8.39zM12.01 21.54a9.55 9.55 0 01-4.88-1.34l-.35-.21-3.67.96.98-3.58-.23-.37a9.53 9.53 0 118.15 4.54zm5.52-7.26c-.3-.15-1.77-.87-2.04-.97-.27-.1-.47-.15-.66.15-.2.3-.76.97-.93 1.17-.17.2-.34.22-.64.07-.3-.15-1.25-.46-2.38-1.47-.88-.79-1.47-1.77-1.64-2.07-.17-.3-.02-.46.13-.61.14-.14.3-.34.45-.5.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.66-1.6-.9-2.2-.24-.58-.48-.5-.66-.5h-.57c-.2 0-.52.07-.8.37-.27.3-1.05 1.03-1.05 2.5s1.08 2.9 1.23 3.1c.15.2 2.12 3.24 5.14 4.55.72.31 1.28.5 1.72.64.72.23 1.37.2 1.88.12.57-.09 1.77-.72 2.02-1.42.25-.7.25-1.3.17-1.42-.07-.12-.27-.2-.57-.35z"/>
-  </svg>
-</a>
-
+                    <a
+                      href="https://wa.me/94740172552"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:underline"
+                    >
+                      Ask WhatsApp
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        className="w-5 h-5 text-green-500"
+                      >
+                        <path d="M20.52 3.48A11.91 11.91 0 0012.01 0C5.38 0 .01 5.37.01 12c0 2.11.55 4.17 1.6 5.99L0 24l6.18-1.62a11.94 11.94 0 005.83 1.49h.01c6.63 0 12-5.37 12-12 0-3.2-1.25-6.21-3.5-8.39zM12.01 21.54a9.55 9.55 0 01-4.88-1.34l-.35-.21-3.67.96.98-3.58-.23-.37a9.53 9.53 0 118.15 4.54zm5.52-7.26c-.3-.15-1.77-.87-2.04-.97-.27-.1-.47-.15-.66.15-.2.3-.76.97-.93 1.17-.17.2-.34.22-.64.07-.3-.15-1.25-.46-2.38-1.47-.88-.79-1.47-1.77-1.64-2.07-.17-.3-.02-.46.13-.61.14-.14.3-.34.45-.5.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.66-1.6-.9-2.2-.24-.58-.48-.5-.66-.5h-.57c-.2 0-.52.07-.8.37-.27.3-1.05 1.03-1.05 2.5s1.08 2.9 1.23 3.1c.15.2 2.12 3.24 5.14 4.55.72.31 1.28.5 1.72.64.72.23 1.37.2 1.88.12.57-.09 1.77-.72 2.02-1.42.25-.7.25-1.3.17-1.42-.07-.12-.27-.2-.57-.35z" />
+                      </svg>
+                    </a>
                   </div>
                 </div>
               </article>
@@ -1087,7 +1100,7 @@ function LandingPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h2 className="text-3xl font-bold sm:text-4xl">
-              හරියට ඉගන ගන්න හරිම තැනට එන්න 
+              හරියට ඉගන ගන්න හරිම තැනට එන්න
             </h2>
             <p className="mx-auto mt-3 max-w-3xl text-blue-100">
               Join thousands of learners who are advancing their skills with
@@ -1268,27 +1281,26 @@ function Navbar({
               onClick={() => scrollTo("tutors")}
               className="block w-full rounded-lg px-3 py-2 text-left text-slate-700 hover:bg-blue-50"
             >
-              අපගේ ඇදුරු මඩුල්ල 
+              අපගේ ඇදුරු මඩුල්ල
             </button>
             <button
               onClick={() => scrollTo("courses")}
               className="block w-full rounded-lg px-3 py-2 text-left text-slate-700 hover:bg-blue-50"
             >
-              පාඨමාලාවන් 
+              පාඨමාලාවන්
             </button>
             <button
               onClick={() => scrollTo("about")}
               className="block w-full rounded-lg px-3 py-2 text-left text-slate-700 hover:bg-blue-50"
             >
-              අපි ගැන 
+              අපි ගැන
             </button>
             <button
               onClick={() => scrollTo("top-students")}
               className="block w-full rounded-lg px-3 py-2 text-left text-slate-700 hover:bg-blue-50"
             >
-              ඉහලම ලකුණු ලබාගත් සිසුන් 
+              ඉහලම ලකුණු ලබාගත් සිසුන්
             </button>
-            
 
             {/* Auth area for mobile */}
             <div className="pt-2">
