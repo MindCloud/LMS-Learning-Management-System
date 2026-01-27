@@ -40,6 +40,101 @@ import "swiper/css/pagination";
 
 // const HERO_BG_360 = "https://royalinstitute.org/wp-content/uploads/2021/03/Gampaha-RGB.jpg";
 
+// spectial notice data
+const specialNotices = [
+  {
+    id: "n1",
+    title: "2026 නව පන්ති ආරම්භය",
+    description:
+      "2026 පෙබරවාරි මාසයේ නව ICT සහ Graphic Design  ආරම්භ වේ.",
+    postedAt: "2026-01-20 10:30 AM",
+  },
+  {
+    id: "n2",
+    title: "නව Web Design පාඨමාලාව",
+    description:
+      "Beginner සිට Intermediate දක්වා Web Design & Development නව පාඨමාලාවක්.",
+    postedAt: "2026-01-22 02:00 PM",
+  },
+  {
+    id: "n3",
+    title: "Free Seminar",
+    description:
+      "සිසුන් සඳහා නොමිලේ ICT දැනුවත් කිරීමේ සම්මන්ත්‍රණය.",
+    postedAt: "2026-01-24 09:15 AM",
+  },
+];
+
+
+
+// sample top students data 
+const topStudents = [
+  {
+    id: "s1",
+    name: "Kavindu Perera",
+    subject: "Mathematics",
+    marks: 98,
+    instructor: "John Silva",
+    image:
+      "https://randomuser.me/api/portraits/men/32.jpg",
+  },
+  {
+    id: "s2",
+    name: "Nethmi Fernando",
+    subject: "Science",
+    marks: 96,
+    instructor: "Nimali Perera",
+    image:
+      "https://randomuser.me/api/portraits/women/44.jpg",
+  },
+  {
+    id: "s3",
+    name: "Sahan Jayawardena",
+    subject: "ICT",
+    marks: 95,
+    instructor: "Tharindu Peris",
+    image:
+      "https://randomuser.me/api/portraits/men/54.jpg",
+  },
+  {
+    id: "s4",
+    name: "Hiruni Madushika",
+    subject: "Physics",
+    marks: 94,
+    instructor: "Amara De Silva",
+    image:
+      "https://randomuser.me/api/portraits/women/68.jpg",
+  },
+  {
+    id: "s5",
+    name: "Dilshan Weerasinghe",
+    subject: "Chemistry",
+    marks: 93,
+    instructor: "Ruwan Jayasuriya",
+    image:
+      "https://randomuser.me/api/portraits/men/61.jpg",
+  },
+  {
+    id: "s6",
+    name: "Sachini Gunawardena",
+    subject: "English",
+    marks: 92,
+    instructor: "Ishara Fernando",
+    image:
+      "https://randomuser.me/api/portraits/women/71.jpg",
+  },
+  {
+    id: "s7",
+    name: "Ashen Wickramasinghe",
+    subject: "Web Development",
+    marks: 91,
+    instructor: "Chamindu Madushan",
+    image:
+      "https://randomuser.me/api/portraits/men/77.jpg",
+  },
+];
+
+
 /* ---------- Shared data ---------- */
 const defaultTutors = [
   {
@@ -324,7 +419,7 @@ function LandingPage() {
               <h1 className="mt-4 text-4xl font-extrabold leading-tight text-white md:text-5xl lg:text-6xl">
                 අනුරාධ උසස් අධ්‍යාපන ආයතනය මොරවක​
                 <br />
-                <span className="text-blue-300">Powerd by Ezone </span>
+                <span className="text-blue-300">Powered by Ezone </span>
               </h1>
               <p className="mt-4 text-lg text-blue-100 md:text-xl">
                 The modern LMS for students, educators, and institutions. Learn
@@ -361,30 +456,139 @@ function LandingPage() {
             </div>
 
             <div className="relative">
-              <div className="mx-auto w-full max-w-xl rounded-3xl border border-white/20 bg-white/90 p-6 shadow-2xl backdrop-blur">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-700 text-white">
-                    <FiUsers />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900">
-                      Live cohorts
-                    </p>
-                    <p className="text-xs text-slate-600">
-                      Learn together, faster
-                    </p>
-                  </div>
-                </div>
-                <ul className="mt-4 list-inside list-disc text-sm text-slate-700">
-                  <li>Weekly mentor sessions</li>
-                  <li>Recorded lectures & quizzes</li>
-                  <li>Certificates on completion</li>
-                </ul>
-              </div>
-            </div>
+  <div className="mx-auto w-full max-w-xl rounded-3xl border border-white/20 bg-white/95 p-6 shadow-2xl backdrop-blur">
+    
+    {/* Header */}
+    <div className="mb-5 flex items-center gap-4">
+      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-600 text-white text-xl">
+        📢
+      </div>
+      <div>
+        <p className="text-lg font-bold text-slate-900">
+          ආයතනික විශේෂ දැන්වීම්
+        </p>
+        <p className="text-sm text-slate-600">
+          Institute Special Notices
+        </p>
+      </div>
+    </div>
+
+    {/* Notices */}
+    <ul className="space-y-4">
+      {specialNotices.map((n) => (
+        <li
+          key={n.id}
+          className="rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm"
+        >
+          <p className="text-base font-semibold text-blue-900">
+            {n.title}
+          </p>
+
+          <p className="mt-2 text-sm leading-relaxed text-slate-700">
+            {n.description}
+          </p>
+
+          <p className="mt-3 text-xs font-medium text-slate-500">
+            🕒 Posted on {n.postedAt}
+          </p>
+        </li>
+      ))}
+    </ul>
+
+  </div>
+</div>
+
           </div>
         </div>
       </section>
+
+      {/* Top Students */}
+<section
+  id="top-students"
+  className="relative overflow-hidden bg-gradient-to-b from-white to-blue-50 py-20 scroll-mt-24"
+>
+  {/* Background glow */}
+  <div className="pointer-events-none absolute inset-0">
+    <div className="absolute -top-24 left-1/3 h-72 w-72 rounded-full bg-blue-200/40 blur-3xl" />
+    <div className="absolute -bottom-24 right-1/4 h-72 w-72 rounded-full bg-blue-100/60 blur-3xl" />
+  </div>
+
+  <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div className="mb-12 text-center">
+      <h2 className="text-3xl font-bold text-blue-900 sm:text-4xl">
+         Top Students
+      </h2>
+      <p className="mt-3 text-lg text-slate-600">
+        අපගේ ඉහළම ප්‍රතිඵල ලබාගත් සිසුන් – ප්‍රතිඵල මඟින්ම විශ්වාසය
+      </p>
+    </div>
+
+    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {topStudents.map((s, index) => (
+        <article
+          key={s.id}
+          className="group relative overflow-hidden rounded-3xl bg-white p-6 shadow-sm ring-1 ring-blue-100 transition hover:-translate-y-1 hover:shadow-xl"
+        >
+          {/* Rank badge */}
+          <div className="absolute right-4 top-4 rounded-full bg-blue-700 px-3 py-1 text-xs font-bold text-white shadow">
+            Rank #{index + 1}
+          </div>
+
+          {/* Student info */}
+          <div className="flex items-center gap-4">
+            <img
+  src={s.image}
+  alt={s.name}
+  className="h-24 w-24 rounded-full object-cover ring-4 ring-blue-200 shadow-lg group-hover:scale-105 transition"
+  loading="lazy"
+/>
+            <div>
+              <h3 className="text-lg font-semibold text-blue-900">
+                {s.name}
+              </h3>
+              <p className="text-sm text-slate-600">
+                Subject: {s.subject}
+              </p>
+            </div>
+          </div>
+
+          {/* Marks */}
+          <div className="mt-5 flex items-center justify-between rounded-2xl bg-blue-50 px-4 py-3">
+            <div>
+              <p className="text-xs uppercase tracking-wide text-slate-500">
+                Marks
+              </p>
+              <p className="text-2xl font-bold text-blue-800">
+                {s.marks}%
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-xs uppercase tracking-wide text-slate-500">
+                Instructor
+              </p>
+              <p className="text-sm font-semibold text-slate-700">
+                {s.instructor}
+              </p>
+            </div>
+          </div>
+
+          {/* Progress bar */}
+          <div className="mt-4">
+            <div className="h-2 w-full rounded-full bg-blue-100">
+              <div
+                className="h-2 rounded-full bg-blue-600 transition-all"
+                style={{ width: `${s.marks}%` }}
+              />
+            </div>
+          </div>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+
+
 
       {/* Tutors Section */}
       <section
@@ -443,9 +647,9 @@ function LandingPage() {
                   {/* Right: Content */}
                   <div className="flex flex-1 flex-col justify-between p-5">
                     <div>
-                      <h4 className="text-lg font-semibold text-blue-900 line-clamp-1">
-                        {t.fullName}
-                      </h4>
+                      <h4 className="text-2xl font-semibold text-blue-900 line-clamp-1">
+  {t.fullName}
+</h4>
                       <p className="mt-1 text-sm text-slate-600 line-clamp-1">
                         {subjects.join(" • ")}
                       </p>
@@ -966,6 +1170,7 @@ function Navbar({
         <nav className="hidden items-center gap-2 md:flex">
           <NavButton id="home">Home</NavButton>
           <NavButton id="tutors">අපෙගේ ඇදුරු මඩුල්ල </NavButton>
+          <NavButton id="top-students">Top Students</NavButton>
           <NavButton id="courses">පාඨමාලා</NavButton>
           <NavButton id="about">අපි ගැන විස්තර </NavButton>
           <NavButton id="testimonials">ප්‍රතිචාර</NavButton>
@@ -1066,26 +1271,27 @@ function Navbar({
               onClick={() => scrollTo("tutors")}
               className="block w-full rounded-lg px-3 py-2 text-left text-slate-700 hover:bg-blue-50"
             >
-              Tutors
+              අපගේ ඇදුරු මඩුල්ල 
             </button>
             <button
               onClick={() => scrollTo("courses")}
               className="block w-full rounded-lg px-3 py-2 text-left text-slate-700 hover:bg-blue-50"
             >
-              Courses
+              පාඨමාලාවන් 
             </button>
             <button
               onClick={() => scrollTo("about")}
               className="block w-full rounded-lg px-3 py-2 text-left text-slate-700 hover:bg-blue-50"
             >
-              About
+              අපි ගැන 
             </button>
             <button
-              onClick={() => scrollTo("testimonials")}
+              onClick={() => scrollTo("top-students")}
               className="block w-full rounded-lg px-3 py-2 text-left text-slate-700 hover:bg-blue-50"
             >
-              Testimonials
+              ඉහලම ලකුණු ලබාගත් සිසුන් 
             </button>
+            
 
             {/* Auth area for mobile */}
             <div className="pt-2">
