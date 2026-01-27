@@ -529,10 +529,7 @@ function LandingPage() {
           key={s.id}
           className="group relative overflow-hidden rounded-3xl bg-white p-6 shadow-sm ring-1 ring-blue-100 transition hover:-translate-y-1 hover:shadow-xl"
         >
-          {/* Rank badge */}
-          <div className="absolute right-4 top-4 rounded-full bg-blue-700 px-3 py-1 text-xs font-bold text-white shadow">
-            Rank #{index + 1}
-          </div>
+         
 
           {/* Student info */}
           <div className="flex items-center gap-4">
