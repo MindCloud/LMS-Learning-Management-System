@@ -360,16 +360,26 @@ function LandingPage() {
   useEffect(() => {
     const fetchTutors = async () => {
       try {
-        const q = query(collection(db, "teachers"), limit(6));
+        setTutorLoading(true);
+        // No limit(6) → shows ALL teachers
+        const q = query(collection(db, "teachers"));
+        // You can add ordering if you want:
+        // const q = query(collection(db, "teachers"), orderBy("fullName"));
+
         const snap = await getDocs(q);
-        const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-        setTutors(data.length ? data : defaultTutors);
+        const data = snap.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setTutors(data);
       } catch (e) {
-        setTutors(defaultTutors);
+        console.error("Error fetching tutors:", e);
+        setTutors(defaultTutors); // fallback only if needed
       } finally {
         setTutorLoading(false);
       }
     };
+
     fetchTutors();
   }, []);
 
@@ -597,6 +607,7 @@ function LandingPage() {
         </div>
       </section>
       {/* Tutors Section */}
+      {/* Tutors Section */}
       <section
         id="tutors"
         className="relative overflow-hidden bg-gradient-to-b from-blue-50 to-white py-20 scroll-mt-24"
@@ -616,111 +627,125 @@ function LandingPage() {
             </h3>
           </div>
 
-          <div className="grid gap-8 md:grid-cols-2">
-            {tutors.map((t) => {
-              const subjects = (
-                t.subjects ||
-                t.subject ||
-                t.expertise ||
-                "Tutor"
-              )
-                .split(",")
-                .map((s) => s.trim())
-                .filter(Boolean)
-                .slice(0, 3);
-              const students = t.students || 120;
-              const lessons = t.lessons || 45;
+          {tutorLoading ? (
+            <div className="flex justify-center py-16">
+              <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
+            </div>
+          ) : tutors.length === 0 ? (
+            <div className="text-center py-16 text-slate-500">
+              <p className="text-xl">No tutors available at the moment</p>
+              <p className="mt-2">Check back later or contact the institute</p>
+            </div>
+          ) : (
+            <div className="grid gap-8 sm:grid-cols-2">
+              {tutors.map((t) => {
+                const subjects = (
+                  t.subjects ||
+                  t.subject ||
+                  t.expertise ||
+                  "Tutor"
+                )
+                  .split(",")
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+                  .slice(0, 3);
 
-              return (
-                <article
-                  key={t.id || t.fullName}
-                  className="group flex h-64 overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-blue-100 transition hover:-translate-y-1 hover:shadow-xl"
-                >
-                  {/* Left: Tutor Image */}
-                  <div className="relative h-full w-48 flex-shrink-0">
-                    <img
-                      src={t.imageUrl || "/default-avatar.png"}
-                      alt={t.fullName}
-                      className="h-full w-full object-cover"
-                      loading="lazy"
-                    />
-                    <div className="absolute left-3 top-3 rounded-md bg-blue-600 px-2 py-0.5 text-xs font-semibold text-white shadow">
-                      ★ {Number(t.rating) || 5}
+                const rating = Number(t.rating) || 5;
+                const studentCount = t.students || 120;
+                const lessonCount = t.lessons || 45;
+
+                return (
+                  <article
+                    key={t.id || t.fullName}
+                    className="group flex h-64 overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-blue-100 transition hover:-translate-y-1 hover:shadow-xl"
+                  >
+                    {/* Left: Tutor Image */}
+                    <div className="relative h-full w-48 flex-shrink-0">
+                      <img
+                        src={
+                          t.imageUrl ||
+                          "https://via.placeholder.com/300?text=Tutor"
+                        }
+                        alt={t.fullName}
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                      />
+                      <div className="absolute left-3 top-3 rounded-md bg-blue-600 px-2 py-0.5 text-xs font-semibold text-white shadow">
+                        ★ {rating}
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Right: Content */}
-                  <div className="flex flex-1 flex-col justify-between p-5">
-                    <div>
-                      <h4 className="text-2xl font-semibold text-blue-900 line-clamp-1">
-                        {t.fullName}
-                      </h4>
-                      <p className="mt-1 text-sm text-slate-600 line-clamp-1">
-                        {subjects.join(" • ")}
-                      </p>
+                    {/* Right: Content */}
+                    <div className="flex flex-1 flex-col justify-between p-5">
+                      <div>
+                        <h4 className="text-2xl font-semibold text-blue-900 line-clamp-1">
+                          {t.fullName}
+                        </h4>
+                        <p className="mt-1 text-sm text-slate-600 line-clamp-1">
+                          {subjects.join(" • ")}
+                        </p>
 
-                      {/* Tags */}
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {subjects.map((s, i) => (
-                          <span
-                            key={`${t.fullName}-${s}`}
-                            className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ring-1 ${
-                              i % 2 === 0
-                                ? "bg-blue-50 text-blue-700 ring-blue-100"
-                                : "bg-cyan-50 text-cyan-700 ring-cyan-100"
-                            }`}
+                        {/* Subject tags */}
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {subjects.map((s, i) => (
+                            <span
+                              key={`${t.fullName}-${s}`}
+                              className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ring-1 ${
+                                i % 2 === 0
+                                  ? "bg-blue-50 text-blue-700 ring-blue-100"
+                                  : "bg-cyan-50 text-cyan-700 ring-cyan-100"
+                              }`}
+                            >
+                              {s}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Bottom: Stats + Buttons */}
+                      <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        {/* Stats */}
+                        <div className="flex gap-6">
+                          <div className="text-center">
+                            <div className="text-base font-bold text-blue-700">
+                              {studentCount}+
+                            </div>
+                            <div className="text-[12px] text-slate-500">
+                              Students
+                            </div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-base font-bold text-blue-700">
+                              {lessonCount}+
+                            </div>
+                            <div className="text-[12px] text-slate-500">
+                              Lessons
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Buttons */}
+                        <div className="flex flex-col gap-2 sm:flex-row">
+                          <Link
+                            to={`/teachers/${t.id || ""}`}
+                            className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500"
                           >
-                            {s}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Bottom: Stats + Buttons */}
-                    <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      {/* Stats */}
-                      <div className="flex gap-6">
-                        <div className="text-center">
-                          <div className="text-base font-bold text-blue-700">
-                            {students}+
-                          </div>
-                          <div className="text-[12px] text-slate-500">
-                            Students
-                          </div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-base font-bold text-blue-700">
-                            {lessons}+
-                          </div>
-                          <div className="text-[12px] text-slate-500">
-                            Lessons
-                          </div>
+                            View Profile
+                          </Link>
+                          <Link
+                            to={`/courses?instructor=${encodeURIComponent(t.fullName)}`}
+                            className="inline-flex items-center justify-center rounded-lg bg-white px-4 py-2 text-sm font-semibold text-blue-800 ring-1 ring-blue-200 transition hover:bg-blue-50"
+                          >
+                            Courses
+                          </Link>
                         </div>
                       </div>
-
-                      {/* Buttons */}
-                      <div className="flex flex-col gap-2 sm:flex-row">
-                        <Link
-                          to={`/teachers/${t.id || ""}`}
-                          className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500"
-                        >
-                          View Profile
-                        </Link>
-                        <Link
-                          to={`/courses?instructor=${encodeURIComponent(
-                            t.fullName,
-                          )}`}
-                          className="inline-flex items-center justify-center rounded-lg bg-white px-4 py-2 text-sm font-semibold text-blue-800 ring-1 ring-blue-200 transition hover:bg-blue-50"
-                        >
-                          Courses
-                        </Link>
-                      </div>
                     </div>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
 
