@@ -18,6 +18,7 @@ import AskQuestion from "./components/AskQuestion";
 import Questions from "./components/TeacherQuestions";
 import TeacherFeedback from "./components/TeacherFeedback";
 import TeacherProfile from "./components/TeacherProfile";
+import Downloads from "./components/Downloads";
 
 // Check if user is logged in
 const isAuthenticated = () => {
@@ -71,6 +72,7 @@ function App() {
           <Route path="/ask" element={<AskQuestion />} />
           <Route path="/questions" element={<Questions />} />
           <Route path="/teachers/:id" element={<TeacherProfile />} />
+          <Route path="/downloads" element={<Downloads />} />
 
           {/* Protected Routes */}
           <Route

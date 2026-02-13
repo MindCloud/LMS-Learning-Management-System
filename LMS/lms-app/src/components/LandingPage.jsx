@@ -1209,6 +1209,9 @@ function Navbar({
           <NavButton id="courses">පාඨමාලා</NavButton>
           <NavButton id="about">අපි ගැන විස්තර </NavButton>
           <NavButton id="testimonials">ප්‍රතිචාර</NavButton>
+          <Link to="/downloads">
+            <NavButton id="testimonials">Downloads</NavButton>
+          </Link>
         </nav>
 
         {/* Right side: Auth */}
