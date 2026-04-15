@@ -436,7 +436,7 @@ function LandingPage() {
                 <FiCheckCircle /> Trusted by 50k+ learners
               </span>
               <h1 className="mt-4 text-4xl font-extrabold leading-tight text-white md:text-5xl lg:text-6xl">
-                අනුරාධ උසස් අධ්‍යාපන ආයතනය මොරවක​
+                අනුරාධ උසස් අධ්‍යාපන ආයතනය මොරවක
                 <br />
                 <span className="text-blue-300">Powered by Ezone </span>
               </h1>
@@ -690,11 +690,10 @@ function LandingPage() {
                           {subjects.map((s, i) => (
                             <span
                               key={`${t.fullName}-${s}`}
-                              className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ring-1 ${
-                                i % 2 === 0
+                              className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ring-1 ${i % 2 === 0
                                   ? "bg-blue-50 text-blue-700 ring-blue-100"
                                   : "bg-cyan-50 text-cyan-700 ring-cyan-100"
-                              }`}
+                                }`}
                             >
                               {s}
                             </span>
@@ -1210,7 +1209,7 @@ function Navbar({
           <NavButton id="about">අපි ගැන විස්තර </NavButton>
           <NavButton id="testimonials">ප්‍රතිචාර</NavButton>
           <Link to="/downloads">
-            <NavButton id="testimonials">Downloads</NavButton>
+            <NavButton>Downloads</NavButton>
           </Link>
         </nav>
 

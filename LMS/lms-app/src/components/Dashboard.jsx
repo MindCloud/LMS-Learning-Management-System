@@ -13,6 +13,7 @@ import {
 } from "firebase/firestore";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { toast } from "sonner";
+import AddResourceFolderModal from "./AddResourceFolderModal";
 
 import MarkModal from "./MarkModal";
 import {
@@ -53,6 +54,7 @@ function Dashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedGrade, setSelectedGrade] = useState("all");
   const [studentToDelete, setStudentToDelete] = useState(null);
+  const [isAddFolderModalOpen, setIsAddFolderModalOpen] = useState(false);
 
   // Sidebar grade filters
   const [selectedGradeNotices, setSelectedGradeNotices] = useState("all");
@@ -234,8 +236,7 @@ function Dashboard() {
 
       toast.dismiss();
       toast.success(
-        `Student status updated to ${
-          newStatus === "active" ? "Active" : "Pending"
+        `Student status updated to ${newStatus === "active" ? "Active" : "Pending"
         }`
       );
     } catch (error) {
@@ -380,6 +381,14 @@ function Dashboard() {
               <MessageCircle className="h-4 w-4 text-blue-600" />
               Feedback
             </button>
+            {/* Add this button inside the <nav> section, preferably before Questions button */}
+            <button
+              onClick={() => setIsAddFolderModalOpen(true)}
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:from-emerald-700 hover:to-teal-700 transition"
+            >
+              <FileText className="h-4 w-4" />
+              Add Resource Folder
+            </button>
             <button
               onClick={handleLogout}
               className="inline-flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-200 shadow-sm transition hover:bg-slate-50"
@@ -453,7 +462,6 @@ function Dashboard() {
               <StatCard label="Notices" value={notices.length} />
             </div>
           </div>
-
           {/* Shortcuts */}
           <div className="rounded-2xl border bg-white p-6 shadow-sm ring-1 ring-blue-100">
             <h2 className="mb-4 flex items-center gap-3 text-base font-semibold text-slate-900">
@@ -474,6 +482,13 @@ function Dashboard() {
                 icon={<NotebookPen className="h-4 w-4 text-sky-600" />}
                 label="Assign homework"
                 onClick={() => navigate("/homework")}
+              />
+
+              {/* New Button for Managing Resources */}
+              <Shortcut
+                icon={<FileText className="h-4 w-4 text-emerald-600" />}
+                label="Manage Resource Folders"
+                onClick={() => navigate("/manage-resources")}
               />
             </div>
           </div>
@@ -562,8 +577,8 @@ function Dashboard() {
                                   ? student.grade === "after-ol"
                                     ? "After O/L"
                                     : student.grade === "after-al"
-                                    ? "After A/L"
-                                    : `Grade ${student.grade}`
+                                      ? "After A/L"
+                                      : `Grade ${student.grade}`
                                   : "Grade not set"}
                               </span>
                             </p>
@@ -598,11 +613,10 @@ function Dashboard() {
                                 Status:
                               </p>
                               <span
-                                className={`inline-flex items-center gap-1 mt-2 rounded-full px-2.5 py-1 text-xs font-medium ${
-                                  student.status === "active"
-                                    ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
-                                    : "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
-                                }`}
+                                className={`inline-flex items-center gap-1 mt-2 rounded-full px-2.5 py-1 text-xs font-medium ${student.status === "active"
+                                  ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
+                                  : "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
+                                  }`}
                               >
                                 {student.status === "active" ? (
                                   <CheckCircle2 className="h-3.5 w-3.5" />
@@ -709,11 +723,10 @@ function Dashboard() {
                             <button
                               key={i + 1}
                               onClick={() => handlePageChange(i + 1)}
-                              className={`rounded-lg px-3 py-1.5 text-sm ${
-                                currentPage === i + 1
-                                  ? "bg-blue-600 text-white"
-                                  : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
-                              }`}
+                              className={`rounded-lg px-3 py-1.5 text-sm ${currentPage === i + 1
+                                ? "bg-blue-600 text-white"
+                                : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
+                                }`}
                             >
                               {i + 1}
                             </button>
@@ -905,6 +918,12 @@ function Dashboard() {
         student={selectedStudent}
         teacherId={teacher?.uid}
         onMarkAdded={handleMarkAdded}
+      />
+      {/* Add Resource Folder Modal */}
+      <AddResourceFolderModal
+        isOpen={isAddFolderModalOpen}
+        onClose={() => setIsAddFolderModalOpen(false)}
+        teacher={teacher}
       />
     </div>
   );

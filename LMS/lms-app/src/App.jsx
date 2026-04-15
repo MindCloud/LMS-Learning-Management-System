@@ -19,6 +19,7 @@ import Questions from "./components/TeacherQuestions";
 import TeacherFeedback from "./components/TeacherFeedback";
 import TeacherProfile from "./components/TeacherProfile";
 import Downloads from "./components/Downloads";
+import ManageResourceFolders from "./components/ManageResourceFolders"
 
 // Check if user is logged in
 const isAuthenticated = () => {
@@ -73,7 +74,15 @@ function App() {
           <Route path="/questions" element={<Questions />} />
           <Route path="/teachers/:id" element={<TeacherProfile />} />
           <Route path="/downloads" element={<Downloads />} />
-
+          {/* NEW: Manage Resources - Protected Route */}
+          <Route
+            path="/manage-resources"
+            element={
+              <ProtectedRoute allowedRoles={["teacher"]}>
+                <ManageResourceFolders />
+              </ProtectedRoute>
+            }
+          />
           {/* Protected Routes */}
           <Route
             path="/home"

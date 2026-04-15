@@ -14,6 +14,12 @@ import {
   FiMenu,
   FiX,
 } from "react-icons/fi";
+import {
+  BookOpen, Award, FileText, Download,
+  Zap, Target, Loader2
+} from "lucide-react";
+import { db } from "../firebase";
+import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import logo from "../assets/logo.jpg"; // your logo
 
 // ────────────────────────────────────────────────
@@ -156,57 +162,48 @@ const NavButton = ({ children, to, active }) => (
 // ────────────────────────────────────────────────
 // Main Downloads Page
 // ────────────────────────────────────────────────
+const iconMap = {
+  BookOpen: BookOpen,
+  Award: Award,
+  FileText: FileText,
+  Download: Download,
+  Zap: Zap,
+  Target: Target,
+};
+
 const Downloads = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [folders, setFolders] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const folders = [
-    {
-      id: "pp-2024-al",
-      name: "2024 A/L Past Papers",
-      description: "Combined Maths • Physics • Chemistry • Biology • ICT",
-      category: "Past Papers",
-      files: 56,
-      updated: "Feb 2025",
-      driveLink: "https://drive.google.com/drive/folders/1examplePP2024",
-      accent: "from-blue-600 to-indigo-600",
-      icon: FiBookOpen,
-    },
-    {
-      id: "ms-2023",
-      name: "2023 Marking Schemes",
-      description: "Official schemes — all main & optional subjects",
-      category: "Marking Schemes",
-      files: 41,
-      updated: "Jan 2025",
-      driveLink: "https://drive.google.com/drive/folders/2exampleMS2023",
-      accent: "from-indigo-500 to-violet-600",
-      icon: FiAward,
-    },
-    {
-      id: "notes-bio",
-      name: "Biology Comprehensive Notes",
-      description: "Unit notes + diagrams + quick revision (Sinhala & English)",
-      category: "Notes",
-      files: 24,
-      updated: "Mar 2025",
-      driveLink: "https://drive.google.com/drive/folders/3exampleBioNotes",
-      accent: "from-emerald-500 to-teal-600",
-      icon: FiFileText,
-    },
-    {
-      id: "model-2025",
-      name: "2025 Model Papers & Predicted",
-      description: "Provincial • School • Grand mock series",
-      category: "Model Papers",
-      files: 33,
-      updated: "Apr 2025",
-      driveLink: "https://drive.google.com/drive/folders/4exampleModel2025",
-      accent: "from-amber-500 to-orange-600",
-      icon: FiDownload,
-    },
-  ];
+  // Fetch all resource folders
+  const fetchFolders = async () => {
+    setLoading(true);
+    try {
+      const q = query(
+        collection(db, "resourceFolders"),
+        orderBy("createdAt", "desc")
+      );
+      const snapshot = await getDocs(q);
+
+      const fetchedFolders = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      setFolders(fetchedFolders);
+    } catch (error) {
+      console.error("Error fetching folders:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchFolders();
+  }, []);
 
   const categories = [
     "All",
@@ -220,8 +217,8 @@ const Downloads = () => {
 
   const filteredFolders = folders.filter((f) => {
     const searchMatch =
-      f.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      f.description.toLowerCase().includes(searchTerm.toLowerCase());
+      (f.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (f.description || "").toLowerCase().includes(searchTerm.toLowerCase());
     const catMatch = activeCategory === "All" || f.category === activeCategory;
     return searchMatch && catMatch;
   });
@@ -359,10 +356,17 @@ const Downloads = () => {
             </div>
           </div>
 
-          {filteredFolders.length > 0 ? (
+          {loading ? (
+            <div className="flex justify-center py-20">
+              <div className="flex items-center gap-3 text-slate-500 text-lg font-medium">
+                <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+                Loading resources...
+              </div>
+            </div>
+          ) : filteredFolders.length > 0 ? (
             <div className="grid gap-7 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {filteredFolders.map((folder) => {
-                const Icon = folder.icon || FiFolder;
+                const Icon = iconMap[folder.iconName] || FiFolder;
                 return (
                   <a
                     key={folder.id}
