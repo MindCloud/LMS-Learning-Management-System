@@ -81,152 +81,157 @@ export default function AddTopStudentModal({ open, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center px-3">
-      <div className="w-full max-w-4xl bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-0 sm:px-3 sm:py-6">
+      <div className="w-full h-full sm:h-auto sm:max-w-4xl bg-white sm:rounded-2xl shadow-xl overflow-hidden flex flex-col sm:max-h-[90vh]">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b sticky top-0 bg-white z-10">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
+        <div className="flex items-center justify-between px-6 py-4 border-b sticky top-0 bg-white z-10 font-bold">
+          <h2 className="text-lg flex items-center gap-2 text-slate-900">
             <Star className="text-yellow-500" size={20} />
             Top Students
           </h2>
-          <button onClick={onClose}>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
+          >
             <X className="text-slate-500 hover:text-black" />
           </button>
         </div>
 
-        {/* Form */}
-        <form
-          onSubmit={handleSubmit}
-          className="grid gap-4 p-6 border-b md:grid-cols-2"
-        >
-          {/* Name */}
-          <div className="relative">
-            <User className="absolute left-3 top-3 text-slate-400" />
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          {/* Form */}
+          <form
+            onSubmit={handleSubmit}
+            className="grid gap-4 p-6 border-b bg-slate-50/30 md:grid-cols-2"
+          >
+            {/* Name */}
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Student Name"
+                required
+                className="w-full rounded-xl border border-slate-200 pl-10 pr-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              />
+            </div>
+
+            {/* Subject */}
+            <div className="relative">
+              <Book className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
+              <input
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                placeholder="Subject"
+                required
+                className="w-full rounded-xl border border-slate-200 pl-10 pr-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              />
+            </div>
+
+            {/* Marks */}
             <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Student Name"
+              type="number"
+              value={marks}
+              onChange={(e) => setMarks(e.target.value)}
+              placeholder="Marks (e.g., 95)"
               required
-              className="w-full rounded-lg border pl-10 pr-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
             />
-          </div>
 
-          {/* Subject */}
-          <div className="relative">
-            <Book className="absolute left-3 top-3 text-slate-400" />
+            {/* Instructor */}
             <input
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              placeholder="Subject"
+              value={instructor}
+              onChange={(e) => setInstructor(e.target.value)}
+              placeholder="Instructor Name"
               required
-              className="w-full rounded-lg border pl-10 pr-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
             />
-          </div>
 
-          {/* Marks */}
-          <input
-            type="number"
-            value={marks}
-            onChange={(e) => setMarks(e.target.value)}
-            placeholder="Marks"
-            required
-            className="w-full rounded-lg border px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-          />
+            {/* Image URL */}
+            <input
+              value={image}
+              onChange={(e) => setImage(e.target.value)}
+              placeholder="Image URL (e.g. https://...)"
+              required
+              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 transition-all md:col-span-2"
+            />
 
-          {/* Instructor */}
-          <input
-            value={instructor}
-            onChange={(e) => setInstructor(e.target.value)}
-            placeholder="Instructor"
-            required
-            className="w-full rounded-lg border px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-          />
-
-          {/* Image URL */}
-          <input
-            value={image}
-            onChange={(e) => setImage(e.target.value)}
-            placeholder="Image URL"
-            required
-            className="w-full rounded-lg border px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none md:col-span-2"
-          />
-
-          {/* Buttons */}
-          <div className="flex justify-end gap-2 md:col-span-2">
-            {editingId && (
+            {/* Buttons */}
+            <div className="flex flex-col sm:flex-row justify-end gap-3 md:col-span-2">
+              {editingId && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingId(null);
+                    setName("");
+                    setSubject("");
+                    setMarks("");
+                    setInstructor("");
+                    setImage("");
+                  }}
+                  className="w-full sm:w-auto px-6 py-2.5 rounded-xl border border-slate-200 font-medium hover:bg-slate-50 transition-colors"
+                >
+                  Cancel
+                </button>
+              )}
               <button
-                type="button"
-                onClick={() => {
-                  setEditingId(null);
-                  setName("");
-                  setSubject("");
-                  setMarks("");
-                  setInstructor("");
-                  setImage("");
-                }}
-                className="px-4 py-2 rounded-lg border hover:bg-slate-100"
+                disabled={loading}
+                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 text-white px-8 py-2.5 rounded-xl font-bold hover:bg-blue-700 disabled:opacity-60 transition-all active:scale-95 shadow-md"
               >
-                Cancel
+                {editingId ? "Update Student" : "Add Student"}
               </button>
+            </div>
+          </form>
+
+          {/* Students List */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-4">
+            {students.length === 0 && (
+              <p className="text-center text-slate-400 text-sm">
+                No students added yet
+              </p>
             )}
-            <button
-              disabled={loading}
-              className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-60"
-            >
-              {editingId ? "Update Student" : "Add Student"}
-            </button>
-          </div>
-        </form>
 
-        {/* Students List */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
-          {students.length === 0 && (
-            <p className="text-center text-slate-400 text-sm">
-              No students added yet
-            </p>
-          )}
+            {students.map((s) => (
+              <div
+                key={s.id}
+                className="rounded-xl border p-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 hover:shadow-md transition"
+              >
+                <div className="flex items-center gap-4">
+                  <img
+                    src={s.image}
+                    alt={s.name}
+                    className="w-16 h-16 rounded-full object-cover border shadow-sm"
+                  />
+                  <div>
+                    <h3 className="font-semibold text-slate-900">{s.name}</h3>
+                    <p className="text-sm text-slate-600">{s.subject}</p>
+                    <p className="text-sm text-slate-600">
+                      Instructor: {s.instructor}
+                    </p>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Marks: {s.marks}
+                    </p>
+                  </div>
+                </div>
 
-          {students.map((s) => (
-            <div
-              key={s.id}
-              className="rounded-xl border p-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 hover:shadow-md transition"
-            >
-              <div className="flex items-center gap-4">
-                <img
-                  src={s.image}
-                  alt={s.name}
-                  className="w-16 h-16 rounded-full object-cover border shadow-sm"
-                />
-                <div>
-                  <h3 className="font-semibold text-slate-900">{s.name}</h3>
-                  <p className="text-sm text-slate-600">{s.subject}</p>
-                  <p className="text-sm text-slate-600">
-                    Instructor: {s.instructor}
-                  </p>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Marks: {s.marks}
-                  </p>
+                <div className="flex gap-2 self-end sm:self-start">
+                  <button
+                    onClick={() => handleEdit(s)}
+                    className="p-2 rounded-lg hover:bg-slate-100 transition"
+                    title="Edit"
+                  >
+                    <Edit2 size={16} />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(s.id)}
+                    className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
+                    title="Delete"
+                  >
+                    <Trash2 size={16} />
+                  </button>
                 </div>
               </div>
-
-              <div className="flex gap-2 self-end sm:self-start">
-                <button
-                  onClick={() => handleEdit(s)}
-                  className="p-2 rounded-lg hover:bg-slate-100 transition"
-                  title="Edit"
-                >
-                  <Edit2 size={16} />
-                </button>
-                <button
-                  onClick={() => handleDelete(s.id)}
-                  className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
-                  title="Delete"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </div>

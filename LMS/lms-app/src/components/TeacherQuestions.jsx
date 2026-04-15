@@ -104,11 +104,11 @@ export default function TeacherQuestions() {
         prev.map((q) =>
           q.id === selectedQuestion.id
             ? {
-                ...q,
-                reply: reply.trim(),
-                status: "answered",
-                repliedAt: new Date(),
-              }
+              ...q,
+              reply: reply.trim(),
+              status: "answered",
+              repliedAt: new Date(),
+            }
             : q
         )
       );
@@ -128,10 +128,19 @@ export default function TeacherQuestions() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-indigo-50 via-slate-50 to-white py-8 px-4">
-      {/* soft background blobs */}
-      <div className="pointer-events-none absolute -top-28 -left-28 h-72 w-72 rounded-full bg-blue-100 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-28 -right-28 h-80 w-80 rounded-full bg-indigo-100 blur-3xl" />
-
+      {/* Responsive soft background blobs */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden z-[-1]">
+        <div
+          className="absolute -top-16 -left-16 h-64 w-64 rounded-full bg-sky-100 blur-3xl 
+               sm:-top-20 sm:-left-20 sm:h-72 sm:w-72
+               md:-top-24 md:-left-24 md:h-72 md:w-72"
+        />
+        <div
+          className="absolute -bottom-16 -right-16 h-64 w-64 rounded-full bg-indigo-100 blur-3xl 
+               sm:-bottom-20 sm:-right-20 sm:h-72 sm:w-72
+               md:-bottom-24 md:-right-24 md:h-80 md:w-80"
+        />
+      </div>
       <div className="mx-auto w-full max-w-6xl rounded-2xl border bg-white shadow-sm ring-1 ring-blue-100">
         {/* Header */}
         <div className="flex items-center justify-between border-b px-6 py-4">
@@ -226,11 +235,10 @@ export default function TeacherQuestions() {
 
                   <button
                     onClick={() => handleOpenModal(q)}
-                    className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-white transition ${
-                      q.reply
+                    className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-white transition ${q.reply
                         ? "bg-indigo-600 hover:bg-indigo-700"
                         : "bg-blue-600 hover:bg-blue-700"
-                    }`}
+                      }`}
                   >
                     <Reply className="h-4 w-4" />
                     {q.reply ? "Edit Reply" : "Reply"}
@@ -327,11 +335,10 @@ function StatusChip({ status }) {
   const isAnswered = (status || "").toLowerCase() === "answered";
   return (
     <span
-      className={`mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
-        isAnswered
+      className={`mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${isAnswered
           ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
           : "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
-      }`}
+        }`}
     >
       {isAnswered ? (
         <CheckCircle2 className="h-3.5 w-3.5" />

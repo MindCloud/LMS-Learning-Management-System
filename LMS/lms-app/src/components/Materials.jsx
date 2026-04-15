@@ -187,9 +187,19 @@ function Materials() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-purple-100 via-violet-100 to-purple-50 py-10 px-4">
-      {/* soft background blobs */}
-      <div className="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full bg-sky-100 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-24 -right-24 h-80 w-80 rounded-full bg-indigo-100 blur-3xl" />
+      {/* Responsive soft background blobs */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden z-[-1]">
+        <div
+          className="absolute -top-16 -left-16 h-64 w-64 rounded-full bg-sky-100 blur-3xl 
+               sm:-top-20 sm:-left-20 sm:h-72 sm:w-72
+               md:-top-24 md:-left-24 md:h-72 md:w-72"
+        />
+        <div
+          className="absolute -bottom-16 -right-16 h-64 w-64 rounded-full bg-indigo-100 blur-3xl 
+               sm:-bottom-20 sm:-right-20 sm:h-72 sm:w-72
+               md:-bottom-24 md:-right-24 md:h-80 md:w-80"
+        />
+      </div>
 
       <div className="mx-auto w-full max-w-2xl rounded-2xl border bg-white shadow-sm ring-1 ring-blue-100">
         {/* Header */}
@@ -258,9 +268,8 @@ function Materials() {
                   : selectedGrades.join(", ")}
               </span>
               <ChevronDown
-                className={`h-4 w-4 transition-transform ${
-                  isDropdownOpen ? "rotate-180" : ""
-                }`}
+                className={`h-4 w-4 transition-transform ${isDropdownOpen ? "rotate-180" : ""
+                  }`}
               />
             </button>
 

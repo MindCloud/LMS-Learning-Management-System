@@ -250,9 +250,19 @@ Keep responses short, clear, accurate, and educational. Use bullet points or num
         const rawTeachers = Array.isArray(studentData.preferredTeachers)
           ? studentData.preferredTeachers
           : [];
-        const teacherIds = rawTeachers
+        const preferredTeacherIds = rawTeachers
           .map((t) => (typeof t === "string" ? t : t?.preferredTeacherId))
           .filter(Boolean);
+
+        // Also collect teacher IDs from marks
+        const marksTeacherIds = (studentData.marks || [])
+          .map((m) => m.teacherId)
+          .filter(Boolean);
+
+        // Combine and unique
+        const teacherIds = Array.from(
+          new Set([...preferredTeacherIds, ...marksTeacherIds])
+        );
 
         if (teacherIds.length === 0) {
           if (isMounted) setTeachers([]);
@@ -801,60 +811,108 @@ Keep responses short, clear, accurate, and educational. Use bullet points or num
               </button>
             </div>
 
-            <div className="p-8">
+            <div className="p-4 sm:p-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
               {marks.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="border-b-2 border-purple-200 text-sm font-medium text-slate-700">
-                        <th className="pb-4 pr-8">Subject</th>
-                        <th className="pb-4 pr-8 text-center">Score</th>
-                        <th className="pb-4 pr-8 text-center">Performance</th>
-                        <th className="pb-4">Date</th>
-                        <th className="pb-4">Teacher</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {[...marks]
-                        .sort((a, b) => new Date(b.date) - new Date(a.date))
-                        .map((mark, index) => (
-                          <tr
-                            key={index}
-                            className="border-b hover:bg-purple-50/50 transition last:border-0"
-                          >
-                            <td className="py-5 pr-8 font-medium text-slate-900">
+                <>
+                  {/* Desktop Table - Hidden on Mobile */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="border-b-2 border-purple-200 text-sm font-medium text-slate-700">
+                          <th className="pb-4 pr-8">Subject</th>
+                          <th className="pb-4 pr-8 text-center">Score</th>
+                          <th className="pb-4 pr-8 text-center">Performance</th>
+                          <th className="pb-4">Date</th>
+                          <th className="pb-4">Teacher</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {[...marks]
+                          .sort((a, b) => new Date(b.date) - new Date(a.date))
+                          .map((mark, index) => (
+                            <tr
+                              key={index}
+                              className="border-b hover:bg-purple-50/50 transition last:border-0"
+                            >
+                              <td className="py-5 pr-8 font-medium text-slate-900">
+                                {mark.subject}
+                              </td>
+                              <td className="py-5 pr-8 text-center">
+                                <span className="text-2xl font-bold text-purple-700">
+                                  {mark.score}
+                                </span>
+                                <span className="ml-2 text-sm text-slate-500">
+                                  /100
+                                </span>
+                              </td>
+                              <td className="py-5 pr-8 text-center">
+                                <span
+                                  className={`inline-flex rounded-full px-4 py-1.5 text-sm font-medium ring-1 ${getPerformanceBadge(
+                                    mark.score
+                                  )}`}
+                                >
+                                  {getPerformanceLabel(mark.score)}
+                                </span>
+                              </td>
+                              <td className="py-5 text-sm text-slate-600 flex items-center gap-2">
+                                <Calendar className="h-4 w-4 text-slate-400" />
+                                {formatDate(mark.date)}
+                              </td>
+                              <td className="py-5 text-sm text-slate-600">
+                                {teachers.find((t) => t.id === mark.teacherId)
+                                  ?.fullName ||
+                                  mark.teacherId?.slice(0, 8) + "..."}
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Mobile Cards - Hidden on Desktop */}
+                  <div className="grid gap-4 md:hidden">
+                    {[...marks]
+                      .sort((a, b) => new Date(b.date) - new Date(a.date))
+                      .map((mark, index) => (
+                        <div
+                          key={index}
+                          className="rounded-xl border border-purple-100 bg-white p-5 shadow-sm active:scale-[0.98] transition-transform"
+                        >
+                          <div className="flex items-center justify-between mb-3">
+                            <h4 className="font-bold text-slate-900">
                               {mark.subject}
-                            </td>
-                            <td className="py-5 pr-8 text-center">
-                              <span className="text-2xl font-bold text-purple-700">
-                                {mark.score}
-                              </span>
-                              <span className="ml-2 text-sm text-slate-500">
-                                /100
-                              </span>
-                            </td>
-                            <td className="py-5 pr-8 text-center">
-                              <span
-                                className={`inline-flex rounded-full px-4 py-1.5 text-sm font-medium ring-1 ${getPerformanceBadge(
-                                  mark.score
-                                )}`}
-                              >
-                                {getPerformanceLabel(mark.score)}
-                              </span>
-                            </td>
-                            <td className="py-5 text-sm text-slate-600 flex items-center gap-2">
-                              <Calendar className="h-4 w-4 text-slate-400" />
+                            </h4>
+                            <span
+                              className={`rounded-full px-3 py-1 text-xs font-semibold ring-1 ${getPerformanceBadge(
+                                mark.score
+                              )}`}
+                            >
+                              {getPerformanceLabel(mark.score)}
+                            </span>
+                          </div>
+                          <div className="flex items-baseline gap-2 mb-4">
+                            <span className="text-3xl font-extrabold text-purple-700">
+                              {mark.score}
+                            </span>
+                            <span className="text-sm font-medium text-slate-400">
+                              / 100
+                            </span>
+                          </div>
+                          <div className="flex flex-col gap-2 pt-3 border-t border-slate-50">
+                            <div className="flex items-center gap-2 text-xs text-slate-600">
+                              <Calendar className="h-3.5 w-3.5 text-slate-400" />
                               {formatDate(mark.date)}
-                            </td>
-                            <td className="py-5 text-sm text-slate-600">
-                              {/* Optional: Show teacher name if you fetch it, otherwise just ID */}
-                              {mark.teacherId?.slice(0, 8)}...
-                            </td>
-                          </tr>
-                        ))}
-                    </tbody>
-                  </table>
-                </div>
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-slate-600">
+                              <User className="h-3.5 w-3.5 text-slate-400" />
+                              {teachers.find((t) => t.id === mark.teacherId)
+                                ?.fullName || "Teacher ID: " + mark.teacherId?.slice(0, 6)}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </>
               ) : (
                 <div className="py-16 text-center">
                   <Award className="mx-auto h-16 w-16 text-purple-300" />

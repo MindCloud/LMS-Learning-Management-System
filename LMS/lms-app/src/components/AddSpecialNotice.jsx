@@ -30,7 +30,7 @@ export default function AddSpecialNoticeModal({ open, onClose }) {
   useEffect(() => {
     const q = query(
       collection(db, "SpecialNotices"),
-      orderBy("postedAt", "desc"),
+      orderBy("postedAt", "desc")
     );
 
     const unsub = onSnapshot(q, (snapshot) => {
@@ -66,9 +66,9 @@ export default function AddSpecialNoticeModal({ open, onClose }) {
     } catch (err) {
       console.error(err);
       alert("Operation failed");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   const handleEdit = (n) => {
@@ -79,112 +79,126 @@ export default function AddSpecialNoticeModal({ open, onClose }) {
 
   const handleDelete = async (id) => {
     if (!confirm("Delete this notice?")) return;
-    await deleteDoc(doc(db, "SpecialNotices", id));
+    try {
+      await deleteDoc(doc(db, "SpecialNotices", id));
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete notice");
+    }
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center px-3">
-      <div className="w-full max-w-4xl bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-0 sm:px-3 sm:py-6">
+      <div className="w-full h-full sm:h-auto sm:max-w-4xl bg-white sm:rounded-2xl shadow-xl overflow-hidden flex flex-col sm:max-h-[90vh]">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b sticky top-0 bg-white z-10">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
+          <h2 className="text-lg font-bold flex items-center gap-2 text-slate-900">
             <PlusCircle className="text-blue-600" size={20} />
             Special Notices
           </h2>
-          <button onClick={onClose}>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
+          >
             <X className="text-slate-500 hover:text-black" />
           </button>
         </div>
 
-        {/* Form */}
-        <form
-          onSubmit={handleSubmit}
-          className="grid gap-4 p-6 border-b md:grid-cols-2"
-        >
-          <div className="relative md:col-span-2">
-            <FileText className="absolute left-3 top-3 text-slate-400" />
-            <input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Notice title"
-              required
-              className="w-full rounded-lg border pl-10 pr-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-            />
-          </div>
+        <div className="flex-1 overflow-hidden flex flex-col">
+          {/* Form */}
+          <form
+            onSubmit={handleSubmit}
+            className="grid gap-4 p-6 border-b bg-slate-50/30"
+          >
+            <div className="relative">
+              <FileText className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
+              <input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Notice title"
+                required
+                className="w-full rounded-xl border border-slate-200 pl-10 pr-3 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+              />
+            </div>
 
-          <div className="relative md:col-span-2">
-            <AlignLeft className="absolute left-3 top-3 text-slate-400" />
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Notice description"
-              rows={4}
-              required
-              className="w-full rounded-lg border pl-10 pr-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-            />
-          </div>
+            <div className="relative">
+              <AlignLeft className="absolute left-3 top-3 text-slate-400 h-4 w-4" />
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Notice description"
+                rows={4}
+                required
+                className="w-full rounded-xl border border-slate-200 pl-10 pr-3 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+              />
+            </div>
 
-          <div className="flex justify-end gap-2 md:col-span-2">
-            {editingId && (
+            <div className="flex flex-col sm:flex-row justify-end gap-3">
+              {editingId && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingId(null);
+                    setTitle("");
+                    setDescription("");
+                  }}
+                  className="w-full sm:w-auto px-6 py-2.5 rounded-xl border border-slate-200 font-medium hover:bg-slate-100 transition-colors"
+                >
+                  Cancel
+                </button>
+              )}
+
               <button
-                type="button"
-                onClick={() => {
-                  setEditingId(null);
-                  setTitle("");
-                  setDescription("");
-                }}
-                className="px-4 py-2 rounded-lg border hover:bg-slate-100"
+                disabled={loading}
+                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 text-white px-8 py-2.5 rounded-xl font-bold hover:bg-blue-700 disabled:opacity-60 transition-all active:scale-95 shadow-md focus:ring-2 ring-blue-500"
               >
-                Cancel
+                {editingId ? "Update Notice" : "Post Notice"}
               </button>
+            </div>
+          </form>
+
+          {/* Notices List */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+            {notices.length === 0 && (
+              <p className="text-center text-slate-400 text-sm py-8">
+                No notices posted yet
+              </p>
             )}
 
-            <button
-              disabled={loading}
-              className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-60"
-            >
-              {editingId ? "Update Notice" : "Post Notice"}
-            </button>
+            {notices.map((n) => (
+              <div
+                key={n.id}
+                className="rounded-xl border p-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 hover:shadow-sm transition"
+              >
+                <div className="flex-1">
+                  <h3 className="font-semibold text-slate-900">{n.title}</h3>
+                  <p className="text-sm text-slate-600 mt-1 whitespace-pre-wrap">
+                    {n.description}
+                  </p>
+                  {n.postedAt && (
+                    <p className="text-xs text-slate-400 mt-2">
+                      {n.postedAt.toDate().toLocaleString()}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex gap-2 self-end sm:self-start mt-2 sm:mt-0">
+                  <button
+                    onClick={() => handleEdit(n)}
+                    className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
+                  >
+                    <Edit2 size={16} />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(n.id)}
+                    className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
-        </form>
-
-        {/* Notices List */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
-          {notices.length === 0 && (
-            <p className="text-center text-slate-400 text-sm">
-              No notices posted yet
-            </p>
-          )}
-
-          {notices.map((n) => (
-            <div
-              key={n.id}
-              className="rounded-xl border p-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 hover:shadow-sm transition"
-            >
-              <div>
-                <h3 className="font-semibold">{n.title}</h3>
-                <p className="text-sm text-slate-600 mt-1">{n.description}</p>
-                <p className="text-xs text-slate-400 mt-2">
-                  {n.postedAt?.toDate().toLocaleString()}
-                </p>
-              </div>
-
-              <div className="flex gap-2 self-end sm:self-start">
-                <button
-                  onClick={() => handleEdit(n)}
-                  className="p-2 rounded-lg hover:bg-slate-100"
-                >
-                  <Edit2 size={16} />
-                </button>
-                <button
-                  onClick={() => handleDelete(n.id)}
-                  className="p-2 rounded-lg hover:bg-red-50 text-red-600"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            </div>
-          ))}
         </div>
       </div>
     </div>

@@ -190,11 +190,11 @@ function UpdateTeacherForm({ teacher, onClose, onTeacherUpdated }) {
       role="dialog"
       aria-modal="true"
       onMouseDown={onOverlayClick}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-blue-950/20 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-blue-950/40 backdrop-blur-sm p-0 sm:p-4"
     >
       <div
         onMouseDown={(e) => e.stopPropagation()}
-        className="w-full max-w-4xl max-h-[80vh] overflow-y-auto rounded-2xl border border-blue-100 bg-white shadow-2xl"
+        className="w-full h-full sm:h-auto sm:max-w-4xl sm:max-h-[90vh] overflow-y-auto sm:rounded-2xl border-0 sm:border border-blue-100 bg-white shadow-2xl flex flex-col"
       >
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-gradient-to-r from-blue-50 to-white px-6 py-4">
@@ -398,19 +398,19 @@ function UpdateTeacherForm({ teacher, onClose, onTeacherUpdated }) {
 
         {/* Footer */}
         <div className="sticky bottom-0 z-10 border-t bg-gradient-to-r from-white to-blue-50 px-6 py-4">
-          <div className="flex items-center justify-end gap-3">
+          <div className="flex flex-col sm:flex-row items-center justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
               disabled={submitting}
-              className="rounded-xl border border-blue-200 px-5 py-2.5 text-sm font-medium text-blue-800 transition hover:bg-blue-50 disabled:opacity-50"
+              className="w-full sm:w-auto rounded-xl border border-blue-200 px-5 py-3 text-sm font-medium text-blue-800 transition hover:bg-blue-50 disabled:opacity-50 active:scale-95"
             >
               Cancel
             </button>
             <button
               onClick={handleSubmit}
               disabled={submitting}
-              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-70 disabled:cursor-not-allowed"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-8 py-3 text-sm font-medium text-white shadow-md transition hover:bg-blue-700 disabled:opacity-70 disabled:cursor-not-allowed active:scale-95"
             >
               {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
               Update Teacher

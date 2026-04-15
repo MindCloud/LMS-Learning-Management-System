@@ -39,7 +39,10 @@ import {
   ChevronRight,
   Trash2,
   MessageCircle,
+  Menu,
+  X,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 function Dashboard() {
   const [teacher, setTeacher] = useState(null);
@@ -55,6 +58,7 @@ function Dashboard() {
   const [selectedGrade, setSelectedGrade] = useState("all");
   const [studentToDelete, setStudentToDelete] = useState(null);
   const [isAddFolderModalOpen, setIsAddFolderModalOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // Sidebar grade filters
   const [selectedGradeNotices, setSelectedGradeNotices] = useState("all");
@@ -336,10 +340,10 @@ function Dashboard() {
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-indigo-50 via-slate-50 to-white">
       {/* Header */}
-      <header className="sticky top-0 z-20 border-b bg-white/80 backdrop-blur">
+      <header className="sticky top-0 z-40 border-b bg-white/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-sm">
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-md">
               <LayoutDashboard className="h-5 w-5" />
             </span>
             <div>
@@ -351,7 +355,9 @@ function Dashboard() {
               </p>
             </div>
           </div>
-          <nav className="flex items-center gap-2">
+
+          {/* Desktop Navigation */}
+          <nav className="hidden xl:flex items-center gap-2">
             <TopLink
               onClick={() => navigate("/notices")}
               icon={<Bell className="h-4 w-4 text-amber-600" />}
@@ -369,35 +375,99 @@ function Dashboard() {
             />
             <button
               onClick={() => navigate("/questions")}
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:from-blue-700 hover:to-indigo-700"
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:from-blue-700 hover:to-indigo-700 active:scale-95"
             >
               <MessageSquare className="h-4 w-4" />
               Questions
             </button>
             <button
               onClick={() => navigate("/teacher-feedback")}
-              className="inline-flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-200 shadow-sm transition hover:bg-slate-50"
+              className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-200 shadow-sm transition hover:bg-slate-50 active:scale-95"
             >
               <MessageCircle className="h-4 w-4 text-blue-600" />
               Feedback
             </button>
-            {/* Add this button inside the <nav> section, preferably before Questions button */}
             <button
               onClick={() => setIsAddFolderModalOpen(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:from-emerald-700 hover:to-teal-700 transition"
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:from-emerald-700 hover:to-teal-700 transition active:scale-95"
             >
               <FileText className="h-4 w-4" />
               Add Resource Folder
             </button>
             <button
               onClick={handleLogout}
-              className="inline-flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-200 shadow-sm transition hover:bg-slate-50"
+              className="ml-2 inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-medium text-red-600 ring-1 ring-red-100 shadow-sm transition hover:bg-red-50 active:scale-95"
             >
               <LogOut className="h-4 w-4" />
               Logout
             </button>
           </nav>
+
+          {/* Mobile Menu Toggle */}
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="inline-flex xl:hidden h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-slate-600 ring-1 ring-slate-200 transition active:scale-90"
+          >
+            {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
         </div>
+
+        {/* Mobile Navigation Menu */}
+        <AnimatePresence>
+          {isMenuOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="overflow-hidden xl:hidden border-t bg-white shadow-lg"
+            >
+              <div className="flex flex-col gap-1 p-4">
+                <MobileLink
+                  onClick={() => { navigate("/notices"); setIsMenuOpen(false); }}
+                  icon={<Bell className="h-5 w-5 text-amber-600" />}
+                  label="Manage Notices"
+                />
+                <MobileLink
+                  onClick={() => { navigate("/materials"); setIsMenuOpen(false); }}
+                  icon={<BookOpen className="h-5 w-5 text-indigo-600" />}
+                  label="Materials"
+                />
+                <MobileLink
+                  onClick={() => { navigate("/homework"); setIsMenuOpen(false); }}
+                  icon={<NotebookPen className="h-5 w-5 text-sky-600" />}
+                  label="Homework"
+                />
+                <MobileLink
+                  onClick={() => { navigate("/questions"); setIsMenuOpen(false); }}
+                  icon={<MessageSquare className="h-5 w-5 text-blue-600" />}
+                  label="Questions"
+                />
+                <MobileLink
+                  onClick={() => { navigate("/teacher-feedback"); setIsMenuOpen(false); }}
+                  icon={<MessageCircle className="h-5 w-5 text-indigo-600" />}
+                  label="Feedback"
+                />
+                <button
+                  onClick={() => { setIsAddFolderModalOpen(true); setIsMenuOpen(false); }}
+                  className="flex items-center gap-3 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700 ring-1 ring-emerald-100 transition hover:bg-emerald-100"
+                >
+                  <FileText className="h-5 w-5" />
+                  Add Resource Folder
+                </button>
+                <div className="my-2 h-px bg-slate-100" />
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-3 rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 ring-1 ring-red-100 transition hover:bg-red-100"
+                >
+                  <LogOut className="h-5 w-5" />
+                  Logout
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <div className="h-1 w-full bg-gradient-to-r from-blue-600 via-sky-500 via-40% to-indigo-600" />
       </header>
 
@@ -935,6 +1005,18 @@ function TopLink({ onClick, icon, label }) {
     <button
       onClick={onClick}
       className="inline-flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-200 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-300"
+    >
+      {icon}
+      {label}
+    </button>
+  );
+}
+
+function MobileLink({ onClick, icon, label }) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex items-center gap-3 rounded-xl p-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 active:bg-slate-100"
     >
       {icon}
       {label}

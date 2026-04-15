@@ -37,7 +37,10 @@ import {
   Edit,
   Trash2,
   Loader2,
+  Menu,
+  X,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 function AdminDashboard() {
   const [teachers, setTeachers] = useState([]);
@@ -48,6 +51,7 @@ function AdminDashboard() {
   const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [showNoticeModal, setShowNoticeModal] = useState(false);
   const [showTopStudentModal, setShowTopStudentModal] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // UI / filters
   const [query, setQuery] = useState("");
@@ -140,9 +144,8 @@ function AdminDashboard() {
 
     if (debouncedQuery) {
       list = list.filter((t) => {
-        const full = `${t.fullName || ""} ${t.email || ""} ${
-          t.subjects || ""
-        } ${t.username || ""}`.toLowerCase();
+        const full = `${t.fullName || ""} ${t.email || ""} ${t.subjects || ""
+          } ${t.username || ""}`.toLowerCase();
         return full.includes(debouncedQuery);
       });
     }
@@ -243,21 +246,24 @@ function AdminDashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 via-indigo-50/40 to-white">
       {/* Header */}
-      <header className="sticky top-0 z-20 border-b bg-white/80 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
+      <header className="sticky top-0 z-40 border-b bg-white/80 backdrop-blur-md">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
           <div className="flex items-center gap-2">
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-sm ring-1 ring-blue-400/30">
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-md ring-1 ring-blue-400/30">
               <LayoutDashboard className="h-5 w-5" />
             </span>
             <div>
-              <h1 className="text-lg font-semibold text-slate-900">
+              <h1 className="text-base font-bold text-slate-900 sm:text-lg">
                 Admin Dashboard
               </h1>
-              <p className="text-xs text-slate-500">EZone Institute • Admin</p>
+              <p className="hidden text-[10px] text-slate-500 sm:block">
+                EZone Institute • Admin
+              </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          {/* Desktop Actions */}
+          <div className="hidden items-center gap-2 xl:flex">
             <button
               onClick={fetchTeachers}
               className="inline-flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-200 shadow-sm transition hover:bg-blue-50/40 hover:ring-blue-200"
@@ -269,7 +275,7 @@ function AdminDashboard() {
 
             <button
               onClick={() => setShowAddModal(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:from-blue-700 hover:to-indigo-700"
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:from-blue-700 hover:to-indigo-700 active:scale-95"
             >
               <Plus className="h-4 w-4" />
               Add Teacher
@@ -277,16 +283,15 @@ function AdminDashboard() {
 
             <button
               onClick={() => setShowNoticeModal(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:from-emerald-700 hover:to-teal-700"
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:from-emerald-700 hover:to-teal-700 active:scale-95"
             >
               <Plus className="h-4 w-4" />
               Add Notice
             </button>
 
-            {/* ✅ New Top Students Button */}
             <button
               onClick={() => setShowTopStudentModal(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:from-purple-700 hover:to-pink-700"
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:from-purple-700 hover:to-pink-700 active:scale-95"
             >
               <Plus className="h-4 w-4" />
               Add Top Student
@@ -294,21 +299,95 @@ function AdminDashboard() {
 
             <button
               onClick={handleSignOut}
-              className="inline-flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-200 shadow-sm transition hover:bg-blue-50/40 hover:ring-blue-200"
+              className="ml-2 inline-flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-200 shadow-sm transition hover:bg-red-50 hover:text-red-600 hover:ring-red-100 active:scale-95"
               title="Sign out"
             >
-              <LogOut className="h-4 w-4 text-blue-600" />
+              <LogOut className="h-4 w-4" />
               Log out
             </button>
           </div>
+
+          {/* Mobile Menu Toggle */}
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-slate-600 ring-1 ring-slate-200 transition active:scale-90 xl:hidden"
+          >
+            {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
         </div>
+
+        {/* Mobile Navigation Menu */}
+        <AnimatePresence>
+          {isMenuOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="overflow-hidden border-t bg-white shadow-lg xl:hidden"
+            >
+              <div className="flex flex-col gap-2 p-4">
+                <button
+                  onClick={() => {
+                    fetchTeachers();
+                    setIsMenuOpen(false);
+                  }}
+                  className="flex items-center gap-3 rounded-xl p-3 text-sm font-semibold text-slate-700 transition hover:bg-blue-50"
+                >
+                  <RefreshCw className="h-5 w-5 text-blue-600" />
+                  Refresh List
+                </button>
+                <div className="h-px bg-slate-100" />
+                <button
+                  onClick={() => {
+                    setShowAddModal(true);
+                    setIsMenuOpen(false);
+                  }}
+                  className="flex items-center gap-3 rounded-xl bg-blue-50 px-4 py-3 text-sm font-bold text-blue-700 transition hover:bg-blue-100"
+                >
+                  <Plus className="h-5 w-5" />
+                  Add New Teacher
+                </button>
+                <button
+                  onClick={() => {
+                    setShowNoticeModal(true);
+                    setIsMenuOpen(false);
+                  }}
+                  className="flex items-center gap-3 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700 transition hover:bg-emerald-100"
+                >
+                  <Plus className="h-5 w-5" />
+                  Add Special Notice
+                </button>
+                <button
+                  onClick={() => {
+                    setShowTopStudentModal(true);
+                    setIsMenuOpen(false);
+                  }}
+                  className="flex items-center gap-3 rounded-xl bg-purple-50 px-4 py-3 text-sm font-bold text-purple-700 transition hover:bg-purple-100"
+                >
+                  <Plus className="h-5 w-5" />
+                  Add Top Student
+                </button>
+                <div className="h-px bg-slate-100" />
+                <button
+                  onClick={handleSignOut}
+                  className="flex items-center gap-3 rounded-xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700 transition hover:bg-red-100"
+                >
+                  <LogOut className="h-5 w-5" />
+                  Log Out
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <div className="h-1 w-full bg-gradient-to-r from-blue-600 via-sky-500 to-indigo-600" />
       </header>
 
       <main className="mx-auto max-w-7xl p-4 sm:p-6">
         {/* Overview Stats */}
-        <section className="mb-6 grid gap-4 sm:grid-cols-3">
+        {/* Overview Stats */}
+        <section className="mb-6 grid gap-4 grid-cols-1 sm:grid-cols-3">
           <StatCard
             accent="from-blue-50 to-indigo-50"
             icon={<Users className="h-5 w-5 text-blue-600" />}
@@ -331,8 +410,8 @@ function AdminDashboard() {
 
         {/* Toolbar */}
         <section className="mb-6 rounded-2xl border bg-white/95 p-4 shadow-sm ring-1 ring-slate-100">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div className="flex flex-1 items-center gap-2">
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
@@ -342,15 +421,38 @@ function AdminDashboard() {
                     setPage(1);
                   }}
                   placeholder="Search name, email, subject, username…"
-                  className="w-full rounded-lg border px-9 py-2 text-sm text-slate-800 ring-1 ring-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full rounded-xl border px-9 py-2.5 text-sm text-slate-800 ring-1 ring-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
-              <span className="hidden items-center gap-1 rounded-lg bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-blue-200 md:inline-flex">
-                <Filter className="h-3.5 w-3.5" /> Filters
-              </span>
+
+              <div className="flex items-center gap-1 self-end rounded-lg bg-blue-50 p-1 ring-1 ring-blue-200">
+                <button
+                  onClick={() => setView("grid")}
+                  className={`rounded-md px-3 py-1.5 transition ${view === "grid"
+                    ? "bg-white shadow-sm ring-1 ring-blue-200"
+                    : "text-slate-700 hover:bg-white/60"
+                    }`}
+                  title="Grid view"
+                >
+                  <GridIcon className="h-4 w-4 text-blue-600" />
+                </button>
+                <button
+                  onClick={() => setView("list")}
+                  className={`rounded-md px-3 py-1.5 transition ${view === "list"
+                    ? "bg-white shadow-sm ring-1 ring-blue-200"
+                    : "text-slate-700 hover:bg-white/60"
+                    }`}
+                  title="List view"
+                >
+                  <ListIcon className="h-4 w-4 text-blue-600" />
+                </button>
+              </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2 py-1.5 text-xs font-semibold text-blue-700 ring-1 ring-blue-200">
+                <Filter className="h-3.5 w-3.5" /> Filters:
+              </span>
               <Select
                 value={subjectFilter}
                 onChange={(v) => {
@@ -378,30 +480,6 @@ function AdminDashboard() {
                 placeholder="All roles"
                 options={roles}
               />
-              <div className="ml-auto flex items-center gap-1 rounded-lg bg-blue-50 p-1 ring-1 ring-blue-200">
-                <button
-                  onClick={() => setView("grid")}
-                  className={`rounded-md px-2 py-1 transition ${
-                    view === "grid"
-                      ? "bg-white shadow ring-1 ring-blue-200"
-                      : "text-slate-700 hover:bg-white/60"
-                  }`}
-                  title="Grid view"
-                >
-                  <GridIcon className="h-4 w-4 text-blue-600" />
-                </button>
-                <button
-                  onClick={() => setView("list")}
-                  className={`rounded-md px-2 py-1 transition ${
-                    view === "list"
-                      ? "bg-white shadow ring-1 ring-blue-200"
-                      : "text-slate-700 hover:bg-white/60"
-                  }`}
-                  title="List view"
-                >
-                  <ListIcon className="h-4 w-4 text-blue-600" />
-                </button>
-              </div>
             </div>
           </div>
         </section>
@@ -472,33 +550,39 @@ function AdminDashboard() {
 
           {/* Pagination */}
           {filtered.length > 0 && (
-            <div className="flex items-center justify-between border-t bg-blue-50/40 px-5 py-3 text-sm text-slate-700">
-              <span>
+            <div className="flex flex-col items-center justify-between gap-4 border-t bg-blue-50/40 px-5 py-4 text-sm text-slate-700 sm:flex-row sm:py-3">
+              <span className="order-2 sm:order-1 font-medium">
                 Showing{" "}
-                <strong>
+                <span className="text-blue-700">
                   {(pageSafe - 1) * PAGE_SIZE + 1}-
                   {Math.min(pageSafe * PAGE_SIZE, filtered.length)}
-                </strong>{" "}
-                of <strong>{filtered.length}</strong>
+                </span>{" "}
+                of <span className="text-blue-700">{filtered.length}</span>
               </span>
-              <div className="flex items-center gap-2">
+              <div className="flex order-1 sm:order-2 items-center gap-2">
                 <button
-                  className="inline-flex items-center gap-1 rounded-lg bg-white px-3 py-1 ring-1 ring-blue-200 shadow-sm transition hover:bg-blue-50 disabled:opacity-50"
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  className="inline-flex items-center gap-1 rounded-xl bg-white px-4 py-2 ring-1 ring-blue-200 shadow-sm transition hover:bg-blue-50 disabled:opacity-50 active:scale-95"
+                  onClick={() => {
+                    setPage((p) => Math.max(1, p - 1));
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
                   disabled={pageSafe <= 1}
                 >
                   <ChevronLeft className="h-4 w-4 text-blue-600" />
-                  Prev
+                  <span className="hidden xs:inline">Prev</span>
                 </button>
-                <span className="rounded-lg bg-white px-2 py-1 ring-1 ring-blue-200 shadow-sm">
-                  Page {pageSafe} / {totalPages}
+                <span className="rounded-xl bg-white px-3 py-2 font-bold text-blue-700 ring-1 ring-blue-200 shadow-sm">
+                  {pageSafe} / {totalPages}
                 </span>
                 <button
-                  className="inline-flex items-center gap-1 rounded-lg bg-white px-3 py-1 ring-1 ring-blue-200 shadow-sm transition hover:bg-blue-50 disabled:opacity-50"
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  className="inline-flex items-center gap-1 rounded-xl bg-white px-4 py-2 ring-1 ring-blue-200 shadow-sm transition hover:bg-blue-50 disabled:opacity-50 active:scale-95"
+                  onClick={() => {
+                    setPage((p) => Math.min(totalPages, p + 1));
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
                   disabled={pageSafe >= totalPages}
                 >
-                  Next
+                  <span className="hidden xs:inline">Next</span>
                   <ChevronRight className="h-4 w-4 text-blue-600" />
                 </button>
               </div>
@@ -609,18 +693,16 @@ function SortPill({ label, current, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`inline-flex items-center gap-1 rounded-md px-2 py-1 ring-1 text-xs shadow-sm transition ${
-        current
+      className={`inline-flex items-center gap-1 rounded-md px-2 py-1 ring-1 text-xs shadow-sm transition ${current
           ? "bg-blue-50 ring-blue-200 text-blue-700"
           : "bg-white/80 ring-slate-200 text-slate-700 hover:bg-blue-50"
-      }`}
+        }`}
       title={`Sort by ${label}`}
     >
       {label}
       <ArrowUpDown
-        className={`h-3.5 w-3.5 ${
-          current ? "text-blue-600" : "text-slate-400"
-        }`}
+        className={`h-3.5 w-3.5 ${current ? "text-blue-600" : "text-slate-400"
+          }`}
       />
     </button>
   );
@@ -653,13 +735,13 @@ function Badge({ children }) {
 
 function Row({ icon, label, value }) {
   return (
-    <div className="flex items-start gap-2 rounded-lg bg-white/90 px-3 py-2 ring-1 ring-blue-100">
-      <span className="mt-0.5 text-blue-500">{icon}</span>
-      <div className="min-w-0">
-        <dt className="text-xs uppercase tracking-wide text-slate-500">
+    <div className="flex items-start gap-2.5 rounded-xl bg-white/60 backdrop-blur-sm px-3 py-2.5 ring-1 ring-blue-100/50 shadow-sm transition hover:bg-white hover:shadow-md hover:ring-blue-200">
+      <span className="mt-1 text-blue-600 shrink-0">{icon}</span>
+      <div className="min-w-0 flex-1">
+        <dt className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
           {label}
         </dt>
-        <dd className="truncate text-slate-800">{value}</dd>
+        <dd className="truncate text-sm font-medium text-slate-700">{value}</dd>
       </div>
     </div>
   );
@@ -667,101 +749,116 @@ function Row({ icon, label, value }) {
 
 function TeacherCard({ teacher, onUpdate, onDelete }) {
   return (
-    <article className="group rounded-2xl border bg-gradient-to-br from-white to-blue-50/30 p-5 shadow-sm transition hover:shadow-md ring-1 ring-blue-100 hover:ring-blue-200">
-      <div className="flex items-center gap-4">
-        <div className="relative">
+    <article className="group relative flex flex-col rounded-3xl border bg-gradient-to-br from-white via-white to-blue-50/20 p-5 shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ring-1 ring-blue-100 hover:ring-blue-300">
+      {/* Glossy Top Accent */}
+      <div className="absolute inset-x-0 top-0 h-1 rounded-t-3xl bg-gradient-to-r from-blue-400 to-indigo-500 opacity-60" />
+
+      {/* Header Profile Section */}
+      <div className="flex items-center gap-4 mb-5">
+        <div className="relative shrink-0">
+          <div className="absolute -inset-1 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 blur opacity-20 group-hover:opacity-40 transition duration-500" />
           {teacher.imageUrl ? (
             <img
               src={teacher.imageUrl}
               alt={teacher.fullName}
-              className="h-16 w-16 rounded-full object-cover ring-2 ring-white shadow"
+              className="relative h-16 w-16 rounded-full object-cover border-2 border-white shadow-lg ring-1 ring-blue-100"
             />
           ) : (
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 ring-2 ring-white shadow">
+            <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 border-2 border-white shadow-lg ring-1 ring-blue-100">
               <UserIcon className="h-8 w-8 text-blue-400" />
             </div>
           )}
           {teacher.role && (
-            <span className="absolute -bottom-1 -right-1">
+            <span className="absolute -bottom-1 -right-1 shadow-lg">
               <Badge>{teacher.role}</Badge>
             </span>
           )}
         </div>
 
-        <div className="min-w-0">
-          <h3 className="truncate text-base font-semibold text-slate-900">
+        <div className="min-w-0 flex-1">
+          <h3 className="truncate text-lg font-bold text-slate-800 tracking-tight group-hover:text-blue-700 transition-colors">
             {teacher.fullName || "—"}
           </h3>
-          <p className="flex items-center gap-2 truncate text-sm text-slate-600">
-            <Mail className="h-4 w-4 text-blue-500" />
+          <p className="flex items-center gap-1.5 truncate text-xs font-medium text-slate-500 mt-0.5">
+            <Mail className="h-3.5 w-3.5 text-blue-500" />
             {teacher.email || "—"}
           </p>
         </div>
       </div>
 
-      <dl className="mt-4 space-y-2 text-sm text-slate-700">
+      {/* Info Grid - Responsive Columns inside the card */}
+      <dl className="grid grid-cols-1 min-[480px]:grid-cols-2 gap-3 mb-5">
         {teacher.username && (
           <Row
-            icon={<UserIcon className="h-4 w-4" />}
-            label="Username"
+            icon={<UserIcon className="h-3.5 w-3.5" />}
+            label="ID / User"
             value={teacher.username}
           />
         )}
         {teacher.subjects && (
           <Row
-            icon={<GraduationCap className="h-4 w-4" />}
-            label="Subjects"
+            icon={<GraduationCap className="h-3.5 w-3.5" />}
+            label="Subject"
             value={teacher.subjects}
-          />
-        )}
-        {teacher.grades?.length > 0 && (
-          <Row
-            icon={<Sparkles className="h-4 w-4" />}
-            label="Grades"
-            value={teacher.grades.join(", ")}
           />
         )}
         {teacher.contact && (
           <Row
-            icon={<Phone className="h-4 w-4" />}
+            icon={<Phone className="h-3.5 w-3.5" />}
             label="Contact"
             value={teacher.contact}
           />
         )}
         {teacher.address && (
           <Row
-            icon={<MapPin className="h-4 w-4" />}
-            label="Address"
+            icon={<MapPin className="h-3.5 w-3.5" />}
+            label="Location"
             value={teacher.address}
           />
         )}
         {teacher.achievements && (
           <Row
-            icon={<Sparkles className="h-4 w-4" />}
-            label="Achievements"
+            icon={<Sparkles className="h-3.5 w-3.5" />}
+            label="Awards"
             value={teacher.achievements}
           />
         )}
-        {teacher.bio && (
-          <div className="rounded-xl bg-blue-50/40 px-3 py-2 italic text-slate-700 ring-1 ring-blue-100">
-            “{teacher.bio}”
+        {teacher.grades?.length > 0 && (
+          <div className="min-[480px]:col-span-2">
+            <Row
+              icon={<Sparkles className="h-3.5 w-3.5" />}
+              label="Teaching Grades"
+              value={teacher.grades.join(", ")}
+            />
           </div>
         )}
       </dl>
-      <div className="mt-4 flex gap-2">
+
+      {/* Bio section */}
+      {teacher.bio && (
+        <div className="mb-6 relative">
+          <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-blue-200 rounded-full" />
+          <p className="pl-4 italic text-sm text-slate-600 line-clamp-2 hover:line-clamp-none transition-all cursor-default">
+            “{teacher.bio}”
+          </p>
+        </div>
+      )}
+
+      {/* Action Buttons - Sticky to bottom */}
+      <div className="mt-auto flex gap-3">
         <button
           onClick={onUpdate}
-          className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700"
+          className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-sm font-bold text-white shadow-blue-200 shadow-lg transition-all hover:bg-blue-700 active:scale-95"
         >
           <Edit className="h-4 w-4" />
-          Update
+          Edit
         </button>
         <button
           onClick={onDelete}
-          className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-red-700"
+          className="inline-flex items-center justify-center rounded-xl bg-white p-3 text-red-500 ring-1 ring-red-100 transition-all hover:bg-red-50 hover:ring-red-200 active:scale-95 shadow-sm"
+          title="Delete Teacher"
         >
-          <Trash2 className="h-4 w-4" />
-          Delete
+          <Trash2 className="h-5 w-5" />
         </button>
       </div>
     </article>
@@ -777,9 +874,8 @@ function TeacherTable({ rows, sortKey, sortDir, onSort, onUpdate, onDelete }) {
     >
       {label}
       <ArrowUpDown
-        className={`h-3.5 w-3.5 ${
-          sortKey === key ? "text-blue-600" : "text-slate-400"
-        }`}
+        className={`h-3.5 w-3.5 ${sortKey === key ? "text-blue-600" : "text-slate-400"
+          }`}
       />
     </button>
   );
