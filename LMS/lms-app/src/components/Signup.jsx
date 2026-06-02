@@ -331,13 +331,13 @@ function Signup() {
                       Grade 6–11 Classes
                     </option>
                     <option value="al-ict">
-                      A/L ICT
+                      A/L
                     </option>
                     <option value="ol-ict">
-                      O/L ICT
+                      O/L
                     </option>
-                    <option value="foundation">
-                      Foundation IT
+                    <option value="other">
+                      Other
                     </option>
                   </select>
                   {errors.course && (

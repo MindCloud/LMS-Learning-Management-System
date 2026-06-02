@@ -288,13 +288,13 @@ const Downloads = () => {
 
         <div className="relative mx-auto max-w-7xl px-5 sm:px-6 lg:px-8 py-24 lg:py-32 text-center">
           <div className="inline-block mb-6 px-6 py-2.5 bg-white/15 backdrop-blur-md rounded-full text-sm font-medium tracking-wide border border-white/20">
-            2025 Updated • 500+ Free Resources • A/L Focused
+            2026 Updated • 500+ Free Resources • A/L O/L Focused
           </div>
 
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight mb-6 drop-shadow-lg">
-            Your Ultimate A/L <br className="hidden sm:block" />
+            DOWNLOAD <br className="hidden sm:block" />
             <span className="bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-300 bg-clip-text text-transparent">
-              Resource Hub
+              (Ultimate Resourses)
             </span>
           </h1>
 

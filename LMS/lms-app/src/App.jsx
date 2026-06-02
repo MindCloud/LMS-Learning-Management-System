@@ -50,7 +50,7 @@ function App() {
     <div className="min-h-screen flex flex-col">
       {/* Global Toast Provider */}
       <Toaster
-        position="top-right"
+        position="top-center"
         richColors
         closeButton
         toastOptions={{
