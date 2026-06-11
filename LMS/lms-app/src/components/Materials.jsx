@@ -294,7 +294,7 @@ function Materials() {
           {/* Form Composer & Sidebar: Span 5 */}
           <div className="lg:col-span-5 space-y-6">
             {/* Resource Composer Form Card */}
-            <div className="relative overflow-hidden rounded-2xl border border-slate-200/60 bg-white/70 backdrop-blur-md p-6 shadow-sm">
+            <div className="relative rounded-2xl border border-slate-200/60 bg-white/70 backdrop-blur-md p-6 shadow-sm">
               <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-2">
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-50 text-purple-600">
@@ -406,29 +406,31 @@ function Materials() {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-1.5 max-h-56 overflow-y-auto pr-1">
-                          {grades.map((grade) => {
-                            const isSelected = selectedGrades.includes(grade);
-                            return (
-                              <button
-                                key={grade}
-                                type="button"
-                                onClick={() => toggleGrade(grade)}
-                                className={`flex items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-semibold transition-all ${isSelected
-                                  ? "bg-purple-50 text-purple-700 border border-purple-100/50"
-                                  : "bg-slate-50/50 hover:bg-slate-50 text-slate-600 border border-transparent"
-                                  }`}
-                              >
-                                <div className={`h-3.5 w-3.5 rounded flex items-center justify-center border transition-all ${isSelected
-                                  ? "border-purple-600 bg-purple-600 text-white"
-                                  : "border-slate-300 bg-white"
-                                  }`}>
-                                  {isSelected && <CheckCircle2 className="h-2.5 w-2.5 stroke-[3px]" />}
-                                </div>
-                                <span className="truncate">{grade}</span>
-                              </button>
-                            );
-                          })}
+                        <div className="max-h-48 overflow-y-auto pr-1">
+                          <div className="grid grid-cols-2 gap-1.5">
+                            {grades.map((grade) => {
+                              const isSelected = selectedGrades.includes(grade);
+                              return (
+                                <button
+                                  key={grade}
+                                  type="button"
+                                  onClick={() => toggleGrade(grade)}
+                                  className={`flex items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-semibold transition-all ${isSelected
+                                    ? "bg-purple-50 text-purple-700 border border-purple-100/50"
+                                    : "bg-slate-50/50 hover:bg-slate-50 text-slate-600 border border-transparent"
+                                    }`}
+                                >
+                                  <div className={`h-3.5 w-3.5 rounded flex items-center justify-center border transition-all ${isSelected
+                                    ? "border-purple-600 bg-purple-600 text-white"
+                                    : "border-slate-300 bg-white"
+                                    }`}>
+                                    {isSelected && <CheckCircle2 className="h-2.5 w-2.5 stroke-[3px]" />}
+                                  </div>
+                                  <span className="truncate">{grade}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
                       </motion.div>
                     )}
