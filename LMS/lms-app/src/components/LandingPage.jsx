@@ -307,11 +307,18 @@ function StarRating({ rating = 5 }) {
   );
   return (
     <div
-      className="flex items-center gap-1 text-blue-400"
+      className="flex items-center gap-1 text-amber-400"
       aria-label={`Rating ${rating} of 5`}
     >
       {stars.map((on, i) => (
-        <FiStar key={i} className={on ? "fill-current" : "opacity-30"} />
+        <FiStar
+          key={i}
+          className={
+            on
+              ? "fill-current drop-shadow-[0_2px_4px_rgba(251,191,36,0.3)]"
+              : "opacity-25 text-slate-350 dark:text-slate-700"
+          }
+        />
       ))}
     </div>
   );
@@ -691,8 +698,8 @@ function LandingPage() {
                             <span
                               key={`${t.fullName}-${s}`}
                               className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ring-1 ${i % 2 === 0
-                                  ? "bg-blue-50 text-blue-700 ring-blue-100"
-                                  : "bg-cyan-50 text-cyan-700 ring-cyan-100"
+                                ? "bg-blue-50 text-blue-700 ring-blue-100"
+                                : "bg-cyan-50 text-cyan-700 ring-cyan-100"
                                 }`}
                             >
                               {s}
@@ -1057,22 +1064,33 @@ function LandingPage() {
       {/* Testimonials */}
       <section
         id="testimonials"
-        className="bg-gradient-to-r from-blue-50 to-white py-16 scroll-mt-24"
+        className="relative overflow-hidden bg-gradient-to-b from-blue-50/50 to-white dark:from-slate-950 dark:to-slate-900 py-20 scroll-mt-24"
       >
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto mb-12 max-w-2xl text-center">
-            <h2 className="text-3xl font-bold text-blue-900 sm:text-4xl">
+        {/* Background Decorative Blobs */}
+        <div className="pointer-events-none absolute -top-24 -right-24 h-72 w-72 rounded-full bg-blue-150/20 blur-3xl dark:bg-blue-950/10 animate-float-slow" />
+        <div className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-purple-150/20 blur-3xl dark:bg-purple-950/10 animate-float-medium" />
+
+        <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto mb-16 max-w-2xl text-center">
+            <span className="inline-flex items-center gap-2 rounded-full bg-blue-50 dark:bg-blue-950/50 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-blue-700 dark:text-blue-400 border border-blue-100/50 dark:border-blue-900/30">
+              Testimonials
+            </span>
+            <h2 className="mt-4 text-3xl font-bold text-blue-900 dark:text-white sm:text-4xl">
               What Our Community Says
             </h2>
-            <p className="mt-3 text-lg text-slate-600">
-              Real feedback from teachers and learners.
+            <p className="mt-3 text-base text-slate-650 dark:text-slate-400">
+              Real feedback from teachers, educators, and learners.
             </p>
           </div>
 
           {loading ? (
-            <p className="text-center text-slate-600">Loading feedback…</p>
+            <div className="flex justify-center py-12">
+              <p className="text-center text-slate-600 dark:text-slate-400 animate-pulse font-medium">
+                Loading feedback…
+              </p>
+            </div>
           ) : feedbacks.length === 0 ? (
-            <p className="text-center text-slate-600">
+            <p className="text-center text-slate-600 dark:text-slate-400 py-12 font-medium">
               No feedback yet. Be the first to share!
             </p>
           ) : (
@@ -1082,33 +1100,54 @@ function LandingPage() {
               slidesPerView={1}
               navigation
               pagination={{ clickable: true }}
-              autoplay={{ delay: 3500, disableOnInteraction: false }}
+              autoplay={{ delay: 4500, disableOnInteraction: false }}
               breakpoints={{ 768: { slidesPerView: 2 } }}
-              className="pb-12"
+              className="pb-14"
             >
               {feedbacks.map((fb) => (
-                <SwiperSlide key={fb.id}>
-                  <article className="flex h-full flex-col justify-between rounded-2xl bg-white p-8 shadow-sm ring-1 ring-blue-100">
-                    <div className="mb-6 flex items-center gap-4">
-                      <img
-                        loading="lazy"
-                        src={fb.imageUrl || "/default-avatar.png"}
-                        alt={fb.fullName}
-                        className="h-14 w-14 rounded-full object-cover ring-2 ring-white"
-                      />
+                <SwiperSlide key={fb.id || fb.createdAt}>
+                  <article className="relative overflow-hidden rounded-3xl bg-white/70 dark:bg-slate-900/70 p-8 shadow-md border border-slate-200/50 dark:border-slate-800/50 backdrop-blur-md transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl flex h-full flex-col justify-between min-h-[260px]">
+                    {/* Decorative quotes */}
+                    <span className="absolute right-6 top-6 text-7xl font-serif text-slate-200/60 dark:text-slate-800/40 pointer-events-none select-none">
+                      “
+                    </span>
+
+                    <div className="relative z-10 flex h-full flex-col justify-between">
                       <div>
-                        <h4 className="font-semibold text-blue-900">
-                          {fb.fullName}
-                        </h4>
-                        <p className="text-sm text-slate-600">
-                          {fb.role}
-                          {fb.subject ? ` • ${fb.subject}` : ""}
+                        {/* User Header */}
+                        <div className="mb-6 flex items-center gap-4">
+                          <img
+                            loading="lazy"
+                            src={fb.imageUrl || "https://api.dicebear.com/7.x/initials/svg?seed=" + encodeURIComponent(fb.fullName || "User")}
+                            alt={fb.fullName}
+                            className="h-14 w-14 rounded-full object-cover ring-4 ring-blue-50 dark:ring-slate-950 shadow-sm"
+                          />
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1">
+                              <h4 className="font-bold text-blue-900 dark:text-white truncate">
+                                {fb.fullName}
+                              </h4>
+                              <span className="inline-flex text-emerald-500" title="Verified Member">
+                                <FiCheckCircle className="h-4 w-4 fill-emerald-100 dark:fill-emerald-950/20" />
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 truncate font-medium">
+                              {fb.role || "Community Member"}
+                              {fb.subject ? ` • ${fb.subject}` : ""}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Testimonial text */}
+                        <p className="text-slate-700 dark:text-slate-300 italic leading-relaxed break-words text-sm pr-4">
+                          “{fb.feedback}”
                         </p>
                       </div>
-                    </div>
-                    <p className="flex-1 text-slate-700">“{fb.feedback}”</p>
-                    <div className="mt-4">
-                      <StarRating rating={Number(fb.rating) || 5} />
+
+                      {/* Footer Rating */}
+                      <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800/70">
+                        <StarRating rating={Number(fb.rating) || 5} />
+                      </div>
                     </div>
                   </article>
                 </SwiperSlide>

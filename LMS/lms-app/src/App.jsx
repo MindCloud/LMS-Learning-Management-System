@@ -20,6 +20,7 @@ import TeacherFeedback from "./components/TeacherFeedback";
 import TeacherProfile from "./components/TeacherProfile";
 import Downloads from "./components/Downloads";
 import ManageResourceFolders from "./components/ManageResourceFolders"
+import ThemeToggle from "./components/ThemeToggle"; // 👈 ADD THIS
 
 // Check if user is logged in
 const isAuthenticated = () => {
@@ -59,6 +60,8 @@ function App() {
           },
         }}
       />
+      {/* Global Dark Mode Switcher */}
+      <ThemeToggle />
 
       <div className="flex-1">
         <Routes>

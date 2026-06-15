@@ -122,3 +122,202 @@
   background: rgba(148, 163, 184, 0.4);
 }
 
+/* Configure custom dark variant for Tailwind v4 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ==========================================
+   GLOBAL DARK MODE SELECTORS & OVERRIDES
+   ========================================== */
+
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark,
+html.dark body {
+  background-color: #0b0f19 !important;
+  color: #cbd5e1 !important;
+}
+
+/* Float Animations for Ambient Background Blobs (Dark Mode) */
+html.dark .bg-indigo-200\/40,
+html.dark .bg-indigo-200\/30,
+html.dark .bg-indigo-100\/40,
+html.dark .bg-indigo-200,
+html.dark .bg-blue-100,
+html.dark .bg-violet-100 {
+  background-color: rgba(99, 102, 241, 0.08) !important;
+}
+
+html.dark .bg-rose-100\/40,
+html.dark .bg-rose-100\/30,
+html.dark .bg-rose-100,
+html.dark .bg-rose-50 {
+  background-color: rgba(244, 63, 94, 0.05) !important;
+}
+
+html.dark .bg-sky-200\/30,
+html.dark .bg-sky-200\/40,
+html.dark .bg-sky-100\/30,
+html.dark .bg-sky-200,
+html.dark .bg-sky-100 {
+  background-color: rgba(14, 165, 233, 0.05) !important;
+}
+
+/* Glass and Card Containers */
+html.dark .bg-white,
+html.dark .glass-card,
+html.dark .glass-panel {
+  background-color: rgba(18, 24, 36, 0.75) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-color: rgba(38, 50, 71, 0.6) !important;
+  color: #cbd5e1 !important;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.3) !important;
+}
+
+html.dark .glass-panel-darker {
+  background-color: rgba(22, 32, 48, 0.85) !important;
+  border-color: rgba(38, 50, 71, 0.8) !important;
+}
+
+html.dark .glass-card:hover {
+  background-color: rgba(26, 36, 54, 0.85) !important;
+  border-color: rgba(59, 130, 246, 0.35) !important;
+}
+
+/* Global Background colors */
+html.dark .bg-slate-50,
+html.dark .bg-slate-50\/50,
+html.dark .bg-slate-50\/80,
+html.dark .bg-slate-100,
+html.dark .bg-slate-100\/80,
+html.dark .bg-slate-100\/50 {
+  background-color: #0b0f19 !important;
+}
+
+/* Nested elements (inner containers inside cards) */
+html.dark .glass-card .bg-slate-50,
+html.dark .glass-card .bg-slate-100,
+html.dark .bg-white .bg-slate-50,
+html.dark .bg-white .bg-slate-100,
+html.dark .bg-white .bg-slate-50\/80,
+html.dark .rounded-2xl.border.bg-slate-50 {
+  background-color: #1a2333 !important;
+  border-color: #243047 !important;
+}
+
+/* Dynamic color transitions */
+html.dark .text-slate-900,
+html.dark .text-slate-800,
+html.dark .text-slate-700,
+html.dark .text-blue-900,
+html.dark .text-slate-800\/80 {
+  color: #f8fafc !important;
+}
+
+html.dark .text-slate-600,
+html.dark .text-slate-500 {
+  color: #94a3b8 !important;
+}
+
+html.dark .text-blue-800,
+html.dark .text-blue-700,
+html.dark .text-indigo-600,
+html.dark .text-blue-600 {
+  color: #60a5fa !important;
+}
+
+html.dark .text-slate-400 {
+  color: #64748b !important;
+}
+
+/* Borders, rings and dividers */
+html.dark .border,
+html.dark .border-b,
+html.dark .border-t,
+html.dark .border-r,
+html.dark .border-l,
+html.dark .border-slate-200,
+html.dark .border-slate-100,
+html.dark .border-slate-200\/60,
+html.dark .border-slate-200\/50,
+html.dark .border-slate-200\/70,
+html.dark .border-slate-200\/80,
+html.dark .border-slate-100\/50,
+html.dark .border-slate-100\/80,
+html.dark .border-blue-100,
+html.dark .ring-1,
+html.dark .ring-2,
+html.dark .ring-slate-200,
+html.dark .ring-blue-100,
+html.dark .ring-slate-100 {
+  border-color: #243047 !important;
+  --tw-ring-color: #243047 !important;
+}
+
+/* Navbars & Headers */
+html.dark header,
+html.dark .bg-white\/75,
+html.dark .bg-white\/80,
+html.dark .bg-white\/90,
+html.dark .bg-white\/95 {
+  background-color: rgba(11, 15, 25, 0.85) !important;
+  border-color: #1a2333 !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Specific buttons styled with bg-slate-900 (logout, confirms) */
+html.dark .bg-slate-900 {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+html.dark .bg-slate-900:hover {
+  background-color: #2e3b4e !important;
+}
+
+/* Inputs, Textareas, Selects */
+html.dark input,
+html.dark select,
+html.dark textarea {
+  background-color: #121824 !important;
+  border-color: #243047 !important;
+  color: #cbd5e1 !important;
+}
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #475569 !important;
+}
+html.dark input:focus,
+html.dark select:focus,
+html.dark textarea:focus {
+  border-color: #3b82f6 !important;
+  --tw-ring-color: rgba(59, 130, 246, 0.15) !important;
+}
+
+/* Form list selection hover / active items */
+html.dark option {
+  background-color: #121824 !important;
+  color: #cbd5e1 !important;
+}
+
+/* Badges & Tag styling */
+html.dark .bg-blue-50 { background-color: rgba(59, 130, 246, 0.15) !important; color: #60a5fa !important; }
+html.dark .bg-emerald-50 { background-color: rgba(16, 185, 129, 0.15) !important; color: #34d399 !important; }
+html.dark .bg-indigo-50 { background-color: rgba(99, 102, 241, 0.15) !important; color: #a5b4fc !important; }
+html.dark .bg-amber-50 { background-color: rgba(245, 158, 11, 0.15) !important; color: #fcd34d !important; }
+html.dark .bg-cyan-50 { background-color: rgba(6, 182, 212, 0.15) !important; color: #67e8f9 !important; }
+html.dark .bg-rose-50 { background-color: rgba(244, 63, 94, 0.15) !important; color: #fca5a5 !important; }
+html.dark .bg-sky-50 { background-color: rgba(14, 165, 233, 0.15) !important; color: #7dd3fc !important; }
+
+/* Invert colors of gradients to preserve premium visual aesthetic */
+html.dark .bg-gradient-to-b {
+  background-image: linear-gradient(to bottom, #0b0f19, #0f172a) !important;
+}
+html.dark .bg-gradient-to-br {
+  background-image: linear-gradient(to bottom right, #0b0f19, #0f172a) !important;
+}
+html.dark .bg-gradient-to-br.from-blue-600.to-indigo-600 {
+  background-image: linear-gradient(to bottom right, #1d4ed8, #4f46e5) !important;
+}
+
