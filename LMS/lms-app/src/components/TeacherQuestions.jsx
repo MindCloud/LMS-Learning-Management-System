@@ -10,6 +10,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { db, auth } from "../firebase";
+import { onAuthStateChanged } from "firebase/auth";
 import { Dialog } from "@headlessui/react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -50,11 +51,11 @@ export default function TeacherQuestions() {
 
   // Fetch questions for the logged-in teacher
   useEffect(() => {
-    const fetchQuestions = async () => {
-      const user = auth.currentUser;
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!user) {
         toast.error("You must be logged in to view questions.");
         setFetching(false);
+        navigate("/login");
         return;
       }
 
@@ -78,17 +79,16 @@ export default function TeacherQuestions() {
         });
 
         setQuestions(sortedList);
-        toast.success(`Loaded ${sortedList.length} student question(s)`);
       } catch (error) {
         console.error("Error fetching questions:", error);
         toast.error("Failed to load questions. Please try again.");
       } finally {
         setFetching(false);
       }
-    };
+    });
 
-    fetchQuestions();
-  }, []);
+    return () => unsubscribe();
+  }, [navigate]);
 
   // Open modal
   const handleOpenModal = (question) => {

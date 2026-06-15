@@ -352,7 +352,12 @@ function LandingPage() {
   useEffect(() => {
     const fetchFeedback = async () => {
       try {
-        const snap = await getDocs(collection(db, "feedback"));
+        const q = query(
+          collection(db, "feedback"),
+          orderBy("createdAt", "desc"),
+          limit(10),
+        );
+        const snap = await getDocs(q);
         const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
         setFeedbacks(data.length ? data : defaultFeedbacks);
       } catch (e) {

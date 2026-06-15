@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom"; // <-- Added
 import { auth, db } from "../firebase";
+import { onAuthStateChanged } from "firebase/auth";
 import { collection, addDoc, getDoc, doc } from "firebase/firestore";
 import { toast } from "sonner"; // <-- Added for professional toasts
 
@@ -27,15 +28,15 @@ const TeacherFeedback = () => {
 
   // 🔹 Fetch logged-in teacher data
   useEffect(() => {
-    const fetchTeacher = async () => {
-      try {
-        const user = auth.currentUser;
-        if (!user) {
-          toast.error("You must be logged in to submit feedback.");
-          setLoading(false);
-          return;
-        }
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        toast.error("You must be logged in to submit feedback.");
+        setLoading(false);
+        navigate("/login");
+        return;
+      }
 
+      try {
         const teacherRef = doc(db, "teachers", user.uid);
         const teacherSnap = await getDoc(teacherRef);
 
@@ -50,9 +51,10 @@ const TeacherFeedback = () => {
       } finally {
         setLoading(false);
       }
-    };
-    fetchTeacher();
-  }, []);
+    });
+
+    return () => unsubscribe();
+  }, [navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

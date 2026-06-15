@@ -496,10 +496,20 @@ Keep responses short, clear, accurate, and educational. Use bullet points or num
           setMarks(studentData.marks || []);
         }
 
-        const rawGrade = studentData.grade || studentData.course || "";
-        const studentGrade = rawGrade.startsWith("Grade ")
-          ? rawGrade
-          : `Grade ${rawGrade}`;
+        const gradeVal = studentData.grade || "";
+        const courseVal = studentData.course || "";
+        let studentGrade = "";
+
+        if (courseVal === "al-ict" || gradeVal === "al-ict" || gradeVal === "A/L") {
+          studentGrade = "A/L";
+        } else if (courseVal === "ol-ict" || gradeVal === "ol-ict" || gradeVal === "O/L") {
+          studentGrade = "O/L";
+        } else if (courseVal === "other" || gradeVal === "other" || gradeVal === "Other") {
+          studentGrade = "Other";
+        } else if (gradeVal) {
+          const gradeStr = gradeVal.toString();
+          studentGrade = gradeStr.startsWith("Grade ") ? gradeStr : `Grade ${gradeStr}`;
+        }
 
         const isPending =
           (studentData.status || "").toLowerCase() === "pending";
@@ -571,7 +581,15 @@ Keep responses short, clear, accurate, and educational. Use bullet points or num
                   (a.createdAt?.toMillis?.() ?? 0)
               );
 
-              setter((prev) => ({ ...prev, [teacherId]: list }));
+              // Filter list according to student's registered target audience
+              const filteredList = list.filter((item) => {
+                if (!item.grades || !Array.isArray(item.grades) || item.grades.length === 0 || item.grades.includes("All Grades")) {
+                  return true;
+                }
+                return item.grades.includes(studentGrade);
+              });
+
+              setter((prev) => ({ ...prev, [teacherId]: filteredList }));
             } catch (e) {
               console.error(`Failed to load ${colName}:`, e);
               setter((prev) => ({ ...prev, [teacherId]: [] }));

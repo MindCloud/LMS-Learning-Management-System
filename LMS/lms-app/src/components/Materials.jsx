@@ -47,7 +47,6 @@ function Materials() {
   const [gradeFilter, setGradeFilter] = useState("all"); // Material grade filter
   const navigate = useNavigate();
 
-  // Customize grades as needed
   const grades = [
     "Grade 6",
     "Grade 7",
@@ -57,7 +56,7 @@ function Materials() {
     "Grade 11",
     "O/L",
     "A/L",
-    "After A/L",
+    "Other",
     "All Grades",
   ];
 
@@ -294,7 +293,7 @@ function Materials() {
           {/* Form Composer & Sidebar: Span 5 */}
           <div className="lg:col-span-5 space-y-6">
             {/* Resource Composer Form Card */}
-            <div className="relative rounded-2xl border border-slate-200/60 bg-white/70 backdrop-blur-md p-6 shadow-sm">
+            <div className="relative z-20 rounded-2xl border border-slate-200/60 bg-white/70 backdrop-blur-md p-6 shadow-sm">
               <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-2">
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-50 text-purple-600">

@@ -261,17 +261,19 @@ function Dashboard() {
 
     if (selectedGrade !== "all") {
       filtered = filtered.filter((student) => {
-        const studentGrade = (student.grade || "")
-          .toString()
-          .trim()
-          .toLowerCase();
-        if (selectedGrade === "after-ol") {
-          return studentGrade.includes("o/l");
+        const gradeVal = (student.grade || "").toString().trim().toLowerCase();
+        const courseVal = (student.course || "").toString().trim().toLowerCase();
+
+        if (selectedGrade === "o/l") {
+          return courseVal === "ol-ict" || gradeVal === "o/l" || gradeVal === "ol";
         }
-        if (selectedGrade === "after-al") {
-          return studentGrade.includes("a/l");
+        if (selectedGrade === "a/l") {
+          return courseVal === "al-ict" || gradeVal === "a/l" || gradeVal === "al";
         }
-        return studentGrade === selectedGrade;
+        if (selectedGrade === "other") {
+          return courseVal === "other" || gradeVal === "other";
+        }
+        return gradeVal === selectedGrade;
       });
     }
 
@@ -660,8 +662,9 @@ function Dashboard() {
                     <option value="9">Grade 9</option>
                     <option value="10">Grade 10</option>
                     <option value="11">Grade 11</option>
-                    <option value="after-ol">After O/L</option>
-                    <option value="after-al">After A/L</option>
+                    <option value="o/l">O/L</option>
+                    <option value="a/l">A/L</option>
+                    <option value="other">Other</option>
                   </select>
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
                     <ChevronRight className="h-4 w-4 rotate-90" />
@@ -734,12 +737,14 @@ function Dashboard() {
                                 <span className="inline-flex items-center gap-1 rounded-md bg-slate-50 border border-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
                                   <GraduationCap className="h-3 w-3 text-indigo-500" />
                                   {student.grade
-                                    ? student.grade === "after-ol"
-                                      ? "After O/L"
-                                      : student.grade === "after-al"
-                                        ? "After A/L"
-                                        : `Grade ${student.grade}`
-                                    : "Grade —"}
+                                    ? `Grade ${student.grade}`
+                                    : student.course === "al-ict"
+                                      ? "A/L"
+                                      : student.course === "ol-ict"
+                                        ? "O/L"
+                                        : student.course === "other"
+                                          ? "Other"
+                                          : "General"}
                                 </span>
                                 <span
                                   className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-semibold ${student.status === "active"

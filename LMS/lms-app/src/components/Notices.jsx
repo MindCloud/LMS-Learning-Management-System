@@ -52,8 +52,10 @@ function Notices() {
     "Grade 9",
     "Grade 10",
     "Grade 11",
-    "After O/L",
-    "After A/L",
+    "O/L",
+    "A/L",
+    "Other",
+    "All Grades",
   ];
 
   // Real-time listener for teacher's notices
@@ -271,7 +273,7 @@ function Notices() {
           {/* Composer & Info Sidebar: Span 5 */}
           <div className="lg:col-span-5 space-y-6">
             {/* Notice Form Composer Card */}
-            <div className="relative rounded-2xl border border-slate-200/60 dark:border-slate-800/60 bg-white/70 dark:bg-slate-900/60 backdrop-blur-md p-6 shadow-sm">
+            <div className="relative z-20 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 bg-white/70 dark:bg-slate-900/60 backdrop-blur-md p-6 shadow-sm">
               <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-2">
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-50 dark:bg-orange-950/30 text-orange-650 dark:text-orange-400">
