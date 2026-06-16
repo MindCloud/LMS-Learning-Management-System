@@ -13,6 +13,7 @@ import { db } from "../firebase";
 // src/components/LandingPage.jsx
 import HERO_BG_360 from "../assets/landing.png"; // <-- adjust path/name as needed
 import logo from "../assets/logo.jpg";
+import Footer from "./Footer";
 
 // Icons
 import {
@@ -326,6 +327,29 @@ function StarRating({ rating = 5 }) {
 
 /* ---------- Page component ---------- */
 function LandingPage() {
+  const [heroTilt, setHeroTilt] = useState({ rotateX: 0, rotateY: 0, shadowX: 0, shadowY: 0 });
+
+  const handleHeroMouseMove = (e) => {
+    const card = e.currentTarget;
+    const rect = card.getBoundingClientRect();
+    const x = e.clientX - rect.left - rect.width / 2;
+    const y = e.clientY - rect.top - rect.height / 2;
+    const normalizedX = x / (rect.width / 2);
+    const normalizedY = y / (rect.height / 2);
+    const maxRotate = 8; // degrees
+
+    setHeroTilt({
+      rotateX: -normalizedY * maxRotate,
+      rotateY: normalizedX * maxRotate,
+      shadowX: -normalizedX * 12,
+      shadowY: -normalizedY * 12,
+    });
+  };
+
+  const handleHeroMouseLeave = () => {
+    setHeroTilt({ rotateX: 0, rotateY: 0, shadowX: 0, shadowY: 0 });
+  };
+
   const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notices, setNotices] = useState([]);
@@ -460,15 +484,17 @@ function LandingPage() {
               <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row md:justify-start">
                 <Link
                   to="/signup"
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white shadow-lg transition hover:scale-[1.02] hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-white/40"
+                  className="group inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-white/40 active:scale-[0.98] cursor-pointer"
                 >
-                  ලියාපදිංචි වන්න <FaPlay className="text-sm" />
+                  <span>ලියාපදිංචි වන්න</span>
+                  <FiChevronRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1.5" />
                 </Link>
                 <Link
                   to="/login"
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 font-semibold text-blue-800 shadow-sm transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-white/40"
+                  className="group inline-flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 font-semibold text-blue-800 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-white/40 active:scale-[0.98] cursor-pointer"
                 >
-                  පිවිසෙන්න( ලියාපදිංචි සිසුන් වෙනුවෙන් )
+                  <span>පිවිසෙන්න( ලියාපදිංචි සිසුන් වෙනුවෙන් )</span>
+                  <FiChevronRight className="w-5 h-5 text-blue-650 transition-transform duration-300 group-hover:translate-x-1.5" />
                 </Link>
               </div>
 
@@ -487,7 +513,15 @@ function LandingPage() {
             </div>
 
             <div className="relative">
-              <div className="mx-auto w-full max-w-xl rounded-3xl border border-white/20 bg-white/95 p-6 shadow-2xl backdrop-blur">
+              <div
+                onMouseMove={handleHeroMouseMove}
+                onMouseLeave={handleHeroMouseLeave}
+                className="mx-auto w-full max-w-xl rounded-3xl border border-white/20 bg-white/95 p-6 shadow-2xl backdrop-blur transition-all duration-100 ease-out"
+                style={{
+                  transform: `perspective(1000px) rotateX(${heroTilt.rotateX}deg) rotateY(${heroTilt.rotateY}deg) scale3d(1.02, 1.02, 1.02)`,
+                  boxShadow: `${heroTilt.shadowX}px ${heroTilt.shadowY}px 30px rgba(0, 0, 0, 0.15)`,
+                }}
+              >
                 {/* Header */}
                 <div className="mb-5 flex items-center gap-4">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-600 text-white text-xl">
@@ -605,14 +639,7 @@ function LandingPage() {
                 </div>
 
                 {/* Progress bar */}
-                <div className="mt-4">
-                  <div className="h-2 w-full rounded-full bg-blue-100">
-                    <div
-                      className="h-2 rounded-full bg-blue-600 transition-all"
-                      style={{ width: `${s.marks}%` }}
-                    />
-                  </div>
-                </div>
+
               </article>
             ))}
           </div>
@@ -669,83 +696,86 @@ function LandingPage() {
                 return (
                   <article
                     key={t.id || t.fullName}
-                    className="group flex h-64 overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-blue-100 transition hover:-translate-y-1 hover:shadow-xl"
+                    className="group flex flex-col sm:flex-row h-auto sm:h-72 lg:h-64 overflow-hidden rounded-3xl bg-white shadow-sm border border-slate-200/60 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:border-blue-300/80"
                   >
-                    {/* Left: Tutor Image */}
-                    <div className="relative h-full w-48 flex-shrink-0">
+                    {/* Left/Top: Tutor Image Container */}
+                    <div className="relative w-full h-56 sm:h-full sm:w-52 flex-shrink-0 overflow-hidden bg-slate-100">
                       <img
                         src={
                           t.imageUrl ||
                           "https://via.placeholder.com/300?text=Tutor"
                         }
                         alt={t.fullName}
-                        className="h-full w-full object-cover"
+                        className="h-full w-full object-cover transition-transform duration-500 will-change-transform group-hover:scale-105"
                         loading="lazy"
                       />
-                      <div className="absolute left-3 top-3 rounded-md bg-blue-600 px-2 py-0.5 text-xs font-semibold text-white shadow">
-                        ★ {rating}
-                      </div>
                     </div>
 
-                    {/* Right: Content */}
-                    <div className="flex flex-1 flex-col justify-between p-5">
+                    {/* Right/Bottom: Content details */}
+                    <div className="flex flex-1 flex-col justify-between p-6">
                       <div>
-                        <h4 className="text-2xl font-semibold text-blue-900 line-clamp-1">
+                        {/* Subject Small Ribbon header */}
+                        <div className="text-[12px] sm:text-[13px] font-black uppercase tracking-widest text-blue-600 mb-1 leading-none">
+                          {subjects.join(" • ")}
+                        </div>
+
+                        {/* Tutor Name */}
+                        <h4 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-snug group-hover:text-blue-700 transition-colors">
                           {t.fullName}
                         </h4>
-                        <p className="mt-1 text-sm text-slate-600 line-clamp-1">
-                          {subjects.join(" • ")}
-                        </p>
 
-                        {/* Subject tags */}
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {subjects.map((s, i) => (
-                            <span
-                              key={`${t.fullName}-${s}`}
-                              className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ring-1 ${i % 2 === 0
-                                ? "bg-blue-50 text-blue-700 ring-blue-100"
-                                : "bg-cyan-50 text-cyan-700 ring-cyan-100"
-                                }`}
-                            >
-                              {s}
-                            </span>
-                          ))}
+                        {/* Attractive Large Subject Badges */}
+                        <div className="mt-3.5 flex flex-wrap gap-2">
+                          {subjects.map((s, i) => {
+                            // Unique aesthetic color palettes for different subjects
+                            const tagStyle = i % 2 === 0
+                              ? "bg-gradient-to-r from-blue-600 to-indigo-600 shadow-blue-500/10"
+                              : "bg-gradient-to-r from-indigo-500 to-cyan-500 shadow-indigo-500/10";
+                            return (
+                              <span
+                                key={`${t.fullName}-${s}`}
+                                className={`inline-flex items-center rounded-2xl px-5 py-2.5 text-sm sm:text-base font-black uppercase tracking-wider text-white shadow-md ${tagStyle}`}
+                              >
+                                {s}
+                              </span>
+                            );
+                          })}
                         </div>
                       </div>
 
-                      {/* Bottom: Stats + Buttons */}
-                      <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        {/* Stats */}
-                        <div className="flex gap-6">
-                          <div className="text-center">
-                            <div className="text-base font-bold text-blue-700">
+                      {/* Bottom Section: Stats & Action Buttons */}
+                      <div className="mt-6 flex flex-col min-[450px]:flex-row gap-4 sm:items-center sm:justify-between border-t border-slate-100 pt-4">
+                        {/* Stats Info */}
+                        <div className="flex gap-5">
+                          <div className="text-left">
+                            <div className="text-base font-extrabold text-blue-700">
                               {studentCount}+
                             </div>
-                            <div className="text-[12px] text-slate-500">
+                            <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
                               Students
                             </div>
                           </div>
-                          <div className="text-center">
-                            <div className="text-base font-bold text-blue-700">
+                          <div className="text-left border-l border-slate-100 pl-5">
+                            <div className="text-base font-extrabold text-blue-700">
                               {lessonCount}+
                             </div>
-                            <div className="text-[12px] text-slate-500">
+                            <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
                               Lessons
                             </div>
                           </div>
                         </div>
 
-                        {/* Buttons */}
-                        <div className="flex flex-col gap-2 sm:flex-row">
+                        {/* CTAs */}
+                        <div className="flex gap-2">
                           <Link
                             to={`/teachers/${t.id || ""}`}
-                            className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500"
+                            className="inline-flex items-center justify-center rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-4.5 py-2.5 text-xs font-extrabold tracking-wide uppercase transition shadow-md shadow-blue-500/10 hover:shadow-lg active:scale-95 cursor-pointer"
                           >
-                            View Profile
+                            Profile
                           </Link>
                           <Link
                             to={`/courses?instructor=${encodeURIComponent(t.fullName)}`}
-                            className="inline-flex items-center justify-center rounded-lg bg-white px-4 py-2 text-sm font-semibold text-blue-800 ring-1 ring-blue-200 transition hover:bg-blue-50"
+                            className="inline-flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 px-4.5 py-2.5 text-xs font-extrabold tracking-wide uppercase transition border border-transparent active:scale-95 cursor-pointer"
                           >
                             Courses
                           </Link>
@@ -1163,7 +1193,7 @@ function LandingPage() {
       </section>
 
       {/* CTA */}
-      <section className="relative overflow-hidden bg-gradient-to-r from-blue-900 to-blue-700 py-16 text-white">
+      <section className="relative overflow-hidden bg-gradient-to-br from-slate-950 via-blue-950 to-slate-955 py-16 text-white">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.10),transparent_35%),radial-gradient(circle_at_80%_60%,rgba(255,255,255,0.08),transparent_35%)]" />
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center">
@@ -1435,116 +1465,6 @@ function Navbar({
   );
 }
 
-function Footer() {
-  return (
-    <footer className="bg-blue-900 py-12 text-blue-50">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
-          <div>
-            <h3 className="text-lg font-bold text-white">EZone</h3>
-            <p className="mt-2 text-blue-100">
-              Empowering learners and educators worldwide since 2020.
-            </p>
-          </div>
-          <div>
-            <p className="text-lg font-bold text-white">Explore</p>
-            <ul className="mt-2 space-y-2 text-blue-100">
-              <li>
-                <a
-                  href="#home"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    document
-                      .getElementById("home")
-                      ?.scrollIntoView({ behavior: "smooth" });
-                  }}
-                  className="hover:text-white"
-                >
-                  Home
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#courses"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    document
-                      .getElementById("courses")
-                      ?.scrollIntoView({ behavior: "smooth" });
-                  }}
-                  className="hover:text-white"
-                >
-                  Courses
-                </a>
-              </li>
-              {/* <li>
-                <Link to="/pricing" className="hover:text-white">
-                  Pricing
-                </Link>
-              </li> */}
-              <li>
-                <a
-                  href="#about"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    document
-                      .getElementById("about")
-                      ?.scrollIntoView({ behavior: "smooth" });
-                  }}
-                  className="hover:text-white"
-                >
-                  About Us
-                </a>
-              </li>
-            </ul>
-          </div>
-          <div>
-            <p className="text-lg font-bold text-white">Support</p>
-            <ul className="mt-2 space-y-2 text-blue-100">
-              <li>
-                <Link to="/help" className="hover:text-white">
-                  Help Center
-                </Link>
-              </li>
-              <li>
-                <Link to="/contact" className="hover:text-white">
-                  Contact Us
-                </Link>
-              </li>
-              <li>
-                <Link to="/faq" className="hover:text-white">
-                  FAQs
-                </Link>
-              </li>
-            </ul>
-          </div>
-          <div>
-            <p className="text-lg font-bold text-white">Newsletter</p>
-            <p className="mt-2 text-blue-100">
-              Stay updated with product news.
-            </p>
-            <form className="mt-3 flex max-w-sm">
-              <input
-                type="email"
-                placeholder="Your email"
-                className="w-full rounded-l-lg px-4 py-2 text-slate-900"
-                aria-label="Email address"
-              />
-              <button
-                type="button"
-                className="rounded-r-lg bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-700"
-              >
-                Subscribe
-              </button>
-            </form>
-          </div>
-        </div>
-        <div className="mt-12 border-t border-blue-800 pt-6 text-center text-blue-200">
-          <p>&copy; {new Date().getFullYear()} EZone. All rights reserved.</p>
-        </div>
-      </div>
-    </footer>
-  );
-}
+
 
 export default LandingPage;

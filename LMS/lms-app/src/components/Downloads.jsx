@@ -21,127 +21,8 @@ import {
 import { db } from "../firebase";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import logo from "../assets/logo.jpg"; // your logo
+import Footer from "./Footer";
 
-// ────────────────────────────────────────────────
-// Footer Component (as provided + minor polish)
-// ────────────────────────────────────────────────
-function Footer() {
-  return (
-    <footer className="bg-gradient-to-br from-blue-950 to-indigo-950 py-12 text-blue-50">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
-          <div>
-            <h3 className="text-xl font-bold text-white">EZone</h3>
-            <p className="mt-3 text-blue-100/90 text-sm leading-relaxed">
-              Empowering learners and educators in Sri Lanka and beyond since
-              2020.
-            </p>
-          </div>
-
-          <div>
-            <p className="text-lg font-semibold text-white">Explore</p>
-            <ul className="mt-4 space-y-2.5 text-blue-100/90 text-sm">
-              <li>
-                <a
-                  href="#home"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    document
-                      .getElementById("home")
-                      ?.scrollIntoView({ behavior: "smooth" });
-                  }}
-                  className="hover:text-white transition-colors"
-                >
-                  Home
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#courses"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    document
-                      .getElementById("courses")
-                      ?.scrollIntoView({ behavior: "smooth" });
-                  }}
-                  className="hover:text-white transition-colors"
-                >
-                  Courses
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#about"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    document
-                      .getElementById("about")
-                      ?.scrollIntoView({ behavior: "smooth" });
-                  }}
-                  className="hover:text-white transition-colors"
-                >
-                  About Us
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <p className="text-lg font-semibold text-white">Support</p>
-            <ul className="mt-4 space-y-2.5 text-blue-100/90 text-sm">
-              <li>
-                <Link to="/help" className="hover:text-white transition-colors">
-                  Help Center
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/contact"
-                  className="hover:text-white transition-colors"
-                >
-                  Contact Us
-                </Link>
-              </li>
-              <li>
-                <Link to="/faq" className="hover:text-white transition-colors">
-                  FAQs
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <p className="text-lg font-semibold text-white">Newsletter</p>
-            <p className="mt-3 text-blue-100/80 text-sm">
-              Get the latest updates, free resources & exam tips.
-            </p>
-            <form className="mt-4 flex max-w-xs">
-              <input
-                type="email"
-                placeholder="Your email address"
-                className="w-full rounded-l-xl px-4 py-2.5 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                aria-label="Email address"
-              />
-              <button
-                type="button"
-                className="rounded-r-xl bg-blue-600 px-5 py-2.5 font-medium text-white hover:bg-blue-700 transition"
-              >
-                Subscribe
-              </button>
-            </form>
-          </div>
-        </div>
-
-        <div className="mt-12 border-t border-blue-800/50 pt-8 text-center text-blue-200/80 text-sm">
-          <p>© {new Date().getFullYear()} EZone. All rights reserved.</p>
-          <p className="mt-1">
-            Made with dedication for A/L students in Sri Lanka
-          </p>
-        </div>
-      </div>
-    </footer>
-  );
-}
 
 // ────────────────────────────────────────────────
 // Nav Button (refined)
@@ -149,11 +30,10 @@ function Footer() {
 const NavButton = ({ children, to, active }) => (
   <Link
     to={to}
-    className={`px-4 py-2.5 text-sm font-medium rounded-lg transition-all ${
-      active
+    className={`px-4 py-2.5 text-sm font-medium rounded-lg transition-all ${active
         ? "bg-blue-600 text-white shadow-sm"
         : "text-slate-700 hover:text-blue-700 hover:bg-blue-50"
-    }`}
+      }`}
   >
     {children}
   </Link>
@@ -344,11 +224,10 @@ const Downloads = () => {
                 <button
                   key={cat}
                   onClick={() => setActiveCategory(cat)}
-                  className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all ${
-                    activeCategory === cat
+                  className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all ${activeCategory === cat
                       ? "bg-blue-600 text-white shadow-md"
                       : "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"
-                  }`}
+                    }`}
                 >
                   {cat}
                 </button>

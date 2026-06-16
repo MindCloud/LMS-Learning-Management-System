@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom"; // <-- Added
 import { auth, db } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { collection, addDoc, getDoc, doc } from "firebase/firestore";
+import { collection, addDoc, getDoc, doc, query, where, getDocs, deleteDoc } from "firebase/firestore";
 import { toast } from "sonner"; // <-- Added for professional toasts
 
 // Icons
@@ -17,6 +17,7 @@ import {
   Star,
   MessageSquareText,
   ArrowLeft, // <-- Added for back button
+  Trash2,
 } from "lucide-react";
 
 const TeacherFeedback = () => {
@@ -24,7 +25,40 @@ const TeacherFeedback = () => {
   const [formData, setFormData] = useState({ feedback: "", rating: 5 });
   const [loading, setLoading] = useState(true);
   const [hoveredRating, setHoveredRating] = useState(0);
+  const [pastFeedbacks, setPastFeedbacks] = useState([]);
   const navigate = useNavigate(); // <-- For navigation
+
+  // 🔹 Fetch teacher's past feedbacks
+  const fetchPastFeedbacks = async (uid) => {
+    try {
+      const q = query(collection(db, "feedback"), where("teacherId", "==", uid));
+      const snap = await getDocs(q);
+      const list = snap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
+      list.sort((a, b) => {
+        const timeA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
+        const timeB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
+        return timeB - timeA;
+      });
+      setPastFeedbacks(list);
+    } catch (err) {
+      console.error("Error fetching past feedbacks:", err);
+    }
+  };
+
+  // 🔹 Delete feedback handler
+  const handleDeleteFeedback = async (feedbackId) => {
+    if (!window.confirm("Are you sure you want to delete this feedback?")) {
+      return;
+    }
+    try {
+      await deleteDoc(doc(db, "feedback", feedbackId));
+      toast.success("Feedback deleted successfully.");
+      await fetchPastFeedbacks(auth.currentUser.uid);
+    } catch (err) {
+      console.error("Error deleting feedback:", err);
+      toast.error("Failed to delete feedback.");
+    }
+  };
 
   // 🔹 Fetch logged-in teacher data
   useEffect(() => {
@@ -42,8 +76,10 @@ const TeacherFeedback = () => {
 
         if (teacherSnap.exists()) {
           setTeacher(teacherSnap.data());
+          // Fetch their past feedbacks
+          await fetchPastFeedbacks(user.uid);
         } else {
-          toast.error("Teacher profile not found.");
+          toast.underline ? toast.error("Teacher profile not found.") : toast.error("Teacher profile not found.");
         }
       } catch (err) {
         console.error("Error fetching teacher:", err);
@@ -91,6 +127,7 @@ const TeacherFeedback = () => {
         "Thank you! Your feedback has been submitted successfully."
       );
       setFormData({ feedback: "", rating: 5 });
+      await fetchPastFeedbacks(auth.currentUser.uid);
     } catch (err) {
       console.error("Error submitting feedback:", err);
       toast.error("Failed to submit feedback. Please try again.");
@@ -280,83 +317,157 @@ const TeacherFeedback = () => {
             </div>
           </form>
 
-          {/* Right panel: Live Preview */}
-          <div className="lg:col-span-5 flex flex-col justify-center">
-            <div className="sticky top-8 space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                  Live Slider Preview
-                </span>
-                <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 text-xs font-semibold text-blue-600 dark:text-blue-400 border border-blue-100/30 dark:border-blue-900/20">
-                  Homepage render
-                </span>
+          {/* Right panel: Live Preview & Past Feedbacks */}
+          <div className="lg:col-span-5 space-y-8">
+            <div className="sticky top-8 space-y-6">
+              
+              {/* Preview Block */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                    Live Slider Preview
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 text-xs font-semibold text-blue-600 dark:text-blue-400 border border-blue-100/30 dark:border-blue-900/20">
+                    Homepage render
+                  </span>
+                </div>
+
+                {/* Redesigned Glass Card component */}
+                <article className="relative overflow-hidden rounded-3xl bg-white/70 dark:bg-slate-900/70 p-8 shadow-xl border border-slate-200/50 dark:border-slate-800/50 backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
+                  {/* Quotation mark decoration */}
+                  <span className="absolute right-6 top-6 text-7xl font-serif text-slate-200/60 dark:text-slate-800/40 pointer-events-none select-none">
+                    “
+                  </span>
+
+                  <div className="relative z-10 flex h-full flex-col justify-between">
+                    <div>
+                      {/* User Profile */}
+                      <div className="mb-6 flex items-center gap-4">
+                        {teacher?.imageUrl ? (
+                          <img
+                            src={teacher.imageUrl}
+                            alt="Teacher avatar"
+                            className="h-14 w-14 rounded-full object-cover ring-4 ring-purple-100 dark:ring-purple-950 shadow-md"
+                          />
+                        ) : (
+                          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-purple-50 dark:bg-purple-950 ring-4 ring-purple-100 dark:ring-purple-950 shadow-md">
+                            <UserCircle2 className="h-8 w-8 text-purple-500" />
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <h4 className="font-bold text-slate-900 dark:text-white truncate">
+                              {teacher?.fullName || "Educator Name"}
+                            </h4>
+                            <span className="inline-flex items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950/50 p-0.5 text-emerald-600 dark:text-emerald-400" title="Verified Educator">
+                              <BadgeCheck className="h-4 w-4 fill-current" />
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                            {teacher?.role || "Teacher"}
+                            {teacher?.subjects ? ` • ${teacher.subjects}` : " • General"}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Feedback content */}
+                      <p className="text-slate-750 dark:text-slate-300 italic leading-relaxed break-words min-h-[4rem] text-sm">
+                        {formData.feedback.trim()
+                          ? `“${formData.feedback}”`
+                          : "“Your feedback text will appear here as you type in the form on the left. Tell the students and the EZone community what you think!...”"}
+                      </p>
+                    </div>
+
+                    {/* Rating display */}
+                    <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
+                      <div className="flex items-center gap-1">
+                        {[1, 2, 3, 4, 5].map((i) => (
+                          <Star
+                            key={i}
+                            className={`h-5 w-5 ${i <= formData.rating
+                              ? "fill-amber-400 text-amber-400 drop-shadow-[0_2px_4px_rgba(251,191,36,0.3)]"
+                              : "text-slate-200 dark:text-slate-800"
+                              }`}
+                          />
+                        ))}
+                      </div>
+                      <span className="text-xs font-semibold text-purple-600 dark:text-purple-400">
+                        Educator Review
+                      </span>
+                    </div>
+                  </div>
+                </article>
               </div>
 
-              {/* Redesigned Glass Card component */}
-              <article className="relative overflow-hidden rounded-3xl bg-white/70 dark:bg-slate-900/70 p-8 shadow-xl border border-slate-200/50 dark:border-slate-800/50 backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
-                {/* Quotation mark decoration */}
-                <span className="absolute right-6 top-6 text-7xl font-serif text-slate-200/60 dark:text-slate-800/40 pointer-events-none select-none">
-                  “
-                </span>
-
-                <div className="relative z-10 flex h-full flex-col justify-between">
-                  <div>
-                    {/* User Profile */}
-                    <div className="mb-6 flex items-center gap-4">
-                      {teacher?.imageUrl ? (
-                        <img
-                          src={teacher.imageUrl}
-                          alt="Teacher avatar"
-                          className="h-14 w-14 rounded-full object-cover ring-4 ring-purple-100 dark:ring-purple-950 shadow-md"
-                        />
-                      ) : (
-                        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-purple-50 dark:bg-purple-950 ring-4 ring-purple-100 dark:ring-purple-950 shadow-md">
-                          <UserCircle2 className="h-8 w-8 text-purple-500" />
-                        </div>
-                      )}
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <h4 className="font-bold text-slate-900 dark:text-white truncate">
-                            {teacher?.fullName || "Educator Name"}
-                          </h4>
-                          <span className="inline-flex items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950/50 p-0.5 text-emerald-600 dark:text-emerald-400" title="Verified Educator">
-                            <BadgeCheck className="h-4 w-4 fill-current" />
-                          </span>
-                        </div>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                          {teacher?.role || "Teacher"}
-                          {teacher?.subjects ? ` • ${teacher.subjects}` : " • General"}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Feedback content */}
-                    <p className="text-slate-750 dark:text-slate-300 italic leading-relaxed break-words min-h-[4rem] text-sm">
-                      {formData.feedback.trim()
-                        ? `“${formData.feedback}”`
-                        : "“Your feedback text will appear here as you type in the form on the left. Tell the students and the EZone community what you think!...”"}
-                    </p>
-                  </div>
-
-                  {/* Rating display */}
-                  <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
-                    <div className="flex items-center gap-1">
-                      {[1, 2, 3, 4, 5].map((i) => (
-                        <Star
-                          key={i}
-                          className={`h-5 w-5 ${i <= formData.rating
-                            ? "fill-amber-400 text-amber-400 drop-shadow-[0_2px_4px_rgba(251,191,36,0.3)]"
-                            : "text-slate-200 dark:text-slate-800"
-                            }`}
-                        />
-                      ))}
-                    </div>
-                    <span className="text-xs font-semibold text-purple-600 dark:text-purple-400">
-                      Educator Review
-                    </span>
-                  </div>
+              {/* History Block */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between pt-4 border-t border-slate-200/50 dark:border-slate-800/50">
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                    Your Submitted Feedbacks
+                  </span>
+                  <span className="rounded-full bg-purple-50 dark:bg-purple-950/40 px-2 py-0.5 text-xs font-semibold text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/20">
+                    {pastFeedbacks.length} Total
+                  </span>
                 </div>
-              </article>
+
+                <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1">
+                  {pastFeedbacks.length > 0 ? (
+                    pastFeedbacks.map((fb) => (
+                      <div
+                        key={fb.id}
+                        className="group relative rounded-2xl border border-slate-200/70 dark:border-slate-800/70 bg-white/60 dark:bg-slate-900/60 p-4 shadow-sm backdrop-blur-xs transition hover:shadow-md"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="space-y-1 min-w-0 flex-1">
+                            {/* Rating Stars */}
+                            <div className="flex items-center gap-0.5">
+                              {[1, 2, 3, 4, 5].map((i) => (
+                                <Star
+                                  key={i}
+                                  className={`h-3.5 w-3.5 ${
+                                    i <= fb.rating
+                                      ? "fill-amber-400 text-amber-400"
+                                      : "text-slate-200 dark:text-slate-800"
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                            {/* Feedback text */}
+                            <p className="text-xs text-slate-600 dark:text-slate-350 leading-relaxed italic break-words line-clamp-3">
+                              “{fb.feedback}”
+                            </p>
+                            {/* Date */}
+                            <p className="text-[9px] text-slate-400">
+                              {fb.createdAt?.toDate
+                                ? fb.createdAt.toDate().toLocaleDateString(undefined, {
+                                    month: "short",
+                                    day: "numeric",
+                                    year: "numeric",
+                                  })
+                                : "N/A"}
+                            </p>
+                          </div>
+
+                          {/* Delete Button */}
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteFeedback(fb.id)}
+                            className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 transition cursor-pointer shrink-0"
+                            title="Delete Feedback"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 p-6 text-center text-xs text-slate-400 dark:text-slate-500">
+                      No submitted feedbacks found.
+                    </div>
+                  )}
+                </div>
+              </div>
+
             </div>
           </div>
         </div>

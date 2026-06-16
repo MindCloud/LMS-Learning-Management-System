@@ -16,6 +16,8 @@ import {
   FiPhone,
 } from "react-icons/fi";
 import logo from "../assets/logo1.jpeg"; // ✅ adjust path as needed
+import LoadingSpinner from "./LoadingSpinner";
+import Footer from "./Footer";
 
 const TeacherProfile = () => {
   const { id } = useParams();
@@ -46,11 +48,7 @@ const TeacherProfile = () => {
   }, [id]);
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-600"></div>
-      </div>
-    );
+    return <LoadingSpinner text="Retrieving teacher profile..." fullScreen={true} />;
   }
 
   if (error || !teacher) {
@@ -70,137 +68,212 @@ const TeacherProfile = () => {
     );
   }
 
+  const subjectBadges = (teacher.subjects || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  const gradeBadges = Array.isArray(teacher.grades)
+    ? teacher.grades
+    : Array.isArray(teacher.grade)
+    ? teacher.grade
+    : (teacher.grade || "").split(",").map((g) => g.trim()).filter(Boolean);
+
   return (
-    <div className="bg-gray-50 min-h-screen">
-      {/* Navbar Placeholder */}
-      <div className="bg-white shadow-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <h1 className="flex items-center">
-              <img
-                src={logo}
-                alt="EZone Logo"
-                className="h-20 w-auto" // you can tweak the size
-              />
+    <div className="bg-slate-50/50 min-h-screen font-sans text-slate-800 flex flex-col relative overflow-hidden transition-colors duration-300">
+      {/* Background soft glowing elements */}
+      <div className="pointer-events-none absolute top-[20%] left-[-10%] h-[35%] w-[35%] rounded-full bg-blue-200/30 blur-[130px] z-0 animate-pulse" />
+      <div className="pointer-events-none absolute bottom-[20%] right-[-10%] h-[35%] w-[35%] rounded-full bg-indigo-200/30 blur-[130px] z-0 animate-pulse" />
+
+      {/* Header / Navbar */}
+      <header className="sticky top-0 z-40 border-b border-slate-200/60 bg-white/75 backdrop-blur-md shadow-xs">
+        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
+          <Link to="/" className="flex items-center">
+            <img
+              src={logo}
+              alt="EZone Logo"
+              className="h-16 w-auto object-contain"
+            />
+          </Link>
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 border border-slate-200 shadow-2xs hover:bg-slate-50 transition active:scale-95 cursor-pointer"
+          >
+            <ArrowLeftIcon className="w-4 h-4 text-slate-500" />
+            <span>Back to Home</span>
+          </Link>
+        </div>
+      </header>
+
+      {/* Hero Banner Cover */}
+      <div className="relative bg-gradient-to-r from-blue-950 via-indigo-900 to-slate-900 py-16 px-6 sm:px-12 text-white overflow-hidden shadow-md">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.06),transparent_35%)]" />
+        <div className="absolute top-[-20%] right-[-10%] w-[45%] h-[80%] rounded-full bg-blue-500/10 blur-[100px] pointer-events-none" />
+        
+        <div className="relative max-w-5xl mx-auto flex flex-col md:flex-row items-center md:items-start gap-8 z-10">
+          {/* Avatar frame */}
+          <div className="relative group flex-shrink-0">
+            <div className="absolute -inset-1.5 rounded-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 blur opacity-30 group-hover:opacity-60 transition duration-500" />
+            <img
+              src={teacher.imageUrl || "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&q=80&w=300"}
+              alt={teacher.fullName}
+              className="relative w-36 h-36 rounded-full object-cover border-4 border-white shadow-2xl transition duration-300 hover:scale-[1.02]"
+            />
+          </div>
+          
+          <div className="text-center md:text-left space-y-3">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider backdrop-blur-md border border-white/10">
+              <FiCheckCircle className="text-emerald-400 h-4 w-4" /> Verified Educator
+            </span>
+            <h1 className="text-3xl sm:text-5xl font-black tracking-tight leading-none drop-shadow-md">
+              {teacher.fullName}
             </h1>
-            <Link
-              to="/"
-              className="inline-flex items-center text-lg font-semibold text-blue-600 hover:text-blue-800"
-            >
-              <ArrowLeftIcon className="w-5 h-5 mr-2" />
-              Home
-            </Link>
+            <p className="text-lg text-blue-200 font-extrabold uppercase tracking-widest leading-none">
+              {teacher.role || "Instructor"}
+            </p>
+            <p className="text-xs text-slate-355 font-semibold tracking-wider">
+              @{teacher.username || "teacher"}
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-5xl mx-auto p-6 md:p-8">
-        {/* Header Section */}
-        <div className="bg-white rounded-xl shadow-lg p-6 md:p-8 mb-8">
-          <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-            <img
-              src={teacher.imageUrl}
-              alt={teacher.fullName}
-              className="w-32 h-32 rounded-full object-cover shadow-md border-4 border-blue-100"
-            />
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
-                {teacher.fullName}
-              </h1>
-              <p className="text-lg text-blue-600 capitalize font-medium">
-                {teacher.role}
+      {/* Main Container */}
+      <main className="flex-grow max-w-5xl w-full mx-auto p-6 md:p-8 z-10 space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* Left / Sidebar Column - spans 1 on md */}
+          <div className="md:col-span-1 space-y-8">
+            {/* Contact Card */}
+            <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm space-y-6">
+              <h2 className="text-base font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-2 pb-3 border-b border-slate-100">
+                <FiMail className="w-5 h-5 text-blue-600" />
+                Contact Info
+              </h2>
+              <div className="space-y-5">
+                <div className="flex items-center gap-3.5 group">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100/50 group-hover:scale-105 transition-transform">
+                    <FiMail className="w-4.5 h-4.5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Email Address</div>
+                    <div className="text-sm font-semibold text-slate-700 truncate" title={teacher.email}>{teacher.email}</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3.5 group">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100/50 group-hover:scale-105 transition-transform">
+                    <FiPhone className="w-4.5 h-4.5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Phone Contact</div>
+                    <div className="text-sm font-semibold text-slate-700">{teacher.contact || "—"}</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3.5 group">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600 border border-violet-100/50 group-hover:scale-105 transition-transform">
+                    <FiMapPin className="w-4.5 h-4.5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Location Office</div>
+                    <div className="text-sm font-semibold text-slate-700 truncate" title={teacher.address}>{teacher.address || "—"}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right / Main Info Column - spans 2 on md */}
+          <div className="md:col-span-2 space-y-8">
+            {/* Bio Card */}
+            <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-sm relative overflow-hidden">
+              <span className="absolute right-6 top-6 text-7xl font-serif text-slate-100/80 pointer-events-none select-none leading-none">“</span>
+              <h2 className="text-base font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-2 pb-3 border-b border-slate-100 mb-5">
+                <FiBookOpen className="w-5 h-5 text-blue-600" />
+                About Educator
+              </h2>
+              <p className="text-slate-650 leading-relaxed text-sm italic whitespace-pre-wrap relative z-10 pr-2">
+                {teacher.bio || "No biography provided by the educator."}
               </p>
-              <p className="text-md text-gray-500">@{teacher.username}</p>
+            </div>
+
+            {/* Academic Details Card */}
+            <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-sm space-y-6">
+              <h2 className="text-base font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-2 pb-3 border-b border-slate-100">
+                <FiTarget className="w-5 h-5 text-blue-600" />
+                Teaching Specializations
+              </h2>
+              
+              <div className="space-y-5">
+                <div>
+                  <h3 className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-2.5">Expert Subjects</h3>
+                  {subjectBadges.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {subjectBadges.map((s, idx) => {
+                        const tagStyle = idx % 2 === 0
+                          ? "from-blue-650 to-indigo-650 shadow-blue-500/10"
+                          : "from-indigo-550 to-cyan-555 shadow-indigo-500/10";
+                        return (
+                          <span
+                            key={s}
+                            className={`inline-flex items-center rounded-2xl bg-gradient-to-r px-4.5 py-2 text-xs font-black uppercase tracking-wider text-white shadow-xs ${tagStyle}`}
+                          >
+                            {s}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <span className="text-sm text-slate-500 italic">No subjects set</span>
+                  )}
+                </div>
+
+                <div className="pt-2">
+                  <h3 className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-2.5">Target Classes & Grades</h3>
+                  {gradeBadges.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5">
+                      {gradeBadges.map((g) => (
+                        <span key={g} className="inline-flex items-center rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-650">
+                          {g}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-sm text-slate-500 italic">No grades set</span>
+                  )}
+                </div>
+
+                {teacher.achievements && (
+                  <div className="pt-4 border-t border-slate-100">
+                    <h3 className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-2">Qualifications & Achievements</h3>
+                    <p className="text-xs text-slate-600 leading-relaxed font-semibold bg-slate-50/50 border border-slate-100 rounded-2xl p-4">
+                      {teacher.achievements}
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Profile Details */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Left Column */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-              <FiBookOpen className="w-6 h-6 mr-2 text-blue-600" />
-              About
-            </h2>
-            <p className="text-gray-600 leading-relaxed">
-              {teacher.bio || "No bio available."}
-            </p>
-
-            <h2 className="mt-6 text-xl font-semibold text-gray-800 flex items-center">
-              <FiMail className="w-6 h-6 mr-2 text-blue-600" />
-              Contact Information
-            </h2>
-            <ul className="mt-4 space-y-3 text-gray-600">
-              <li className="flex items-center">
-                <FiMail className="w-5 h-5 mr-3 text-blue-500" />
-                <span>
-                  <strong>Email:</strong> {teacher.email}
-                </span>
-              </li>
-              <li className="flex items-center">
-                <FiPhone className="w-5 h-5 mr-3 text-blue-500" />
-                <span>
-                  <strong>Phone:</strong> {teacher.contact}
-                </span>
-              </li>
-              <li className="flex items-center">
-                <FiMapPin className="w-5 h-5 mr-3 text-blue-500" />
-                <span>
-                  <strong>Address:</strong> {teacher.address}
-                </span>
-              </li>
-            </ul>
-          </div>
-
-          {/* Right Column */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-              <FiTarget className="w-6 h-6 mr-2 text-blue-600" />
-              Teaching Details
-            </h2>
-            <ul className="mt-4 space-y-3 text-gray-600">
-              <li className="flex items-center">
-                <FiBookOpen className="w-5 h-5 mr-3 text-blue-500" />
-                <span>
-                  <strong>Subjects:</strong> {teacher.subjects}
-                </span>
-              </li>
-              <li className="flex items-center">
-                <FiUsers className="w-5 h-5 mr-3 text-blue-500" />
-                <span>
-                  <strong>Grade:</strong> {teacher.grade}
-                </span>
-              </li>
-              <li className="flex items-center">
-                <FiAward className="w-5 h-5 mr-3 text-blue-500" />
-                <span>
-                  <strong>Achievements:</strong> {teacher.achievements}
-                </span>
-              </li>
-            </ul>
-          </div>
-        </div>
-
         {/* Action Buttons */}
-        <div className="mt-8 flex flex-col sm:flex-row gap-4">
+        <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center items-center">
           <Link
             to={`/courses?instructor=${encodeURIComponent(teacher.fullName)}`}
-            className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-md hover:bg-blue-700 transition-colors"
+            className="inline-flex items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-750 text-white px-8 py-3.5 text-sm font-extrabold tracking-wide uppercase transition shadow-md shadow-blue-500/10 hover:shadow-lg active:scale-95 cursor-pointer"
           >
-            <FiBookOpen className="w-5 h-5 mr-2" />
-            View {teacher.fullName}'s Courses
+            <FiBookOpen className="w-4.5 h-4.5" />
+            <span>View Courses</span>
           </Link>
           <Link
             to="/"
-            className="inline-flex items-center justify-center rounded-lg bg-gray-100 px-6 py-3 text-sm font-semibold text-gray-800 hover:bg-gray-200 transition-colors"
+            className="inline-flex items-center justify-center gap-2.5 rounded-2xl bg-white hover:bg-slate-50 text-slate-750 px-8 py-3.5 text-sm font-extrabold tracking-wide uppercase transition border border-slate-200 active:scale-95 cursor-pointer"
           >
-            <ArrowLeftIcon className="w-5 h-5 mr-2" />
-            Back to Teachers
+            <ArrowLeftIcon className="w-4.5 h-4.5 text-slate-550" />
+            <span>Back to Teachers</span>
           </Link>
         </div>
-      </div>
+      </main>
 
       {/* Footer */}
       <Footer />
@@ -208,125 +281,5 @@ const TeacherProfile = () => {
   );
 };
 
-function Footer() {
-  return (
-    <footer className="bg-gradient-to-r from-blue-900 to-blue-800 py-12 text-blue-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
-          <div>
-            <h3 className="text-lg font-bold text-white flex items-center">
-              <FiBookOpen className="w-6 h-6 mr-2" />
-              EZone
-            </h3>
-            <p className="mt-2 text-blue-100 leading-relaxed">
-              Empowering learners and educators worldwide since 2020.
-            </p>
-          </div>
-          <div>
-            <p className="text-lg font-bold text-white">Explore</p>
-            <ul className="mt-4 space-y-3 text-blue-100">
-              <li>
-                <a
-                  href="#home"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    document
-                      .getElementById("home")
-                      ?.scrollIntoView({ behavior: "smooth" });
-                  }}
-                  className="hover:text-white transition-colors"
-                >
-                  Home
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#courses"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    document
-                      .getElementById("courses")
-                      ?.scrollIntoView({ behavior: "smooth" });
-                  }}
-                  className="hover:text-white transition-colors"
-                >
-                  Courses
-                </a>
-              </li>
-              <li>
-                <Link
-                  to="/pricing"
-                  className="hover:text-white transition-colors"
-                >
-                  Pricing
-                </Link>
-              </li>
-              <li>
-                <a
-                  href="#about"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    document
-                      .getElementById("about")
-                      ?.scrollIntoView({ behavior: "smooth" });
-                  }}
-                  className="hover:text-white transition-colors"
-                >
-                  About Us
-                </a>
-              </li>
-            </ul>
-          </div>
-          <div>
-            <p className="text-lg font-bold text-white">Support</p>
-            <ul className="mt-4 space-y-3 text-blue-100">
-              <li>
-                <Link to="/help" className="hover:text-white transition-colors">
-                  Help Center
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/contact"
-                  className="hover:text-white transition-colors"
-                >
-                  Contact Us
-                </Link>
-              </li>
-              <li>
-                <Link to="/faq" className="hover:text-white transition-colors">
-                  FAQs
-                </Link>
-              </li>
-            </ul>
-          </div>
-          <div>
-            <p className="text-lg font-bold text-white">Newsletter</p>
-            <p className="mt-2 text-blue-100 leading-relaxed">
-              Stay updated with product news and updates.
-            </p>
-            <div className="mt-4 flex max-w-sm">
-              <input
-                type="email"
-                placeholder="Your email"
-                className="w-full rounded-l-lg px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                aria-label="Email address"
-              />
-              <button
-                type="button"
-                className="rounded-r-lg bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-700 transition-colors"
-              >
-                Subscribe
-              </button>
-            </div>
-          </div>
-        </div>
-        <div className="mt-12 border-t border-blue-700 pt-6 text-center text-blue-200">
-          <p>&copy; {new Date().getFullYear()} EZone. All rights reserved.</p>
-        </div>
-      </div>
-    </footer>
-  );
-}
 
 export default TeacherProfile;
