@@ -237,16 +237,48 @@ function Dashboard() {
     toast.loading("Updating status...");
 
     try {
-      await updateDoc(doc(db, "students", studentId), { status: newStatus });
+      const studentRef = doc(db, "students", studentId);
+      const studentSnap = await getDoc(studentRef);
+      if (!studentSnap.exists()) {
+        toast.dismiss();
+        toast.error("Student not found");
+        return;
+      }
 
+      const studentData = studentSnap.data();
+      const preferredTeachers = studentData.preferredTeachers || [];
+
+      // Update the status for this specific teacher
+      const updatedPreferredTeachers = preferredTeachers.map((pt) => {
+        if (pt.preferredTeacherId === teacher.uid) {
+          return { ...pt, status: newStatus };
+        }
+        return pt;
+      });
+
+      await updateDoc(studentRef, {
+        preferredTeachers: updatedPreferredTeachers,
+      });
+
+      // Update the local state
       setStudents((prev) =>
-        prev.map((s) => (s.id === studentId ? { ...s, status: newStatus } : s))
+        prev.map((s) => {
+          if (s.id === studentId) {
+            const updatedPrefs = (s.preferredTeachers || []).map((pt) => {
+              if (pt.preferredTeacherId === teacher.uid) {
+                return { ...pt, status: newStatus };
+              }
+              return pt;
+            });
+            return { ...s, preferredTeachers: updatedPrefs };
+          }
+          return s;
+        })
       );
 
       toast.dismiss();
       toast.success(
-        `Student status updated to ${newStatus === "active" ? "Active" : "Pending"
-        }`
+        `Student status updated to ${newStatus === "active" ? "Active" : "Pending"}`
       );
     } catch (error) {
       console.error("Error updating status:", error);
@@ -714,12 +746,12 @@ function Dashboard() {
                                 className="h-16 w-16 rounded-2xl object-cover border-2 border-slate-100 shadow-sm group-hover:border-blue-200 transition-colors"
                               />
                               <span
-                                className={`absolute -bottom-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full border-2 border-white text-[8px] font-bold text-white shadow-sm ${student.status === "active"
+                                className={`absolute -bottom-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full border-2 border-white text-[8px] font-bold text-white shadow-sm ${(student.preferredTeachers || []).some(pt => pt.preferredTeacherId === teacher?.uid && pt.status === "active")
                                   ? "bg-emerald-500"
                                   : "bg-amber-500"
                                   }`}
                               >
-                                {student.status === "active" ? "A" : "P"}
+                                {(student.preferredTeachers || []).some(pt => pt.preferredTeacherId === teacher?.uid && pt.status === "active") ? "A" : "P"}
                               </span>
                             </div>
 
@@ -747,12 +779,12 @@ function Dashboard() {
                                           : "General"}
                                 </span>
                                 <span
-                                  className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-semibold ${student.status === "active"
+                                  className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-semibold ${(student.preferredTeachers || []).some(pt => pt.preferredTeacherId === teacher?.uid && pt.status === "active")
                                     ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
                                     : "bg-amber-50 text-amber-700 border border-amber-100"
                                     }`}
                                 >
-                                  {student.status === "active" ? "Active" : "Pending"}
+                                  {(student.preferredTeachers || []).some(pt => pt.preferredTeacherId === teacher?.uid && pt.status === "active") ? "Active" : "Pending"}
                                 </span>
                               </div>
                             </div>
@@ -793,7 +825,7 @@ function Dashboard() {
                               Marks
                             </button>
 
-                            {student.status !== "active" ? (
+                            {!((student.preferredTeachers || []).some(pt => pt.preferredTeacherId === teacher?.uid && pt.status === "active")) ? (
                               <button
                                 onClick={() => updateStudentStatus(student.id, "active")}
                                 className="inline-flex flex-1 min-w-[70px] items-center justify-center gap-1.5 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-xs font-semibold text-emerald-600 border border-emerald-100 transition hover:bg-emerald-600 hover:text-white cursor-pointer active:scale-95 duration-150"

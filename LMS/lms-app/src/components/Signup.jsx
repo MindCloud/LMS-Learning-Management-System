@@ -223,7 +223,7 @@ function Signup() {
                 role: "student",
                 status: "pending",
                 preferredTeachers: selectedTeacherIds.map(
-                    (id) => ({ preferredTeacherId: id })
+                    (id) => ({ preferredTeacherId: id, status: "pending" })
                 ),
                 createdAt: serverTimestamp(),
             });

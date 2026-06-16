@@ -1338,7 +1338,9 @@ Keep responses short, clear, accurate, and educational. Use bullet points or num
 
                               {/* Content Display */}
                               <div className="min-h-[160px]">
-                                {isPending ? (
+                                 {!(profile?.preferredTeachers || []).some(
+                                   (pt) => pt.preferredTeacherId === teacherId && pt.status === "active"
+                                 ) ? (
                                   <div className="flex flex-col items-center justify-center py-6 text-center">
                                     <AlertCircle className="h-8 w-8 text-amber-500" />
                                     <h5 className="font-semibold text-slate-800 mt-2">Approval Pending</h5>
