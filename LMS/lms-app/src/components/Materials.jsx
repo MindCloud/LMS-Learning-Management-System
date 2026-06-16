@@ -33,6 +33,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import { toast } from "sonner";
+import LoadingSpinner from "./LoadingSpinner";
 import { motion, AnimatePresence } from "framer-motion";
 
 function Materials() {
@@ -512,18 +513,7 @@ function Materials() {
             {/* List Feed View */}
             <div className="flex-1 min-h-[400px]">
               {loading ? (
-                <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-slate-200 bg-white/40 backdrop-blur-sm p-12 h-full">
-                  <div className="relative">
-                    <div className="absolute inset-0 rounded-full bg-purple-500/20 blur-md animate-pulse" />
-                    <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-purple-600 to-indigo-600 text-white shadow-lg">
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <p className="font-semibold text-slate-700">Retrieving resources</p>
-                    <p className="text-xs text-slate-400 mt-1">Connecting to Firestore server...</p>
-                  </div>
-                </div>
+                <LoadingSpinner text="Loading reference materials..." />
               ) : filteredMaterials.length === 0 ? (
                 <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-slate-200 bg-white/40 backdrop-blur-sm p-12 text-center h-full">
                   <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white border border-slate-100 text-purple-600 shadow-sm">

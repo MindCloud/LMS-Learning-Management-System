@@ -24,6 +24,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import { toast } from "sonner"; // <-- Added
+import LoadingSpinner from "./LoadingSpinner";
 
 function Homework() {
   const [homeworks, setHomeworks] = useState([]);
@@ -307,10 +308,7 @@ function Homework() {
         {/* List */}
         <div className="px-6 pb-6">
           {loading ? (
-            <div className="flex items-center gap-2 rounded-xl bg-gradient-to-br from-blue-50/60 to-indigo-50/40 px-3 py-3 text-slate-600 ring-1 ring-blue-100">
-              <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-              <p className="text-sm">Loading homework…</p>
-            </div>
+            <LoadingSpinner text="Loading homework assignments..." />
           ) : homeworks.length === 0 ? (
             <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed bg-gradient-to-br from-blue-50/50 via-indigo-50/40 to-sky-50/40 px-6 py-10 text-center text-slate-600 ring-1 ring-blue-100">
               <ListChecks className="h-10 w-10 text-blue-500" />

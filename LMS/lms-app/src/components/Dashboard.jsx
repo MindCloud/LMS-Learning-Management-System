@@ -15,6 +15,7 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 import { toast } from "sonner";
 import AddResourceFolderModal from "./AddResourceFolderModal";
 import UpdateTeacherForm from "./UpdateTeacherForm";
+import LoadingSpinner from "./LoadingSpinner";
 
 import MarkModal from "./MarkModal";
 import {
@@ -50,6 +51,7 @@ import { motion, AnimatePresence } from "framer-motion";
 function Dashboard() {
   const [teacher, setTeacher] = useState(null);
   const [students, setStudents] = useState([]);
+  const [loadingData, setLoadingData] = useState(true);
   const [filteredStudents, setFilteredStudents] = useState([]);
   const [homework, setHomework] = useState([]);
   const [materials, setMaterials] = useState([]);
@@ -63,7 +65,6 @@ function Dashboard() {
   const [isAddFolderModalOpen, setIsAddFolderModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
-
 
   // Sidebar grade filters
   const [selectedGradeNotices, setSelectedGradeNotices] = useState("all");
@@ -112,7 +113,7 @@ function Dashboard() {
   const fetchAllData = async () => {
     if (!teacher?.uid) return;
 
-    toast.loading("Loading dashboard data...");
+    setLoadingData(true);
 
     try {
       // Fetch students
@@ -170,12 +171,10 @@ function Dashboard() {
         .sort((a, b) => b._createdAtMs - a._createdAtMs);
 
       setNotices(noticeList);
-
-      toast.dismiss();
-      toast.success("Dashboard loaded successfully");
+      setLoadingData(false);
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
-      toast.dismiss();
+      setLoadingData(false);
       toast.error("Failed to load dashboard data");
     }
   };
@@ -524,6 +523,10 @@ function Dashboard() {
       </header>
 
       <main className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
+        {loadingData ? (
+          <LoadingSpinner text="Fetching dashboard data..." />
+        ) : (
+          <>
         {/* Header Cards */}
         <section className="grid gap-6 md:grid-cols-3">
           {/* Profile Card */}
@@ -1115,6 +1118,8 @@ function Dashboard() {
             </div>
           </div>
         </section>
+          </>
+        )}
       </main>
 
       <MarkModal

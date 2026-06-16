@@ -24,7 +24,7 @@ import {
 } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import TeacherModal from "../components/TeacherModal.jsx";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import LoadingSpinner from "../components/LoadingSpinner.jsx";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -45,7 +45,6 @@ import {
   Link as LinkIcon,
   LogOut,
   ExternalLink,
-  Bot,
   Award,
   ChevronRight,
   Calendar,
@@ -64,7 +63,7 @@ import {
   Edit3,
 } from "lucide-react";
 
-const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
+
 
 const subjectHue = (s = "") => {
   const t = s.toLowerCase();
@@ -122,7 +121,7 @@ function Home() {
   const [marks, setMarks] = useState([]);
 
   // Navigation State
-  const [activeTab, setActiveTab] = useState("overview"); // "overview", "teachers", "grades", "ai-chat"
+  const [activeTab, setActiveTab] = useState("overview"); // "overview", "teachers", "grades"
 
   // Widget States
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -137,11 +136,6 @@ function Home() {
   const [pomodoroMode, setPomodoroMode] = useState("focus"); // "focus", "short", "long"
   const [pomodoroTotal, setPomodoroTotal] = useState(25 * 60);
 
-  // AI Chat States
-  const [chatOpen, setChatOpen] = useState(false);
-  const [chatMessages, setChatMessages] = useState([]);
-  const [userInput, setUserInput] = useState("");
-
   const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [marksModalOpen, setMarksModalOpen] = useState(false);
@@ -151,7 +145,6 @@ function Home() {
   const [teacherInnerTabs, setTeacherInnerTabs] = useState({});
 
   const navigate = useNavigate();
-  const chatBottomRef = useRef(null);
 
   // Live Clock effect
   useEffect(() => {
@@ -356,13 +349,6 @@ function Home() {
     setPomodoroTime(duration);
   };
 
-  // Auto-scroll chat to bottom
-  useEffect(() => {
-    if (chatBottomRef.current) {
-      chatBottomRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [chatMessages, chatOpen, activeTab]);
-
   const openModal = useCallback((t) => {
     setSelectedTeacher(t);
     setIsModalOpen(true);
@@ -383,61 +369,6 @@ function Home() {
   const closeMarksModal = () => {
     setMarksModalOpen(false);
     document.body.style.overflow = "";
-  };
-
-  const sendMessage = async (presetText = null) => {
-    const userMessage = presetText || userInput.trim();
-    if (!userMessage) return;
-
-    setChatMessages((prev) => [...prev, { sender: "user", text: userMessage }]);
-    if (!presetText) setUserInput("");
-
-    toast.loading("AI Tutor is thinking...", { id: "ai-thinking" });
-
-    try {
-      const subjects = teachers
-        .map((t) => t.subjects || t.courseName)
-        .filter(Boolean)
-        .join(", ");
-
-      const systemPrompt = `You are a helpful, friendly, and knowledgeable study assistant.
-The student is studying: ${subjects || "various subjects"}.
-Keep responses short, clear, accurate, and educational. Use bullet points or numbered lists when helpful.`;
-
-      const model = genAI.getGenerativeModel({
-        model: "gemini-2.5-flash",
-        systemInstruction: { parts: [{ text: systemPrompt }] },
-      });
-
-      const historyForAPI = chatMessages.map((msg) => ({
-        role: msg.sender === "user" ? "user" : "model",
-        parts: [{ text: msg.text }],
-      }));
-
-      const chatSession = model.startChat({
-        history: historyForAPI,
-      });
-
-      const result = await chatSession.sendMessage(userMessage);
-      const reply = result.response.text();
-
-      toast.dismiss("ai-thinking");
-      toast.success("Answer received!");
-
-      setChatMessages((prev) => [...prev, { sender: "bot", text: reply }]);
-    } catch (err) {
-      console.error("AI Chat error:", err);
-      toast.dismiss("ai-thinking");
-      toast.error("Failed to connect. Try again.");
-
-      setChatMessages((prev) => [
-        ...prev,
-        {
-          sender: "bot",
-          text: "Sorry, I couldn't connect to my knowledge base right now. Please try again in a few moments.",
-        },
-      ]);
-    }
   };
 
   const handleLogout = async () => {
@@ -654,21 +585,7 @@ Keep responses short, clear, accurate, and educational. Use bullet points or num
   };
 
   if (!profile)
-    return (
-      <div className="min-h-screen relative overflow-hidden bg-slate-50 flex items-center justify-center p-6">
-        <div className="pointer-events-none absolute -top-24 -left-24 h-96 w-96 rounded-full bg-blue-100 blur-3xl opacity-60 animate-pulse" />
-        <div className="pointer-events-none absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-violet-100 blur-3xl opacity-60 animate-pulse" />
-        <div className="text-center space-y-4">
-          <div className="relative inline-flex">
-            <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-            <Bot className="w-8 h-8 text-blue-600 absolute top-4 left-4 animate-bounce" />
-          </div>
-          <p className="text-slate-600 font-semibold tracking-wide text-lg">
-            Setting up your study space...
-          </p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner text="Setting up your study space..." fullScreen={true} />;
 
   const isPending = (profile.status || "").toLowerCase() === "pending";
 
@@ -702,17 +619,13 @@ Keep responses short, clear, accurate, and educational. Use bullet points or num
               { id: "overview", label: "Dashboard", icon: School },
               { id: "teachers", label: "My Teachers", icon: Users },
               { id: "grades", label: "Grades & Progress", icon: Award },
-              { id: "ai-chat", label: "AI Tutor", icon: Bot },
             ].map((tab) => {
               const TabIcon = tab.icon;
               const isActive = activeTab === tab.id;
               return (
                 <button
                   key={tab.id}
-                  onClick={() => {
-                    setActiveTab(tab.id);
-                    if (tab.id === "ai-chat") setChatOpen(false);
-                  }}
+                  onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all ${isActive
                     ? "bg-white text-blue-600 shadow-sm"
                     : "text-slate-600 hover:text-slate-900 hover:bg-white/40"
@@ -1640,240 +1553,12 @@ Keep responses short, clear, accurate, and educational. Use bullet points or num
               </div>
             )}
 
-            {/* FULL DEDICATED AI TUTOR WORKSPACE */}
-            {activeTab === "ai-chat" && (
-              <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 min-h-[580px]">
-                {/* Left side panel: Suggestions & Guidelines */}
-                <div className="col-span-1 bg-white border border-slate-200 rounded-3xl p-6 shadow-sm flex flex-col justify-between">
-                  <div className="space-y-6">
-                    <div className="flex items-center gap-2">
-                      <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
-                        <Sparkles className="h-5 w-5" />
-                      </div>
-                      <h3 className="font-bold text-slate-800">AI Tutor Tips</h3>
-                    </div>
 
-                    <p className="text-xs text-slate-500 leading-relaxed">
-                      Your AI Study Assistant uses Gemini technology to answer complex questions, write schedules, or explain school topics.
-                    </p>
-
-                    <div className="space-y-3 pt-2">
-                      <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                        Quick Questions
-                      </p>
-                      {[
-                        "How can I organize a study routine?",
-                        "Summarize basic scientific steps",
-                        "Tell me a clever math shortcut",
-                        "How should I take notes efficiently?",
-                      ].map((promptText, i) => (
-                        <button
-                          key={i}
-                          onClick={() => sendMessage(promptText)}
-                          className="w-full text-left p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-100 hover:border-slate-200 transition text-xs font-medium text-slate-700 leading-normal"
-                        >
-                          "{promptText}"
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="pt-6 border-t border-slate-100 text-[10px] text-slate-400 text-center">
-                    Powered by Gemini 2.5 • Responses are synthesized instantly.
-                  </div>
-                </div>
-
-                {/* Right side panel: Conversation box */}
-                <div className="col-span-3 bg-white border border-slate-200 rounded-3xl shadow-sm flex flex-col h-[580px]">
-                  {/* Chat header */}
-                  <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center">
-                        <Bot className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-slate-800 text-sm">Interactive AI Companion</h4>
-                        <span className="text-[10px] text-emerald-500 font-bold flex items-center gap-1">
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                          Online • Readily Available
-                        </span>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setChatMessages([])}
-                      className="text-xs text-slate-400 hover:text-slate-600 font-semibold"
-                    >
-                      Clear History
-                    </button>
-                  </div>
-
-                  {/* Messages Feed */}
-                  <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar bg-slate-50/20">
-                    {/* Welcome Box */}
-                    <div className="flex gap-3 max-w-[85%]">
-                      <div className="h-8 w-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
-                        <Bot className="h-4.5 w-4.5" />
-                      </div>
-                      <div className="rounded-2xl bg-white border border-slate-200/80 p-4 text-xs leading-relaxed text-slate-700 shadow-sm">
-                        <p className="font-semibold text-slate-800 mb-1">Hi there! 👋</p>
-                        <p>
-                          I'm your study assistant. Need definitions, homework guidance, or revision plans? Simply type below or select a tip card on the left!
-                        </p>
-                      </div>
-                    </div>
-
-                    {chatMessages.map((msg, i) => {
-                      const isBot = msg.sender !== "user";
-                      return (
-                        <div
-                          key={i}
-                          className={`flex gap-3 max-w-[85%] ${isBot ? "self-start" : "self-end flex-row-reverse ml-auto"
-                            }`}
-                        >
-                          {isBot ? (
-                            <div className="h-8 w-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
-                              <Bot className="h-4.5 w-4.5" />
-                            </div>
-                          ) : (
-                            <div className="h-8 w-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center flex-shrink-0">
-                              <User className="h-4.5 w-4.5" />
-                            </div>
-                          )}
-                          <div
-                            className={`rounded-2xl p-4 text-xs leading-relaxed shadow-sm border ${isBot
-                              ? "bg-white border-slate-200/80 text-slate-700"
-                              : "bg-indigo-600 border-indigo-700 text-white"
-                              }`}
-                          >
-                            {msg.text}
-                          </div>
-                        </div>
-                      );
-                    })}
-                    <div ref={chatBottomRef} />
-                  </div>
-
-                  {/* Input area */}
-                  <div className="p-4 border-t border-slate-100 bg-white rounded-b-3xl">
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={userInput}
-                        onChange={(e) => setUserInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && !e.shiftKey) {
-                            e.preventDefault();
-                            sendMessage();
-                          }
-                        }}
-                        placeholder="Ask your AI tutor a question..."
-                        className="flex-1 bg-slate-50 border border-slate-150 rounded-2xl px-4 py-3 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white text-slate-700"
-                      />
-                      <button
-                        onClick={() => sendMessage()}
-                        disabled={!userInput.trim()}
-                        className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs rounded-2xl shadow-md shadow-blue-600/10 transition"
-                      >
-                        Ask
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
           </motion.div>
         </AnimatePresence>
       </main>
 
-      {/* Floating AI Chat Assistant (Only displayed when activeTab is not ai-chat, for accessibility) */}
-      {activeTab !== "ai-chat" && (
-        <>
-          <button
-            onClick={() => setChatOpen(!chatOpen)}
-            className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg hover:scale-105 transition-transform focus:outline-none"
-            aria-label="Toggle AI Tutor"
-          >
-            <Bot className="h-6 w-6" />
-            <span className="absolute -top-1 -right-1 h-3.5 w-3.5 animate-ping rounded-full bg-blue-400 opacity-75"></span>
-            <span className="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-blue-500 border-2 border-white"></span>
-          </button>
 
-          <AnimatePresence>
-            {chatOpen && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9, y: 50 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9, y: 50 }}
-                className="fixed bottom-24 right-6 z-50 w-96 max-w-[calc(100vw-3rem)] overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-2xl flex flex-col"
-              >
-                {/* Header */}
-                <div className="flex items-center justify-between bg-gradient-to-r from-blue-600 via-sky-600 to-indigo-600 px-5 py-4 text-white">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20">
-                      <Bot className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-sm">AI Study Assistant</p>
-                      <p className="text-[10px] opacity-80 font-medium">Ready to help you revise</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setChatOpen(false)}
-                    className="p-1 rounded-lg hover:bg-white/10 transition text-white"
-                  >
-                    <X className="h-4.5 w-4.5" />
-                  </button>
-                </div>
-
-                {/* Messages Feed */}
-                <div className="flex flex-col gap-3 max-h-[300px] overflow-y-auto p-5 custom-scrollbar bg-slate-50/10">
-                  <div className="self-start rounded-2xl bg-slate-100 px-4 py-2.5 text-xs text-slate-700 max-w-[85%] leading-relaxed">
-                    Hello! I'm your AI study bot. Ask me a quick question about school topics or schedules!
-                  </div>
-                  {chatMessages.map((msg, i) => (
-                    <div
-                      key={i}
-                      className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs leading-relaxed ${msg.sender === "user"
-                        ? "self-end bg-blue-600 text-white ml-auto"
-                        : "self-start bg-slate-100 text-slate-700"
-                        }`}
-                    >
-                      {msg.text}
-                    </div>
-                  ))}
-                  <div ref={chatBottomRef} />
-                </div>
-
-                {/* Input Area */}
-                <div className="border-t border-slate-100 bg-slate-50/50 p-4">
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={userInput}
-                      onChange={(e) => setUserInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
-                          e.preventDefault();
-                          sendMessage();
-                        }
-                      }}
-                      placeholder="Type your question..."
-                      className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 outline-none focus:ring-1 focus:ring-blue-400"
-                    />
-                    <button
-                      onClick={() => sendMessage()}
-                      disabled={!userInput.trim()}
-                      className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-blue-700 disabled:opacity-50"
-                    >
-                      Send
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </>
-      )}
 
       {/* Teacher Modal */}
       {isModalOpen && selectedTeacher && (
@@ -2018,6 +1703,7 @@ Keep responses short, clear, accurate, and educational. Use bullet points or num
           </div>
         </div>
       )}
+
     </div>
   );
 }

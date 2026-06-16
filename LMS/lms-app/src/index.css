@@ -103,7 +103,7 @@
   animation: float-fast 8s ease-in-out infinite;
 }
 
-/* Custom scrollbar for chat and timeline */
+/* Custom scrollbar for scrollable panels */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
   height: 6px;

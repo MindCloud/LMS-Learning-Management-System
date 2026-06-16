@@ -7,6 +7,7 @@ import { signOut } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import AddTeacherForm from "./AddTeacherForm";
 import UpdateTeacherForm from "./UpdateTeacherForm";
+import LoadingSpinner from "./LoadingSpinner";
 import { toast } from "sonner"; // <-- Added for professional toasts
 import AddSpecialNoticeModal from "../components/AddSpecialNotice";
 import AddTopStudentModal from "../components/AddTopStudentModal";
@@ -73,7 +74,6 @@ function AdminDashboard() {
     try {
       setLoading(true);
       setFetchError("");
-      toast.loading("Loading teachers list...");
 
       const querySnapshot = await getDocs(collection(db, "teachers"));
       const teachersData = querySnapshot.docs.map((doc) => ({
@@ -81,15 +81,9 @@ function AdminDashboard() {
         ...doc.data(),
       }));
       setTeachers(teachersData);
-
-      toast.dismiss();
-      if (teachersData.length > 0) {
-        toast.success(`Loaded ${teachersData.length} teachers`);
-      }
     } catch (error) {
       console.error("Error fetching teachers:", error);
       setFetchError("Couldn't load teachers. Please try again.");
-      toast.dismiss();
       toast.error("Failed to load teachers list");
     } finally {
       setLoading(false);
@@ -511,7 +505,7 @@ function AdminDashboard() {
           </div>
 
           {loading ? (
-            <SkeletonGrid />
+            <LoadingSpinner text="Loading teachers list..." />
           ) : fetchError ? (
             <div className="p-6">
               <EmptyState
