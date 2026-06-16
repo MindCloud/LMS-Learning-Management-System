@@ -44,6 +44,8 @@ import {
   Menu,
   X,
   Pencil,
+  Grid,
+  List,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -65,6 +67,7 @@ function Dashboard() {
   const [isAddFolderModalOpen, setIsAddFolderModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [studentViewMode, setStudentViewMode] = useState("grid");
 
   // Sidebar grade filters
   const [selectedGradeNotices, setSelectedGradeNotices] = useState("all");
@@ -667,9 +670,38 @@ function Dashboard() {
                   My Students
                 </h3>
               </div>
-              <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 border border-blue-100">
-                Total {filteredStudents.length}
-              </span>
+              <div className="flex items-center gap-3">
+                {/* View Switcher Button Group */}
+                <div className="inline-flex rounded-xl bg-slate-100 dark:bg-slate-800/80 p-0.5 border border-slate-200/40 dark:border-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => setStudentViewMode("grid")}
+                    className={`flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200 cursor-pointer ${
+                      studentViewMode === "grid"
+                        ? "bg-white dark:bg-slate-900 text-blue-600 shadow-xs font-bold"
+                        : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                    }`}
+                    title="Grid View"
+                  >
+                    <Grid className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setStudentViewMode("list")}
+                    className={`flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200 cursor-pointer ${
+                      studentViewMode === "list"
+                        ? "bg-white dark:bg-slate-900 text-blue-600 shadow-xs font-bold"
+                        : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                    }`}
+                    title="List View"
+                  >
+                    <List className="h-4 w-4" />
+                  </button>
+                </div>
+                <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 border border-blue-100">
+                  Total {filteredStudents.length}
+                </span>
+              </div>
             </div>
             <div className="p-6 flex-1 flex flex-col">
               {/* Search & Filter Bar */}
@@ -725,137 +757,257 @@ function Dashboard() {
                 <>
                   <motion.div
                     layout
-                    className="grid gap-4 sm:grid-cols-2"
+                    className={studentViewMode === "list" ? "flex flex-col gap-3" : "grid gap-4 sm:grid-cols-2"}
                   >
                     <AnimatePresence mode="popLayout">
-                      {currentStudents.map((student) => (
-                        <motion.div
-                          layout
-                          initial={{ opacity: 0, y: 12 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, scale: 0.95 }}
-                          transition={{ duration: 0.2 }}
-                          key={student.id}
-                          className="group relative flex flex-col rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm hover:shadow-md transition-all duration-300 hover:border-blue-300/60"
-                        >
-                          <div className="flex items-start gap-4">
-                            <div className="relative flex-shrink-0">
-                              <img
-                                src={
-                                  student.studentImage ||
-                                  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=256"
-                                }
-                                alt={student.fullName}
-                                className="h-16 w-16 rounded-2xl object-cover border-2 border-slate-100 shadow-sm group-hover:border-blue-200 transition-colors"
-                              />
-                              <span
-                                className={`absolute -bottom-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full border-2 border-white text-[8px] font-bold text-white shadow-sm ${(student.preferredTeachers || []).some(pt => pt.preferredTeacherId === teacher?.uid && pt.status === "active")
-                                  ? "bg-emerald-500"
-                                  : "bg-amber-500"
-                                  }`}
-                              >
-                                {(student.preferredTeachers || []).some(pt => pt.preferredTeacherId === teacher?.uid && pt.status === "active") ? "A" : "P"}
-                              </span>
-                            </div>
+                      {currentStudents.map((student) => {
+                        if (studentViewMode === "list") {
+                          return (
+                            <motion.div
+                              layout
+                              initial={{ opacity: 0, y: 12 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, scale: 0.95 }}
+                              transition={{ duration: 0.2 }}
+                              key={student.id}
+                              className="group relative flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-2xl border border-slate-200/60 bg-white p-4 shadow-sm hover:shadow-md transition-all duration-300 hover:border-blue-300/60"
+                            >
+                              {/* Left profile/info */}
+                              <div className="flex items-center gap-4 min-w-0 flex-1">
+                                <div className="relative flex-shrink-0">
+                                  <img
+                                    src={
+                                      student.studentImage ||
+                                      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=256"
+                                    }
+                                    alt={student.fullName}
+                                    className="h-12 w-12 rounded-xl object-cover border border-slate-100 shadow-sm"
+                                  />
+                                  <span
+                                    className={`absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full border border-white text-[7px] font-bold text-white shadow-sm ${(student.preferredTeachers || []).some(pt => pt.preferredTeacherId === teacher?.uid && pt.status === "active")
+                                      ? "bg-emerald-500"
+                                      : "bg-amber-500"
+                                      }`}
+                                  >
+                                    {(student.preferredTeachers || []).some(pt => pt.preferredTeacherId === teacher?.uid && pt.status === "active") ? "A" : "P"}
+                                  </span>
+                                </div>
 
-                            <div className="min-w-0 flex-1">
-                              <p className="text-md font-bold text-slate-900 truncate group-hover:text-blue-600 transition-colors">
-                                {student.fullName}
-                              </p>
+                                <div className="min-w-0 flex-1 grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4 md:items-center">
+                                  <div className="min-w-0">
+                                    <p className="text-sm font-bold text-slate-900 truncate group-hover:text-blue-600 transition-colors">
+                                      {student.fullName}
+                                    </p>
+                                    <p className="text-xs text-slate-400 truncate mt-0.5 flex items-center gap-1">
+                                      <Mail className="h-3 w-3" />
+                                      {student.email}
+                                    </p>
+                                  </div>
 
-                              <p className="text-xs text-slate-500 truncate flex items-center gap-1.5 mt-1 font-medium">
-                                <Mail className="h-3.5 w-3.5 text-slate-400" />
-                                {student.email}
-                              </p>
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className="inline-flex items-center gap-1 rounded-md bg-slate-50 border border-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-650">
+                                      <GraduationCap className="h-2.5 w-2.5 text-indigo-500" />
+                                      {student.grade
+                                        ? `Grade ${student.grade}`
+                                        : student.course === "al-ict"
+                                          ? "A/L"
+                                          : student.course === "ol-ict"
+                                            ? "O/L"
+                                            : student.course === "other"
+                                              ? "Other"
+                                              : "General"}
+                                    </span>
+                                    <span
+                                      className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[9px] font-semibold ${(student.preferredTeachers || []).some(pt => pt.preferredTeacherId === teacher?.uid && pt.status === "active")
+                                        ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
+                                        : "bg-amber-50 text-amber-700 border border-amber-100"
+                                        }`}
+                                    >
+                                      {(student.preferredTeachers || []).some(pt => pt.preferredTeacherId === teacher?.uid && pt.status === "active") ? "Active" : "Pending"}
+                                    </span>
+                                  </div>
 
-                              <div className="flex items-center gap-2 mt-2">
-                                <span className="inline-flex items-center gap-1 rounded-md bg-slate-50 border border-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
-                                  <GraduationCap className="h-3 w-3 text-indigo-500" />
-                                  {student.grade
-                                    ? `Grade ${student.grade}`
-                                    : student.course === "al-ict"
-                                      ? "A/L"
-                                      : student.course === "ol-ict"
-                                        ? "O/L"
-                                        : student.course === "other"
-                                          ? "Other"
-                                          : "General"}
-                                </span>
+                                  <div className="min-w-0 hidden md:block text-xs font-semibold text-slate-500">
+                                    {student.marks && student.marks.length > 0 ? (
+                                      <span className="truncate block">
+                                        Last: <strong className="text-blue-600">{student.marks[student.marks.length - 1].subject}:</strong> {student.marks[student.marks.length - 1].score}
+                                      </span>
+                                    ) : (
+                                      <span className="text-slate-400 italic">No marks logged</span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Right Actions */}
+                              <div className="flex items-center gap-2 shrink-0 md:border-l md:border-slate-100 md:pl-4">
+                                <button
+                                  onClick={() => openModal(student)}
+                                  className="inline-flex items-center justify-center gap-1 rounded-lg bg-blue-50 hover:bg-blue-600 hover:text-white text-blue-600 px-3 py-1.5 text-xs font-semibold border border-blue-100 cursor-pointer active:scale-95 duration-150 animate-all"
+                                >
+                                  <NotebookPen className="h-3 w-3" />
+                                  Marks
+                                </button>
+
+                                {!((student.preferredTeachers || []).some(pt => pt.preferredTeacherId === teacher?.uid && pt.status === "active")) ? (
+                                  <button
+                                    onClick={() => updateStudentStatus(student.id, "active")}
+                                    className="inline-flex items-center justify-center gap-1 rounded-lg bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-600 px-3 py-1.5 text-xs font-semibold border border-emerald-100 cursor-pointer active:scale-95 duration-150 animate-all"
+                                  >
+                                    <CheckCircle2 className="h-3 w-3" />
+                                    Activate
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => updateStudentStatus(student.id, "pending")}
+                                    className="inline-flex items-center justify-center gap-1 rounded-lg bg-amber-50 hover:bg-amber-600 hover:text-white text-amber-600 px-3 py-1.5 text-xs font-semibold border border-amber-100 cursor-pointer active:scale-95 duration-150 animate-all"
+                                  >
+                                    <Clock3 className="h-3 w-3" />
+                                    Suspend
+                                  </button>
+                                )}
+
+                                <button
+                                  onClick={() => setStudentToDelete(student)}
+                                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-red-50 hover:bg-red-600 hover:text-white text-red-600 border border-red-100 transition active:scale-95 duration-150 cursor-pointer animate-all animate-all"
+                                  title="Delete Student"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </motion.div>
+                          );
+                        }
+
+                        return (
+                          <motion.div
+                            layout
+                            initial={{ opacity: 0, y: 12 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            transition={{ duration: 0.2 }}
+                            key={student.id}
+                            className="group relative flex flex-col rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm hover:shadow-md transition-all duration-300 hover:border-blue-300/60"
+                          >
+                            <div className="flex items-start gap-4">
+                              <div className="relative flex-shrink-0">
+                                <img
+                                  src={
+                                    student.studentImage ||
+                                    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=256"
+                                  }
+                                  alt={student.fullName}
+                                  className="h-16 w-16 rounded-2xl object-cover border-2 border-slate-100 shadow-sm group-hover:border-blue-200 transition-colors"
+                                />
                                 <span
-                                  className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-semibold ${(student.preferredTeachers || []).some(pt => pt.preferredTeacherId === teacher?.uid && pt.status === "active")
-                                    ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
-                                    : "bg-amber-50 text-amber-700 border border-amber-100"
+                                  className={`absolute -bottom-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full border-2 border-white text-[8px] font-bold text-white shadow-sm ${(student.preferredTeachers || []).some(pt => pt.preferredTeacherId === teacher?.uid && pt.status === "active")
+                                    ? "bg-emerald-500"
+                                    : "bg-amber-500"
                                     }`}
                                 >
-                                  {(student.preferredTeachers || []).some(pt => pt.preferredTeacherId === teacher?.uid && pt.status === "active") ? "Active" : "Pending"}
+                                  {(student.preferredTeachers || []).some(pt => pt.preferredTeacherId === teacher?.uid && pt.status === "active") ? "A" : "P"}
                                 </span>
                               </div>
-                            </div>
-                          </div>
 
-                          {/* Student Marks Showcase */}
-                          <div className="mt-4 pt-3 border-t border-slate-100/80 flex-1">
-                            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-                              Academic Marks
-                            </p>
-                            {student.marks && student.marks.length > 0 ? (
-                              <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">
-                                {student.marks.map((mark, index) => (
-                                  <div
-                                    key={index}
-                                    className="inline-flex items-center gap-1 rounded-lg bg-blue-50/50 border border-blue-100/50 px-2 py-1 text-xs text-slate-700"
+                              <div className="min-w-0 flex-1">
+                                <p className="text-md font-bold text-slate-900 truncate group-hover:text-blue-600 transition-colors">
+                                  {student.fullName}
+                                </p>
+
+                                <p className="text-xs text-slate-500 truncate flex items-center gap-1.5 mt-1 font-medium">
+                                  <Mail className="h-3.5 w-3.5 text-slate-400" />
+                                  {student.email}
+                                </p>
+
+                                <div className="flex items-center gap-2 mt-2">
+                                  <span className="inline-flex items-center gap-1 rounded-md bg-slate-50 border border-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-660">
+                                    <GraduationCap className="h-3 w-3 text-indigo-500" />
+                                    {student.grade
+                                      ? `Grade ${student.grade}`
+                                      : student.course === "al-ict"
+                                        ? "A/L"
+                                        : student.course === "ol-ict"
+                                          ? "O/L"
+                                          : student.course === "other"
+                                            ? "Other"
+                                            : "General"}
+                                  </span>
+                                  <span
+                                    className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-semibold ${(student.preferredTeachers || []).some(pt => pt.preferredTeacherId === teacher?.uid && pt.status === "active")
+                                      ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
+                                      : "bg-amber-50 text-amber-700 border border-amber-100"
+                                      }`}
                                   >
-                                    <span className="font-semibold text-blue-600">{mark.subject}:</span>
-                                    <span className="font-bold text-slate-800">{mark.score}</span>
-                                    <span className="text-[9px] text-slate-400">({new Date(mark.date).toLocaleDateString()})</span>
-                                  </div>
-                                ))}
+                                    {(student.preferredTeachers || []).some(pt => pt.preferredTeacherId === teacher?.uid && pt.status === "active") ? "Active" : "Pending"}
+                                  </span>
+                                </div>
                               </div>
-                            ) : (
-                              <p className="text-xs text-slate-400 italic">
-                                No records submitted yet.
+                            </div>
+
+                            {/* Student Marks Showcase */}
+                            <div className="mt-4 pt-3 border-t border-slate-100/80 flex-1">
+                              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                                Academic Marks
                               </p>
-                            )}
-                          </div>
+                              {student.marks && student.marks.length > 0 ? (
+                                <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">
+                                  {student.marks.map((mark, index) => (
+                                    <div
+                                      key={index}
+                                      className="inline-flex items-center gap-1 rounded-lg bg-blue-50/50 border border-blue-100/50 px-2 py-1 text-xs text-slate-700"
+                                    >
+                                      <span className="font-semibold text-blue-600">{mark.subject}:</span>
+                                      <span className="font-bold text-slate-800">{mark.score}</span>
+                                      <span className="text-[9px] text-slate-400">({new Date(mark.date).toLocaleDateString()})</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-xs text-slate-400 italic">
+                                  No records submitted yet.
+                                </p>
+                              )}
+                            </div>
 
-                          {/* Quick Student Actions */}
-                          <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between gap-1 flex-wrap">
-                            <button
-                              onClick={() => openModal(student)}
-                              className="inline-flex flex-1 min-w-[70px] items-center justify-center gap-1.5 rounded-lg bg-blue-50 px-2.5 py-1.5 text-xs font-semibold text-blue-600 border border-blue-100 transition hover:bg-blue-600 hover:text-white cursor-pointer active:scale-95 duration-150"
-                            >
-                              <NotebookPen className="h-3.5 w-3.5" />
-                              Marks
-                            </button>
-
-                            {!((student.preferredTeachers || []).some(pt => pt.preferredTeacherId === teacher?.uid && pt.status === "active")) ? (
+                            {/* Quick Student Actions */}
+                            <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between gap-1 flex-wrap">
                               <button
-                                onClick={() => updateStudentStatus(student.id, "active")}
-                                className="inline-flex flex-1 min-w-[70px] items-center justify-center gap-1.5 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-xs font-semibold text-emerald-600 border border-emerald-100 transition hover:bg-emerald-600 hover:text-white cursor-pointer active:scale-95 duration-150"
+                                onClick={() => openModal(student)}
+                                className="inline-flex flex-1 min-w-[70px] items-center justify-center gap-1.5 rounded-lg bg-blue-50 px-2.5 py-1.5 text-xs font-semibold text-blue-600 border border-blue-100 transition hover:bg-blue-600 hover:text-white cursor-pointer active:scale-95 duration-150"
                               >
-                                <CheckCircle2 className="h-3.5 w-3.5" />
-                                Activate
+                                <NotebookPen className="h-3.5 w-3.5" />
+                                Marks
                               </button>
-                            ) : (
-                              <button
-                                onClick={() => updateStudentStatus(student.id, "pending")}
-                                className="inline-flex flex-1 min-w-[70px] items-center justify-center gap-1.5 rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs font-semibold text-amber-600 border border-amber-100 transition hover:bg-amber-600 hover:text-white cursor-pointer active:scale-95 duration-150"
-                              >
-                                <Clock3 className="h-3.5 w-3.5" />
-                                Suspend
-                              </button>
-                            )}
 
-                            <button
-                              onClick={() => setStudentToDelete(student)}
-                              className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-red-50 text-red-600 border border-red-100 transition hover:bg-red-600 hover:text-white cursor-pointer active:scale-95 duration-150"
-                              title="Delete Student"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-                        </motion.div>
-                      ))}
+                              {!((student.preferredTeachers || []).some(pt => pt.preferredTeacherId === teacher?.uid && pt.status === "active")) ? (
+                                <button
+                                  onClick={() => updateStudentStatus(student.id, "active")}
+                                  className="inline-flex flex-1 min-w-[70px] items-center justify-center gap-1.5 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-xs font-semibold text-emerald-600 border border-emerald-100 transition hover:bg-emerald-600 hover:text-white cursor-pointer active:scale-95 duration-150"
+                                >
+                                  <CheckCircle2 className="h-3.5 w-3.5" />
+                                  Activate
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => updateStudentStatus(student.id, "pending")}
+                                  className="inline-flex flex-1 min-w-[70px] items-center justify-center gap-1.5 rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs font-semibold text-amber-600 border border-amber-100 transition hover:bg-amber-600 hover:text-white cursor-pointer active:scale-95 duration-150"
+                                >
+                                  <Clock3 className="h-3.5 w-3.5" />
+                                  Suspend
+                                </button>
+                              )}
+
+                              <button
+                                onClick={() => setStudentToDelete(student)}
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-red-50 text-red-600 border border-red-100 transition hover:bg-red-600 hover:text-white cursor-pointer active:scale-95 duration-150"
+                                title="Delete Student"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
                     </AnimatePresence>
                   </motion.div>
 
