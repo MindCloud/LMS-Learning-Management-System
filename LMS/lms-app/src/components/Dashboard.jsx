@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { auth, db } from "../firebase";
 import {
   doc,
@@ -46,6 +46,7 @@ import {
   Pencil,
   Grid,
   List,
+  Download,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -85,6 +86,71 @@ function Dashboard() {
     } catch (e) {
       console.error("Logout failed:", e);
       toast.error("Failed to log out. Please try again.");
+    }
+  };
+
+  const downloadStudentReport = () => {
+    if (filteredStudents.length === 0) {
+      toast.error("No students available to generate report.");
+      return;
+    }
+
+    try {
+      // 1. Prepare CSV headers and records
+      const headers = ["Student Name", "Email Address", "Grade/Course", "Status", "Academic Marks & Scores"];
+      
+      const rows = filteredStudents.map((student) => {
+        const gradeText = student.grade
+          ? `Grade ${student.grade}`
+          : student.course === "al-ict"
+            ? "A/L"
+            : student.course === "ol-ict"
+              ? "O/L"
+              : student.course === "other"
+                ? "Other"
+                : "General";
+
+        const isActive = (student.preferredTeachers || []).some(
+          (pt) => pt.preferredTeacherId === teacher?.uid && pt.status === "active"
+        );
+        const statusText = isActive ? "Active" : "Pending";
+
+        const marksText = student.marks && student.marks.length > 0
+          ? student.marks.map((m) => `${m.subject}: ${m.score}`).join(" | ")
+          : "No records";
+
+        const cleanVal = (val) => {
+          const stringVal = String(val || "").replace(/"/g, '""');
+          return `"${stringVal}"`;
+        };
+
+        return [
+          cleanVal(student.fullName),
+          cleanVal(student.email),
+          cleanVal(gradeText),
+          cleanVal(statusText),
+          cleanVal(marksText)
+        ].join(",");
+      });
+
+      const summaryHeader = `EZone Student Report - Generated on ${new Date().toLocaleDateString()} - Total Students: ${filteredStudents.length}\n`;
+      const csvContent = summaryHeader + [headers.join(","), ...rows].join("\n");
+
+      // 2. Trigger browser file download
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `ezone_student_report_${teacher?.fullName ? teacher.fullName.replace(/\s+/g, "_").toLowerCase() : "teacher"}_${new Date().toISOString().slice(0, 10)}.csv`);
+      link.style.visibility = "hidden";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast.success("Student report downloaded successfully!");
+    } catch (err) {
+      console.error("Error generating report:", err);
+      toast.error("Failed to generate report.");
     }
   };
 
@@ -671,6 +737,17 @@ function Dashboard() {
                 </h3>
               </div>
               <div className="flex items-center gap-3">
+                {/* Download Report Button */}
+                <button
+                  type="button"
+                  onClick={downloadStudentReport}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-3 py-1.5 text-xs font-bold border border-indigo-100/50 dark:border-indigo-900/30 transition active:scale-95 cursor-pointer"
+                  title="Download CSV Report of My Students"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  <span>Report</span>
+                </button>
+
                 {/* View Switcher Button Group */}
                 <div className="inline-flex rounded-xl bg-slate-100 dark:bg-slate-800/80 p-0.5 border border-slate-200/40 dark:border-slate-800">
                   <button
@@ -775,14 +852,16 @@ function Dashboard() {
                               {/* Left profile/info */}
                               <div className="flex items-center gap-4 min-w-0 flex-1">
                                 <div className="relative flex-shrink-0">
-                                  <img
-                                    src={
-                                      student.studentImage ||
-                                      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=256"
-                                    }
-                                    alt={student.fullName}
-                                    className="h-12 w-12 rounded-xl object-cover border border-slate-100 shadow-sm"
-                                  />
+                                  <Link to={`/students/${student.id}`} className="hover:opacity-85 transition-opacity">
+                                    <img
+                                      src={
+                                        student.studentImage ||
+                                        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=256"
+                                      }
+                                      alt={student.fullName}
+                                      className="h-12 w-12 rounded-xl object-cover border border-slate-100 shadow-sm"
+                                    />
+                                  </Link>
                                   <span
                                     className={`absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full border border-white text-[7px] font-bold text-white shadow-sm ${(student.preferredTeachers || []).some(pt => pt.preferredTeacherId === teacher?.uid && pt.status === "active")
                                       ? "bg-emerald-500"
@@ -795,9 +874,12 @@ function Dashboard() {
 
                                 <div className="min-w-0 flex-1 grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4 md:items-center">
                                   <div className="min-w-0">
-                                    <p className="text-sm font-bold text-slate-900 truncate group-hover:text-blue-600 transition-colors">
+                                    <Link
+                                      to={`/students/${student.id}`}
+                                      className="text-sm font-bold text-slate-900 truncate hover:text-blue-600 transition-colors block"
+                                    >
                                       {student.fullName}
-                                    </p>
+                                    </Link>
                                     <p className="text-xs text-slate-400 truncate mt-0.5 flex items-center gap-1">
                                       <Mail className="h-3 w-3" />
                                       {student.email}
@@ -891,14 +973,16 @@ function Dashboard() {
                           >
                             <div className="flex items-start gap-4">
                               <div className="relative flex-shrink-0">
-                                <img
-                                  src={
-                                    student.studentImage ||
-                                    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=256"
-                                  }
-                                  alt={student.fullName}
-                                  className="h-16 w-16 rounded-2xl object-cover border-2 border-slate-100 shadow-sm group-hover:border-blue-200 transition-colors"
-                                />
+                                <Link to={`/students/${student.id}`} className="hover:opacity-85 transition-opacity">
+                                  <img
+                                    src={
+                                      student.studentImage ||
+                                      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=256"
+                                    }
+                                    alt={student.fullName}
+                                    className="h-16 w-16 rounded-2xl object-cover border-2 border-slate-100 shadow-sm group-hover:border-blue-200 transition-colors"
+                                  />
+                                </Link>
                                 <span
                                   className={`absolute -bottom-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full border-2 border-white text-[8px] font-bold text-white shadow-sm ${(student.preferredTeachers || []).some(pt => pt.preferredTeacherId === teacher?.uid && pt.status === "active")
                                     ? "bg-emerald-500"
@@ -910,9 +994,12 @@ function Dashboard() {
                               </div>
 
                               <div className="min-w-0 flex-1">
-                                <p className="text-md font-bold text-slate-900 truncate group-hover:text-blue-600 transition-colors">
+                                <Link
+                                  to={`/students/${student.id}`}
+                                  className="text-md font-bold text-slate-900 truncate hover:text-blue-600 transition-colors block"
+                                >
                                   {student.fullName}
-                                </p>
+                                </Link>
 
                                 <p className="text-xs text-slate-500 truncate flex items-center gap-1.5 mt-1 font-medium">
                                   <Mail className="h-3.5 w-3.5 text-slate-400" />

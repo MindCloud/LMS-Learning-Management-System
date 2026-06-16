@@ -19,6 +19,7 @@ import Questions from "./components/TeacherQuestions";
 import TeacherFeedback from "./components/TeacherFeedback";
 import TeacherProfile from "./components/TeacherProfile";
 import Downloads from "./components/Downloads";
+import StudentDetail from "./components/StudentDetail";
 import ManageResourceFolders from "./components/ManageResourceFolders"
 import ThemeToggle from "./components/ThemeToggle"; // 👈 ADD THIS
 
@@ -83,6 +84,15 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={["teacher"]}>
                 <ManageResourceFolders />
+              </ProtectedRoute>
+            }
+          />
+          {/* Student details page - Protected Route */}
+          <Route
+            path="/students/:id"
+            element={
+              <ProtectedRoute allowedRoles={["teacher"]}>
+                <StudentDetail />
               </ProtectedRoute>
             }
           />
