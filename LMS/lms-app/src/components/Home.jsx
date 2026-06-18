@@ -641,10 +641,11 @@ function Home() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate("/ask")}
-              className="hidden sm:flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 bg-white ring-1 ring-slate-200 rounded-full hover:bg-slate-50 transition shadow-sm"
+              className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2 text-sm font-medium text-slate-700 bg-white ring-1 ring-slate-200 rounded-full hover:bg-slate-50 transition shadow-sm cursor-pointer"
+              title="Ask Teacher"
             >
               <Mail className="h-4 w-4 text-slate-500" />
-              <span>Ask Teacher</span>
+              <span className="hidden sm:inline">Ask Teacher</span>
             </button>
 
             <button

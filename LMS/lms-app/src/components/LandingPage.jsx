@@ -1,5 +1,5 @@
 // src/components/LandingPage.jsx
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   collection,
@@ -20,7 +20,6 @@ import {
   FaChalkboardTeacher,
   FaBookOpen,
   FaChartLine,
-  FaPlay,
 } from "react-icons/fa";
 import {
   FiStar,
@@ -49,65 +48,64 @@ import "swiper/css/pagination";
 
 // const HERO_BG_360 = "https://royalinstitute.org/wp-content/uploads/2021/03/Gampaha-RGB.jpg";
 
-// sample top students data
-const topStudents = [
-  {
-    id: "s1",
-    name: "Kavindu Perera",
-    subject: "Mathematics",
-    marks: 98,
-    instructor: "John Silva",
-    image: "https://randomuser.me/api/portraits/men/32.jpg",
-  },
-  {
-    id: "s2",
-    name: "Nethmi Fernando",
-    subject: "Science",
-    marks: 96,
-    instructor: "Nimali Perera",
-    image: "https://randomuser.me/api/portraits/women/44.jpg",
-  },
-  {
-    id: "s3",
-    name: "Sahan Jayawardena",
-    subject: "ICT",
-    marks: 95,
-    instructor: "Tharindu Peris",
-    image: "https://randomuser.me/api/portraits/men/54.jpg",
-  },
-  {
-    id: "s4",
-    name: "Hiruni Madushika",
-    subject: "Physics",
-    marks: 94,
-    instructor: "Amara De Silva",
-    image: "https://randomuser.me/api/portraits/women/68.jpg",
-  },
-  {
-    id: "s5",
-    name: "Dilshan Weerasinghe",
-    subject: "Chemistry",
-    marks: 93,
-    instructor: "Ruwan Jayasuriya",
-    image: "https://randomuser.me/api/portraits/men/61.jpg",
-  },
-  {
-    id: "s6",
-    name: "Sachini Gunawardena",
-    subject: "English",
-    marks: 92,
-    instructor: "Ishara Fernando",
-    image: "https://randomuser.me/api/portraits/women/71.jpg",
-  },
-  {
-    id: "s7",
-    name: "Ashen Wickramasinghe",
-    subject: "Web Development",
-    marks: 91,
-    instructor: "Chamindu Madushan",
-    image: "https://randomuser.me/api/portraits/men/77.jpg",
-  },
-];
+// const topStudents = [
+//   {
+//     id: "s1",
+//     name: "Kavindu Perera",
+//     subject: "Mathematics",
+//     marks: 98,
+//     instructor: "John Silva",
+//     image: "https://randomuser.me/api/portraits/men/32.jpg",
+//   },
+//   {
+//     id: "s2",
+//     name: "Nethmi Fernando",
+//     subject: "Science",
+//     marks: 96,
+//     instructor: "Nimali Perera",
+//     image: "https://randomuser.me/api/portraits/women/44.jpg",
+//   },
+//   {
+//     id: "s3",
+//     name: "Sahan Jayawardena",
+//     subject: "ICT",
+//     marks: 95,
+//     instructor: "Tharindu Peris",
+//     image: "https://randomuser.me/api/portraits/men/54.jpg",
+//   },
+//   {
+//     id: "s4",
+//     name: "Hiruni Madushika",
+//     subject: "Physics",
+//     marks: 94,
+//     instructor: "Amara De Silva",
+//     image: "https://randomuser.me/api/portraits/women/68.jpg",
+//   },
+//   {
+//     id: "s5",
+//     name: "Dilshan Weerasinghe",
+//     subject: "Chemistry",
+//     marks: 93,
+//     instructor: "Ruwan Jayasuriya",
+//     image: "https://randomuser.me/api/portraits/men/61.jpg",
+//   },
+//   {
+//     id: "s6",
+//     name: "Sachini Gunawardena",
+//     subject: "English",
+//     marks: 92,
+//     instructor: "Ishara Fernando",
+//     image: "https://randomuser.me/api/portraits/women/71.jpg",
+//   },
+//   {
+//     id: "s7",
+//     name: "Ashen Wickramasinghe",
+//     subject: "Web Development",
+//     marks: 91,
+//     instructor: "Chamindu Madushan",
+//     image: "https://randomuser.me/api/portraits/men/77.jpg",
+//   },
+// ];
 
 /* ---------- Shared data ---------- */
 const defaultTutors = [
@@ -155,66 +153,66 @@ const defaultTutors = [
   },
 ];
 
-const features = [
-  {
-    icon: <FaChalkboardTeacher className="mb-4 text-4xl text-blue-600" />,
-    title: "Expert Instructors",
-    description:
-      "Learn from industry professionals with real-world experience.",
-  },
-  {
-    icon: <FaBookOpen className="mb-4 text-4xl text-blue-500" />,
-    title: "Comprehensive Courses",
-    description: "Access a wide range of courses across multiple disciplines.",
-  },
-  {
-    icon: <FaChartLine className="mb-4 text-4xl text-blue-400" />,
-    title: "Progress Tracking",
-    description: "Monitor your learning journey with detailed analytics.",
-  },
-];
-
-// const defaultFeedbacks = [
+// const features = [
 //   {
-//     id: "1",
-//     fullName: "Nimali Perera",
-//     role: "Teacher",
-//     subject: "Science",
-//     imageUrl:
-//       "https://gsep.pepperdine.edu/blog/images/how-much-could-a-masters-degree-increase-your-teaching-salary.png",
-//     feedback: "EZone is amazing! My students love the interactive lessons.",
-//     rating: 5,
+//     icon: <FaChalkboardTeacher className="mb-4 text-4xl text-blue-600" />,
+//     title: "Expert Instructors",
+//     description:
+//       "Learn from industry professionals with real-world experience.",
 //   },
 //   {
-//     id: "2",
-//     fullName: "John Silva",
-//     role: "Math Teacher",
-//     subject: "Mathematics",
-//     imageUrl: "https://randomuser.me/api/portraits/men/45.jpg",
-//     feedback:
-//       "A great platform for both teachers and students to collaborate and grow.",
-//     rating: 4,
+//     icon: <FaBookOpen className="mb-4 text-4xl text-blue-500" />,
+//     title: "Comprehensive Courses",
+//     description: "Access a wide range of courses across multiple disciplines.",
 //   },
 //   {
-//     id: "3",
-//     fullName: "Amara De Silva",
-//     role: "Student",
-//     subject: "Physics",
-//     imageUrl: "https://randomuser.me/api/portraits/women/65.jpg",
-//     feedback: "I love how easy it is to track progress and improve my grades!",
-//     rating: 5,
-//   },
-//   {
-//     id: "4",
-//     fullName: "Ruwan Jayasuriya",
-//     role: "Parent",
-//     subject: "—",
-//     imageUrl: "https://randomuser.me/api/portraits/men/52.jpg",
-//     feedback:
-//       "The parent dashboard helps me stay informed about my child’s learning.",
-//     rating: 5,
+//     icon: <FaChartLine className="mb-4 text-4xl text-blue-400" />,
+//     title: "Progress Tracking",
+//     description: "Monitor your learning journey with detailed analytics.",
 //   },
 // ];
+
+const defaultFeedbacks = [
+  {
+    id: "1",
+    fullName: "Nimali Perera",
+    role: "Teacher",
+    subject: "Science",
+    imageUrl:
+      "https://gsep.pepperdine.edu/blog/images/how-much-could-a-masters-degree-increase-your-teaching-salary.png",
+    feedback: "EZone is amazing! My students love the interactive lessons.",
+    rating: 5,
+  },
+  {
+    id: "2",
+    fullName: "John Silva",
+    role: "Math Teacher",
+    subject: "Mathematics",
+    imageUrl: "https://randomuser.me/api/portraits/men/45.jpg",
+    feedback:
+      "A great platform for both teachers and students to collaborate and grow.",
+    rating: 4,
+  },
+  {
+    id: "3",
+    fullName: "Amara De Silva",
+    role: "Student",
+    subject: "Physics",
+    imageUrl: "https://randomuser.me/api/portraits/women/65.jpg",
+    feedback: "I love how easy it is to track progress and improve my grades!",
+    rating: 5,
+  },
+  {
+    id: "4",
+    fullName: "Ruwan Jayasuriya",
+    role: "Parent",
+    subject: "—",
+    imageUrl: "https://randomuser.me/api/portraits/men/52.jpg",
+    feedback:
+      "The parent dashboard helps me stay informed about my child’s learning.",
+    rating: 5,
+  },
+];
 
 const formatPrice = (n) => n.toLocaleString("en-LK");
 
@@ -385,7 +383,7 @@ function LandingPage() {
         const snap = await getDocs(q);
         const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
         setFeedbacks(data.length ? data : defaultFeedbacks);
-      } catch (e) {
+      } catch {
         setFeedbacks(defaultFeedbacks);
       } finally {
         setLoading(false);
@@ -695,7 +693,6 @@ function LandingPage() {
                   .filter(Boolean)
                   .slice(0, 3);
 
-                const rating = Number(t.rating) || 5;
                 const studentCount = t.students || 120;
                 const lessonCount = t.lessons || 45;
 
