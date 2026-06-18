@@ -4,13 +4,9 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import {
-  FiStar,
-  FiUsers,
   FiCheckCircle,
   FiBookOpen,
-  FiClock,
   FiTarget,
-  FiAward,
   FiMapPin,
   FiMail,
   FiPhone,
@@ -76,8 +72,8 @@ const TeacherProfile = () => {
   const gradeBadges = Array.isArray(teacher.grades)
     ? teacher.grades
     : Array.isArray(teacher.grade)
-    ? teacher.grade
-    : (teacher.grade || "").split(",").map((g) => g.trim()).filter(Boolean);
+      ? teacher.grade
+      : (teacher.grade || "").split(",").map((g) => g.trim()).filter(Boolean);
 
   return (
     <div className="bg-slate-50/50 min-h-screen font-sans text-slate-800 flex flex-col relative overflow-hidden transition-colors duration-300">
@@ -109,7 +105,7 @@ const TeacherProfile = () => {
       <div className="relative bg-gradient-to-r from-blue-950 via-indigo-900 to-slate-900 py-16 px-6 sm:px-12 text-white overflow-hidden shadow-md">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.06),transparent_35%)]" />
         <div className="absolute top-[-20%] right-[-10%] w-[45%] h-[80%] rounded-full bg-blue-500/10 blur-[100px] pointer-events-none" />
-        
+
         <div className="relative max-w-5xl mx-auto flex flex-col md:flex-row items-center md:items-start gap-8 z-10">
           {/* Avatar frame */}
           <div className="relative group flex-shrink-0">
@@ -120,7 +116,7 @@ const TeacherProfile = () => {
               className="relative w-36 h-36 rounded-full object-cover border-4 border-white shadow-2xl transition duration-300 hover:scale-[1.02]"
             />
           </div>
-          
+
           <div className="text-center md:text-left space-y-3">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider backdrop-blur-md border border-white/10">
               <FiCheckCircle className="text-emerald-400 h-4 w-4" /> Verified Educator
@@ -203,7 +199,7 @@ const TeacherProfile = () => {
                 <FiTarget className="w-5 h-5 text-blue-600" />
                 Teaching Specializations
               </h2>
-              
+
               <div className="space-y-5">
                 <div>
                   <h3 className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-2.5">Expert Subjects</h3>
@@ -218,7 +214,7 @@ const TeacherProfile = () => {
                             key={s}
                             className={`inline-flex items-center rounded-2xl bg-gradient-to-r px-4.5 py-2 text-xs font-black uppercase tracking-wider text-white shadow-xs ${tagStyle}`}
                           >
-                            {s}
+                            {s}00
                           </span>
                         );
                       })}
@@ -259,11 +255,11 @@ const TeacherProfile = () => {
         {/* Action Buttons */}
         <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center items-center">
           <Link
-            to={`/courses?instructor=${encodeURIComponent(teacher.fullName)}`}
+            to={`/teachers/${teacher.id}/notes`}
             className="inline-flex items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-750 text-white px-8 py-3.5 text-sm font-extrabold tracking-wide uppercase transition shadow-md shadow-blue-500/10 hover:shadow-lg active:scale-95 cursor-pointer"
           >
             <FiBookOpen className="w-4.5 h-4.5" />
-            <span>View Courses</span>
+            <span>View Notes by Teacher</span>
           </Link>
           <Link
             to="/"

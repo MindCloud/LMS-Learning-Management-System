@@ -773,12 +773,17 @@ function LandingPage() {
                           >
                             Profile
                           </Link>
-                          <Link
-                            to={`/courses?instructor=${encodeURIComponent(t.fullName)}`}
+                          <button
+                            onClick={() => {
+                              const el = document.getElementById("courses");
+                              if (el) {
+                                el.scrollIntoView({ behavior: "smooth", block: "start" });
+                              }
+                            }}
                             className="inline-flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 px-4.5 py-2.5 text-xs font-extrabold tracking-wide uppercase transition border border-transparent active:scale-95 cursor-pointer"
                           >
                             Courses
-                          </Link>
+                          </button>
                         </div>
                       </div>
                     </div>

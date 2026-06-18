@@ -18,6 +18,7 @@ import AskQuestion from "./components/AskQuestion";
 import Questions from "./components/TeacherQuestions";
 import TeacherFeedback from "./components/TeacherFeedback";
 import TeacherProfile from "./components/TeacherProfile";
+import TeacherNotes from "./components/TeacherNotes";
 import Downloads from "./components/Downloads";
 import StudentDetail from "./components/StudentDetail";
 import ManageResourceFolders from "./components/ManageResourceFolders"
@@ -77,6 +78,7 @@ function App() {
           <Route path="/ask" element={<AskQuestion />} />
           <Route path="/questions" element={<Questions />} />
           <Route path="/teachers/:id" element={<TeacherProfile />} />
+          <Route path="/teachers/:id/notes" element={<TeacherNotes />} />
           <Route path="/downloads" element={<Downloads />} />
           {/* NEW: Manage Resources - Protected Route */}
           <Route
