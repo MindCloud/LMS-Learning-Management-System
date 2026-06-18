@@ -23,6 +23,7 @@ import Downloads from "./components/Downloads";
 import StudentDetail from "./components/StudentDetail";
 import ManageResourceFolders from "./components/ManageResourceFolders"
 import ThemeToggle from "./components/ThemeToggle"; // 👈 ADD THIS
+import ScrollToTop from "./components/ScrollToTop";
 
 // Check if user is logged in
 const isAuthenticated = () => {
@@ -51,6 +52,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 function App() {
   return (
     <div className="min-h-screen flex flex-col">
+      <ScrollToTop />
       {/* Global Toast Provider */}
       <Toaster
         position="top-center"

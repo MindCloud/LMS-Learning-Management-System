@@ -170,22 +170,22 @@ export default function Footer() {
             <h4 className="text-sm font-bold uppercase tracking-wider text-white">Support</h4>
             <ul className="space-y-3 text-slate-400 text-sm font-semibold">
               <li>
-                <Link to="/help" className="hover:text-white transition-colors">
+                <Link to="/help" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="hover:text-white transition-colors">
                   Help Center
                 </Link>
               </li>
               <li>
-                <Link to="/contact" className="hover:text-white transition-colors">
+                <Link to="/contact" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="hover:text-white transition-colors">
                   Contact Us
                 </Link>
               </li>
               <li>
-                <Link to="/faq" className="hover:text-white transition-colors">
+                <Link to="/faq" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="hover:text-white transition-colors">
                   FAQs
                 </Link>
               </li>
               <li>
-                <Link to="/downloads" className="hover:text-white transition-colors">
+                <Link to="/downloads" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="hover:text-white transition-colors">
                   Downloads
                 </Link>
               </li>

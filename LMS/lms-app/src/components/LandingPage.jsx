@@ -35,6 +35,7 @@ import {
   FiMenu,
   FiX,
   FiChevronDown, // ⬅️ for avatar dropdown
+  FiDownload,
 } from "react-icons/fi";
 
 // Swiper
@@ -498,7 +499,12 @@ function LandingPage() {
                 </Link>
               </div>
 
-              <div className="mt-8 inline-flex items-center gap-2 rounded-xl bg-white/10 px-3 py-2 text-blue-50 shadow ring-1 ring-white/20 backdrop-blur">
+              <a
+                href="https://www.google.com/maps/dir/?api=1&destination=Anuradha+Higher+Educational+Institute,+Morawaka"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-8 inline-flex items-center gap-2 rounded-xl bg-white/10 px-3 py-2 text-blue-50 shadow ring-1 ring-white/20 backdrop-blur hover:bg-white/20 transition-all cursor-pointer"
+              >
                 <span
                   role="img"
                   aria-label="location pin"
@@ -509,7 +515,7 @@ function LandingPage() {
                 <span className="text-sm font-semibold">
                   Morawaka, Deniyaya
                 </span>
-              </div>
+              </a>
             </div>
 
             <div className="relative">
@@ -823,12 +829,17 @@ function LandingPage() {
                 දක්ෂතාවයන් බවට පරිවර්තනය කරමු.
               </p>
 
-              <div className="mt-5 inline-flex items-center gap-2 rounded-xl bg-blue-50 px-3 py-2 text-blue-800 ring-1 ring-blue-100">
+              <a
+                href="https://www.google.com/maps/dir/?api=1&destination=Anuradha+Higher+Educational+Institute,+Morawaka"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-5 inline-flex items-center gap-2 rounded-xl bg-blue-50 px-3 py-2 text-blue-800 ring-1 ring-blue-100 hover:bg-blue-100 transition-all cursor-pointer"
+              >
                 <FiMapPin className="h-4 w-4" />
                 <span className="text-sm font-semibold">
                   Morawaka, Deniyaya
                 </span>
-              </div>
+              </a>
 
               <div className="mt-8 grid gap-5 sm:grid-cols-2">
                 <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-blue-100">
@@ -1055,12 +1066,14 @@ function LandingPage() {
                   </div>
 
                   <div className="mt-5 flex items-center gap-3">
-                    <Link
-                      to={`/courses/${c.slug}`}
-                      className="inline-flex items-center gap-1 rounded-full bg-blue-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-800"
+                    <a
+                      href={`https://wa.me/94740172552?text=${encodeURIComponent(`Hello, I would like to enroll in the course: ${c.title}`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 rounded-full bg-blue-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-800 cursor-pointer"
                     >
                       Enroll now <FiChevronRight />
-                    </Link>
+                    </a>
                     {/* <Link
                       to={`/courses/${c.slug}#syllabus`}
                       className="inline-flex items-center text-sm font-semibold text-blue-700 hover:underline"
@@ -1089,15 +1102,7 @@ function LandingPage() {
             ))}
           </div>
 
-          {/* This goes to the full Courses page */}
-          <div className="mt-10 text-center">
-            <Link
-              to="/courses"
-              className="inline-flex items-center gap-1 text-sm font-semibold text-blue-700 hover:underline"
-            >
-              Browse all courses <FiChevronRight />
-            </Link>
-          </div>
+
         </div>
       </section>
 
@@ -1360,17 +1365,26 @@ function Navbar({
           )}
         </div>
 
-        {/* Mobile toggle */}
-        <button
-          className="inline-flex items-center justify-center rounded-lg p-2 text-blue-900 hover:bg-blue-50 md:hidden"
-          onClick={() => {
-            setOpen((v) => !v);
-            setAvatarOpen(false);
-          }}
-          aria-label="Toggle menu"
-        >
-          {open ? <FiX /> : <FiMenu />}
-        </button>
+        {/* Mobile action area */}
+        <div className="flex items-center gap-3 md:hidden">
+          <Link
+            to="/downloads"
+            className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-4.5 py-2 text-xs font-black tracking-wider uppercase shadow-md shadow-orange-500/10 hover:shadow-lg transition-all duration-300 hover:scale-[1.03] active:scale-95 cursor-pointer"
+          >
+            <FiDownload className="w-3.5 h-3.5" />
+            <span>Downloads</span>
+          </Link>
+          <button
+            className="inline-flex items-center justify-center rounded-lg p-2 text-blue-900 hover:bg-blue-50"
+            onClick={() => {
+              setOpen((v) => !v);
+              setAvatarOpen(false);
+            }}
+            aria-label="Toggle menu"
+          >
+            {open ? <FiX /> : <FiMenu />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile sheet */}
