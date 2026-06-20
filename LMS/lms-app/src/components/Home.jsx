@@ -1331,14 +1331,27 @@ function Home() {
                                           notices[teacherId].map((notice) => (
                                             <div
                                               key={notice.id}
-                                              className="p-4 rounded-2xl bg-amber-50/50 border border-amber-100/50 text-slate-700 hover:bg-amber-50 transition"
+                                              className="group relative overflow-hidden p-5 rounded-2xl border border-amber-100/60 bg-gradient-to-r from-amber-50/20 to-yellow-50/10 dark:from-yellow-950/10 dark:to-amber-950/5 dark:border-yellow-900/10 hover:border-amber-300/60 dark:hover:border-amber-500/20 transition-all duration-300 shadow-2xs hover:shadow-xs"
                                             >
-                                              <p className="text-sm font-medium leading-relaxed">{notice.content}</p>
-                                              {notice.createdAt && (
-                                                <p className="text-[10px] text-slate-400 mt-2">
-                                                  Posted {formatDate(notice.createdAt.toDate ? notice.createdAt.toDate() : notice.createdAt)}
-                                                </p>
-                                              )}
+                                              {/* Left vertical amber gradient indicator line */}
+                                              <div className="absolute left-0 top-0 bottom-0 w-[4.5px] bg-gradient-to-b from-amber-500 to-yellow-450 rounded-r-md" />
+                                              
+                                              <div className="flex items-start gap-3 pl-2">
+                                                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100/70 dark:bg-amber-950/20 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5 animate-pulse">
+                                                  <Megaphone className="h-4.5 w-4.5" />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                  <p className="text-sm font-medium leading-relaxed text-slate-800 dark:text-slate-200">
+                                                    {notice.content}
+                                                  </p>
+                                                  {notice.createdAt && (
+                                                    <div className="mt-2.5 flex items-center gap-1.5 text-[10px] text-slate-400 dark:text-slate-500 font-semibold">
+                                                      <Calendar className="h-3.5 w-3.5 text-amber-500/70" />
+                                                      <span>Posted {formatDate(notice.createdAt.toDate ? notice.createdAt.toDate() : notice.createdAt)}</span>
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              </div>
                                             </div>
                                           ))
                                         ) : (

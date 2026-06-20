@@ -465,22 +465,22 @@ function LandingPage() {
       >
         <div className="absolute inset-0 -z-10 bg-blue-900/75" />
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 md:py-28 lg:px-8">
-          <div className="grid items-center gap-10 md:grid-cols-2">
-            <div className="text-center md:text-left">
+          <div className="grid items-center gap-10 lg:grid-cols-2">
+            <div className="text-center lg:text-left">
               <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm font-medium text-blue-50 shadow-sm ring-1 ring-white/20 backdrop-blur">
                 <FiCheckCircle /> Trusted by 50k+ learners
               </span>
-              <h1 className="mt-4 text-4xl font-extrabold leading-tight text-white md:text-5xl lg:text-6xl">
+              <h1 className="mt-4 text-4xl font-extrabold leading-tight text-white lg:text-5xl xl:text-6xl">
                 අනුරාධ උසස් අධ්‍යාපන ආයතනය මොරවක
                 <br />
                 <span className="text-blue-300">Powered by Ezone </span>
               </h1>
-              <p className="mt-4 text-lg text-blue-100 md:text-xl">
+              <p className="mt-4 text-lg text-blue-100 lg:text-xl">
                 The modern LMS for students, educators, and institutions. Learn
                 smarter with interactive courses, analytics, and AI assistance.
               </p>
 
-              <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row md:justify-start">
+              <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row lg:justify-start">
                 <Link
                   to="/signup"
                   className="group inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-white/40 active:scale-[0.98] cursor-pointer"
@@ -520,25 +520,34 @@ function LandingPage() {
               <div
                 onMouseMove={handleHeroMouseMove}
                 onMouseLeave={handleHeroMouseLeave}
-                className="mx-auto w-full max-w-xl rounded-3xl border border-white/20 bg-white/95 p-6 shadow-2xl backdrop-blur transition-all duration-100 ease-out"
+                className="mx-auto w-full max-w-xl rounded-3xl border border-amber-200/50 bg-white/95 dark:bg-slate-900/90 dark:border-amber-500/20 p-6 shadow-2xl shadow-amber-500/10 dark:shadow-amber-500/5 backdrop-blur transition-all duration-100 ease-out"
                 style={{
                   transform: `perspective(1000px) rotateX(${heroTilt.rotateX}deg) rotateY(${heroTilt.rotateY}deg) scale3d(1.02, 1.02, 1.02)`,
-                  boxShadow: `${heroTilt.shadowX}px ${heroTilt.shadowY}px 30px rgba(0, 0, 0, 0.15)`,
+                  boxShadow: `${heroTilt.shadowX}px ${heroTilt.shadowY}px 30px rgba(245, 158, 11, 0.08)`,
                 }}
               >
                 {/* Header */}
-                <div className="mb-5 flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-600 text-white text-xl">
-                    📢
+                <div className="mb-6 flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-4">
+                    {/* Glowing pulsing megaphone beacon */}
+                    <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-500 text-white shadow-lg shadow-amber-500/20 shrink-0">
+                      <span className="absolute inline-flex h-full w-full rounded-2xl bg-amber-400 opacity-75 animate-ping -z-10" />
+                      <span className="text-xl animate-pulse">📢</span>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-black tracking-tight text-slate-900 dark:text-white leading-snug">
+                        ආයතනික විශේෂ දැන්වීම්
+                      </h3>
+                      <p className="text-[10px] font-bold text-amber-600 dark:text-yellow-450 uppercase tracking-widest mt-0.5">
+                        Institute Notices
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-lg font-bold text-slate-900">
-                      ආයතනික විශේෂ දැන්වීම්
-                    </p>
-                    <p className="text-sm text-slate-600">
-                      Institute Special Notices
-                    </p>
-                  </div>
+                  {/* Premium indicator badge */}
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 border border-amber-200/50 dark:border-amber-900/30 shrink-0">
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                    Live Updates
+                  </span>
                 </div>
 
                 {/* Notices */}
@@ -546,23 +555,37 @@ function LandingPage() {
                   {notices.map((n) => (
                     <li
                       key={n.id}
-                      className="rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm"
+                      className="group relative overflow-hidden rounded-2xl border border-amber-100/60 bg-gradient-to-r from-amber-50/20 to-yellow-50/10 dark:from-yellow-950/10 dark:to-amber-950/5 dark:border-yellow-900/10 px-5 py-4 shadow-xs hover:shadow-md hover:border-amber-300/60 dark:hover:border-amber-500/20 transition-all duration-300"
                     >
-                      <p className="text-base font-semibold text-blue-900">
-                        {n.title}
-                      </p>
-                      <p className="mt-2 text-sm leading-relaxed text-slate-700">
-                        {n.description}
-                      </p>
-                      <p className="mt-3 text-xs font-medium text-slate-500">
-                        🕒 Posted on {n.postedAt || "N/A"}
-                      </p>
+                      {/* Left vertical amber gradient indicator line */}
+                      <div className="absolute left-0 top-0 bottom-0 w-[4.5px] bg-gradient-to-b from-amber-500 to-yellow-450 rounded-r-md" />
+                      
+                      <div className="pl-1">
+                        <h4 className="text-base font-extrabold text-amber-950 dark:text-amber-300 tracking-tight leading-snug">
+                          {n.title}
+                        </h4>
+                        <p className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-350 font-medium">
+                          {n.description}
+                        </p>
+                        <div className="mt-3 flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 font-semibold">
+                          <FiClock className="h-3.5 w-3.5 text-amber-500/70" />
+                          <span>Posted on {n.postedAt || "N/A"}</span>
+                        </div>
+                      </div>
                     </li>
                   ))}
                   {notices.length === 0 && (
-                    <p className="text-center text-slate-400 text-sm">
-                      No notices found.
-                    </p>
+                    <div className="flex flex-col items-center justify-center py-10 text-center">
+                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30 text-amber-500 mb-4">
+                        <span className="text-2xl opacity-60">📢</span>
+                      </div>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 font-bold">
+                        No active notices
+                      </p>
+                      <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 max-w-[240px]">
+                        Announcements from the institute will be posted here.
+                      </p>
+                    </div>
                   )}
                 </ul>
               </div>
@@ -680,7 +703,7 @@ function LandingPage() {
               <p className="mt-2">Check back later or contact the institute</p>
             </div>
           ) : (
-            <div className="grid gap-8 sm:grid-cols-2">
+            <div className="grid gap-8 grid-cols-1 lg:grid-cols-2">
               {tutors.map((t) => {
                 const subjects = (
                   t.subjects ||
@@ -699,17 +722,17 @@ function LandingPage() {
                 return (
                   <article
                     key={t.id || t.fullName}
-                    className="group flex flex-col sm:flex-row h-auto sm:h-72 lg:h-64 overflow-hidden rounded-3xl bg-white shadow-sm border border-slate-200/60 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:border-blue-300/80"
+                    className="group flex flex-col md:flex-row h-auto md:min-h-[256px] overflow-hidden rounded-3xl bg-white shadow-sm border border-slate-200/60 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:border-blue-300/80"
                   >
                     {/* Left/Top: Tutor Image Container */}
-                    <div className="relative w-full h-56 sm:h-full sm:w-52 flex-shrink-0 overflow-hidden bg-slate-100">
+                    <div className="relative w-full h-56 md:h-auto md:w-44 lg:w-52 md:self-stretch flex-shrink-0 overflow-hidden bg-slate-100">
                       <img
                         src={
                           t.imageUrl ||
                           "https://via.placeholder.com/300?text=Tutor"
                         }
                         alt={t.fullName}
-                        className="h-full w-full object-cover transition-transform duration-500 will-change-transform group-hover:scale-105"
+                        className="h-full w-full object-cover transition-transform duration-500 will-change-transform group-hover:scale-105 md:absolute md:inset-0"
                         loading="lazy"
                       />
                     </div>
@@ -1257,14 +1280,14 @@ function Navbar({
   const NavButton = ({ id, children }) => (
     <button
       onClick={() => scrollTo(id)}
-      className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:text-blue-700"
+      className="rounded-lg px-2.5 py-1.5 text-xs xl:text-sm font-bold text-slate-700 hover:text-blue-700 hover:bg-slate-50 transition-colors"
     >
       {children}
     </button>
   );
 
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur dark:bg-slate-950/85 dark:border-slate-800">
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link
           to="/"
@@ -1277,12 +1300,12 @@ function Navbar({
           <img
             src={logo}
             alt="EZone Logo"
-            className="h-18 w-30 object-contain"
+            className="h-16 w-24 md:h-18 md:w-28 lg:w-30 object-contain"
           />
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden items-center gap-2 md:flex">
+        <nav className="hidden items-center gap-1.5 lg:flex lg:gap-1 xl:gap-2">
           <NavButton id="home">Home</NavButton>
           <NavButton id="tutors">අපෙගේ ඇදුරු මඩුල්ල </NavButton>
           <NavButton id="top-students">Top Students</NavButton>
@@ -1295,18 +1318,18 @@ function Navbar({
         </nav>
 
         {/* Right side: Auth */}
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="hidden items-center gap-2 lg:flex lg:gap-2 xl:gap-3">
           {!isAuthenticated ? (
             <>
               <Link
                 to="/login"
-                className="rounded-xl px-4 py-2 text-sm font-semibold text-blue-900 ring-1 ring-blue-100 hover:bg-blue-50"
+                className="rounded-xl px-3 py-1.5 text-xs xl:text-sm font-bold text-blue-900 dark:text-blue-400 ring-1 ring-blue-100 dark:ring-blue-900/60 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-colors"
               >
                 Log in
               </Link>
               <Link
                 to="/signup"
-                className="rounded-xl bg-blue-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800"
+                className="rounded-xl bg-blue-700 hover:bg-blue-800 dark:bg-blue-650 dark:hover:bg-blue-700 px-3 py-1.5 text-xs xl:text-sm font-bold text-white shadow-sm transition-colors"
               >
                 Sign up
               </Link>
@@ -1315,7 +1338,7 @@ function Navbar({
             <div className="relative">
               <button
                 onClick={() => setAvatarOpen((v) => !v)}
-                className="flex items-center gap-2 rounded-full px-2 py-1 hover:bg-blue-50"
+                className="flex items-center gap-2 rounded-full px-2 py-1 hover:bg-blue-50 dark:hover:bg-slate-900/50"
               >
                 <img
                   src={
@@ -1325,30 +1348,30 @@ function Navbar({
                   alt={user?.displayName || "User"}
                   className="h-8 w-8 rounded-full object-cover"
                 />
-                <span className="text-sm font-semibold text-slate-700 hidden lg:inline">
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-350 hidden xl:inline">
                   {user?.displayName || "Account"}
                 </span>
                 <FiChevronDown className="text-slate-500" />
               </button>
 
               {avatarOpen && (
-                <div className="absolute right-0 mt-2 w-48 rounded-xl bg-white shadow-xl ring-1 ring-slate-200 p-2">
+                <div className="absolute right-0 mt-2 w-48 rounded-xl bg-white dark:bg-slate-900 shadow-xl ring-1 ring-slate-200 dark:ring-slate-800 p-2">
                   <Link
                     to="/dashboard"
-                    className="block rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-blue-50"
+                    className="block rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-350 hover:bg-blue-50 dark:hover:bg-slate-800/60"
                     onClick={() => setAvatarOpen(false)}
                   >
                     Dashboard
                   </Link>
                   <Link
                     to="/profile"
-                    className="block rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-blue-50"
+                    className="block rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-350 hover:bg-blue-50 dark:hover:bg-slate-800/60"
                     onClick={() => setAvatarOpen(false)}
                   >
                     Profile
                   </Link>
                   <button
-                    className="block w-full text-left rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-blue-50"
+                    className="block w-full text-left rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-350 hover:bg-blue-50 dark:hover:bg-slate-800/60"
                     onClick={() => {
                       setAvatarOpen(false);
                       if (onLogout) onLogout();
@@ -1363,7 +1386,7 @@ function Navbar({
         </div>
 
         {/* Mobile action area */}
-        <div className="flex items-center gap-3 md:hidden">
+        <div className="flex items-center gap-3 lg:hidden">
           <Link
             to="/downloads"
             className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-4.5 py-2 text-xs font-black tracking-wider uppercase shadow-md shadow-orange-500/10 hover:shadow-lg transition-all duration-300 hover:scale-[1.03] active:scale-95 cursor-pointer"
@@ -1372,7 +1395,7 @@ function Navbar({
             <span>Downloads</span>
           </Link>
           <button
-            className="inline-flex items-center justify-center rounded-lg p-2 text-blue-900 hover:bg-blue-50"
+            className="inline-flex items-center justify-center rounded-lg p-2 text-blue-900 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-900/50"
             onClick={() => {
               setOpen((v) => !v);
               setAvatarOpen(false);
@@ -1386,7 +1409,7 @@ function Navbar({
 
       {/* Mobile sheet */}
       {open && (
-        <div className="md:hidden border-t border-slate-200 bg-white">
+        <div className="lg:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
           <div className="mx-auto max-w-7xl px-4 py-3 space-y-2">
             <button
               onClick={() => scrollTo("home")}
