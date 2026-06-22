@@ -285,16 +285,42 @@ function Dashboard() {
   const handleDeleteStudent = async (student) => {
     setStudentToDelete(null);
 
-    toast.loading(`Deleting ${student.fullName}...`);
+    // Double check permission
+    const currentAssociation = (student.preferredTeachers || []).find(
+      (pt) => pt.preferredTeacherId === teacher?.uid
+    );
+    if (!currentAssociation || currentAssociation.status !== "active") {
+      toast.error("You do not have permission to delete this student (not approved yet).");
+      return;
+    }
+
+    toast.loading(`Removing ${student.fullName}...`);
 
     try {
-      await deleteDoc(doc(db, "students", student.id));
+      const studentRef = doc(db, "students", student.id);
+      
+      // Filter out this teacher from preferredTeachers
+      const updatedPreferredTeachers = (student.preferredTeachers || []).filter(
+        (pt) => pt.preferredTeacherId !== teacher.uid
+      );
+
+      if (updatedPreferredTeachers.length === 0) {
+        // No associations left, completely delete the student record from Firestore
+        await deleteDoc(studentRef);
+        toast.dismiss();
+        toast.success(`${student.fullName} completely removed from the system.`);
+      } else {
+        // Other associations exist, only update preferredTeachers to remove this teacher
+        await updateDoc(studentRef, {
+          preferredTeachers: updatedPreferredTeachers,
+        });
+        toast.dismiss();
+        toast.success(`${student.fullName} removed from your panel.`);
+      }
 
       setStudents((prev) => prev.filter((s) => s.id !== student.id));
-      toast.dismiss();
-      toast.success(`${student.fullName} deleted successfully`);
     } catch (error) {
-      console.error("Error deleting student:", error);
+      console.error("Error deleting student association:", error);
       toast.dismiss();
       toast.error("Failed to delete student");
     }
@@ -838,6 +864,10 @@ function Dashboard() {
                   >
                     <AnimatePresence mode="popLayout">
                       {currentStudents.map((student) => {
+                        const isApproved = (student.preferredTeachers || []).some(
+                          (pt) => pt.preferredTeacherId === teacher?.uid && pt.status === "active"
+                        );
+
                         if (studentViewMode === "list") {
                           return (
                             <motion.div
@@ -863,12 +893,11 @@ function Dashboard() {
                                     />
                                   </Link>
                                   <span
-                                    className={`absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full border border-white text-[7px] font-bold text-white shadow-sm ${(student.preferredTeachers || []).some(pt => pt.preferredTeacherId === teacher?.uid && pt.status === "active")
-                                      ? "bg-emerald-500"
-                                      : "bg-amber-500"
-                                      }`}
+                                    className={`absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full border border-white text-[7px] font-bold text-white shadow-sm ${
+                                      isApproved ? "bg-emerald-500" : "bg-amber-500"
+                                    }`}
                                   >
-                                    {(student.preferredTeachers || []).some(pt => pt.preferredTeacherId === teacher?.uid && pt.status === "active") ? "A" : "P"}
+                                    {isApproved ? "A" : "P"}
                                   </span>
                                 </div>
 
@@ -900,12 +929,13 @@ function Dashboard() {
                                               : "General"}
                                     </span>
                                     <span
-                                      className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[9px] font-semibold ${(student.preferredTeachers || []).some(pt => pt.preferredTeacherId === teacher?.uid && pt.status === "active")
-                                        ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
-                                        : "bg-amber-50 text-amber-700 border border-amber-100"
-                                        }`}
+                                      className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[9px] font-semibold ${
+                                        isApproved
+                                          ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
+                                          : "bg-amber-50 text-amber-700 border border-amber-100"
+                                      }`}
                                     >
-                                      {(student.preferredTeachers || []).some(pt => pt.preferredTeacherId === teacher?.uid && pt.status === "active") ? "Active" : "Pending"}
+                                      {isApproved ? "Active" : "Pending"}
                                     </span>
                                   </div>
 
@@ -931,7 +961,7 @@ function Dashboard() {
                                   Marks
                                 </button>
 
-                                {!((student.preferredTeachers || []).some(pt => pt.preferredTeacherId === teacher?.uid && pt.status === "active")) ? (
+                                {!isApproved ? (
                                   <button
                                     onClick={() => updateStudentStatus(student.id, "active")}
                                     className="inline-flex items-center justify-center gap-1 rounded-lg bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-600 px-3 py-1.5 text-xs font-semibold border border-emerald-100 cursor-pointer active:scale-95 duration-150 animate-all"
@@ -950,9 +980,14 @@ function Dashboard() {
                                 )}
 
                                 <button
-                                  onClick={() => setStudentToDelete(student)}
-                                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-red-50 hover:bg-red-600 hover:text-white text-red-600 border border-red-100 transition active:scale-95 duration-150 cursor-pointer animate-all animate-all"
-                                  title="Delete Student"
+                                  disabled={!isApproved}
+                                  onClick={() => isApproved && setStudentToDelete(student)}
+                                  className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border transition duration-150 ${
+                                    isApproved
+                                      ? "bg-red-50 hover:bg-red-600 hover:text-white text-red-600 border-red-100 active:scale-95 cursor-pointer"
+                                      : "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-50"
+                                  }`}
+                                  title={isApproved ? "Delete Student" : "Cannot delete student before approval"}
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </button>
@@ -984,12 +1019,11 @@ function Dashboard() {
                                   />
                                 </Link>
                                 <span
-                                  className={`absolute -bottom-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full border-2 border-white text-[8px] font-bold text-white shadow-sm ${(student.preferredTeachers || []).some(pt => pt.preferredTeacherId === teacher?.uid && pt.status === "active")
-                                    ? "bg-emerald-500"
-                                    : "bg-amber-500"
-                                    }`}
+                                  className={`absolute -bottom-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full border-2 border-white text-[8px] font-bold text-white shadow-sm ${
+                                    isApproved ? "bg-emerald-500" : "bg-amber-500"
+                                  }`}
                                 >
-                                  {(student.preferredTeachers || []).some(pt => pt.preferredTeacherId === teacher?.uid && pt.status === "active") ? "A" : "P"}
+                                  {isApproved ? "A" : "P"}
                                 </span>
                               </div>
 
@@ -1020,12 +1054,13 @@ function Dashboard() {
                                             : "General"}
                                   </span>
                                   <span
-                                    className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-semibold ${(student.preferredTeachers || []).some(pt => pt.preferredTeacherId === teacher?.uid && pt.status === "active")
-                                      ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
-                                      : "bg-amber-50 text-amber-700 border border-amber-100"
-                                      }`}
+                                    className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-semibold ${
+                                      isApproved
+                                        ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
+                                        : "bg-amber-50 text-amber-700 border border-amber-100"
+                                    }`}
                                   >
-                                    {(student.preferredTeachers || []).some(pt => pt.preferredTeacherId === teacher?.uid && pt.status === "active") ? "Active" : "Pending"}
+                                    {isApproved ? "Active" : "Pending"}
                                   </span>
                                 </div>
                               </div>
@@ -1066,7 +1101,7 @@ function Dashboard() {
                                 Marks
                               </button>
 
-                              {!((student.preferredTeachers || []).some(pt => pt.preferredTeacherId === teacher?.uid && pt.status === "active")) ? (
+                              {!isApproved ? (
                                 <button
                                   onClick={() => updateStudentStatus(student.id, "active")}
                                   className="inline-flex flex-1 min-w-[70px] items-center justify-center gap-1.5 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-xs font-semibold text-emerald-600 border border-emerald-100 transition hover:bg-emerald-600 hover:text-white cursor-pointer active:scale-95 duration-150"
@@ -1085,9 +1120,14 @@ function Dashboard() {
                               )}
 
                               <button
-                                onClick={() => setStudentToDelete(student)}
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-red-50 text-red-600 border border-red-100 transition hover:bg-red-600 hover:text-white cursor-pointer active:scale-95 duration-150"
-                                title="Delete Student"
+                                disabled={!isApproved}
+                                onClick={() => isApproved && setStudentToDelete(student)}
+                                className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border transition duration-150 ${
+                                  isApproved
+                                    ? "bg-red-50 hover:bg-red-600 hover:text-white text-red-600 border-red-100 active:scale-95 cursor-pointer"
+                                    : "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-50"
+                                }`}
+                                title={isApproved ? "Delete Student" : "Cannot delete student before approval"}
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
                               </button>
@@ -1103,10 +1143,10 @@ function Dashboard() {
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
                       <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl border border-slate-100">
                         <h3 className="text-lg font-bold text-slate-900">
-                          Delete Student Account
+                          Remove Student Association
                         </h3>
                         <p className="mt-2 text-sm text-slate-500 leading-relaxed">
-                          Are you sure you want to delete <span className="font-semibold text-slate-800">{studentToDelete.fullName}</span>? All academic marks and history for this student will be permanently erased.
+                          Are you sure you want to remove <span className="font-semibold text-slate-800">{studentToDelete.fullName}</span> from your panel? This will dissociate the student from your account. If this student has no other associated teachers, their record will be deleted from the system.
                         </p>
 
                         <div className="mt-6 flex justify-end gap-3">
@@ -1120,7 +1160,7 @@ function Dashboard() {
                             onClick={() => handleDeleteStudent(studentToDelete)}
                             className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 cursor-pointer shadow-md shadow-red-500/10 transition"
                           >
-                            Delete Student
+                            Remove Student
                           </button>
                         </div>
                       </div>
