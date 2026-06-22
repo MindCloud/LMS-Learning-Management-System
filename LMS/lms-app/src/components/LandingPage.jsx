@@ -1285,14 +1285,14 @@ function Navbar({
   const NavButton = ({ id, icon: Icon, children }) => (
     <button
       onClick={() => scrollTo(id)}
-      className="group relative flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-xs xl:text-sm font-bold text-slate-700 dark:text-slate-350 hover:text-blue-700 dark:hover:text-blue-400 hover:bg-blue-50/50 dark:hover:bg-slate-900/50 transition-all duration-300 active:scale-95 cursor-pointer"
+      className="group relative flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-xs xl:text-sm font-bold text-slate-700 dark:text-slate-350 hover:text-orange-500 dark:hover:text-orange-400 hover:bg-orange-50/40 dark:hover:bg-slate-900/50 transition-all duration-300 active:scale-95 cursor-pointer"
     >
       {Icon && (
-        <Icon className="h-4 w-4 text-slate-400 dark:text-slate-500 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300 scale-100 group-hover:scale-110" />
+        <Icon className="h-4 w-4 text-slate-400 dark:text-slate-500 group-hover:text-orange-500 dark:group-hover:text-orange-400 transition-colors duration-300 scale-100 group-hover:scale-110" />
       )}
       <span className="relative">
         {children}
-        <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-blue-600 dark:bg-blue-400 transition-all duration-300 group-hover:w-full rounded-full" />
+        <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-300 group-hover:w-full rounded-full" />
       </span>
     </button>
   );
