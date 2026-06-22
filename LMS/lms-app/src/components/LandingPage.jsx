@@ -14,6 +14,7 @@ import { db } from "../firebase";
 import HERO_BG_360 from "../assets/landing.png"; // <-- adjust path/name as needed
 import logo from "../assets/logo.jpg";
 import Footer from "./Footer";
+import { useLanguage } from "../context/LanguageContext";
 
 // Icons
 import {
@@ -352,6 +353,7 @@ function Typewriter({ text, delay = 100, startDelay = 0, className = "" }) {
 
 /* ---------- Page component ---------- */
 function LandingPage() {
+  const { t } = useLanguage();
   const [heroTilt, setHeroTilt] = useState({ rotateX: 0, rotateY: 0, shadowX: 0, shadowY: 0 });
 
   const handleHeroMouseMove = (e) => {
@@ -511,18 +513,17 @@ function LandingPage() {
           <div className="grid items-center gap-10 lg:grid-cols-2">
             <div className="text-center lg:text-left">
               <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm font-medium text-blue-50 shadow-sm ring-1 ring-white/20 backdrop-blur">
-                <FiCheckCircle /> Trusted by 50k+ learners
+                <FiCheckCircle /> {t("landing.trustedBy")}
               </span>
               <h1 className="mt-4 text-4xl font-extrabold leading-tight text-white lg:text-5xl xl:text-6xl min-h-[140px] md:min-h-[160px] lg:min-h-[190px]">
-                <Typewriter text="අනුරාධ උසස් අධ්‍යාපන ආයතනය මොරවක" delay={60} />
+                <Typewriter text={t("landing.instituteTitle")} delay={60} />
                 <br />
                 <span className="bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 bg-clip-text text-transparent drop-shadow-sm font-black mt-2 inline-block">
-                  <Typewriter text="Powered by Ezone" delay={80} startDelay={2200} />
+                  <Typewriter text={t("landing.poweredBy")} delay={80} startDelay={2200} />
                 </span>
               </h1>
               <p className="mt-4 text-lg text-blue-100 lg:text-xl">
-                The modern LMS for students, educators, and institutions. Learn
-                smarter with interactive courses, analytics, and AI assistance.
+                {t("landing.heroDesc")}
               </p>
 
               <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row lg:justify-start">
@@ -530,14 +531,14 @@ function LandingPage() {
                   to="/signup"
                   className="group inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-white/40 active:scale-[0.98] cursor-pointer"
                 >
-                  <span>ලියාපදිංචි වන්න</span>
+                  <span>{t("landing.registerBtn")}</span>
                   <FiChevronRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1.5" />
                 </Link>
                 <Link
                   to="/login"
                   className="group inline-flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 font-semibold text-blue-800 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-white/40 active:scale-[0.98] cursor-pointer"
                 >
-                  <span>පිවිසෙන්න( ලියාපදිංචි සිසුන් වෙනුවෙන් )</span>
+                  <span>{t("landing.loginBtn")}</span>
                   <FiChevronRight className="w-5 h-5 text-blue-650 transition-transform duration-300 group-hover:translate-x-1.5" />
                 </Link>
               </div>
@@ -575,7 +576,7 @@ function LandingPage() {
                     </div>
                     <div>
                       <h3 className="text-lg font-black tracking-tight text-slate-900 dark:text-white leading-snug">
-                        ආයතනික විශේෂ දැන්වීම්
+                        {t("landing.instituteNotices")}
                       </h3>
                       <p className="text-[10px] font-bold text-amber-600 dark:text-yellow-450 uppercase tracking-widest mt-0.5">
                         Institute Notices
@@ -585,7 +586,7 @@ function LandingPage() {
                   {/* Premium indicator badge */}
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 border border-amber-200/50 dark:border-amber-900/30 shrink-0">
                     <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-                    Live Updates
+                    {t("landing.liveUpdates")}
                   </span>
                 </div>
 
@@ -597,10 +598,10 @@ function LandingPage() {
                         <span className="text-2xl opacity-60">📢</span>
                       </div>
                       <p className="text-sm text-slate-500 dark:text-slate-400 font-bold">
-                        No active notices
+                        {t("landing.noActiveNotices")}
                       </p>
                       <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 max-w-[240px]">
-                        Announcements from the institute will be posted here.
+                        {t("landing.noActiveNoticesDesc")}
                       </p>
                     </div>
                   ) : (
@@ -642,7 +643,7 @@ function LandingPage() {
                     to="/all-notices"
                     className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 px-5 py-2.5 text-xs sm:text-sm font-black text-white shadow-md shadow-orange-500/10 hover:from-orange-600 hover:to-yellow-600 active:scale-[0.98] transition-all cursor-pointer"
                   >
-                    <span>සියලුම දැන්වීම් බලන්න (Read More Notices)</span>
+                    <span>{t("landing.readMoreNotices")}</span>
                     <FiChevronRight className="w-4 w-4 transition-transform duration-300 hover:translate-x-1" />
                   </Link>
                 </div>
@@ -666,10 +667,10 @@ function LandingPage() {
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-12 text-center">
             <h2 className="text-3xl font-bold text-blue-900 sm:text-4xl">
-              Top Students
+              {t("landing.topStudents")}
             </h2>
             <p className="mt-3 text-lg text-slate-600">
-              අපගේ ඉහළම ප්‍රතිඵල ලබාගත් සිසුන් – ප්‍රතිඵල මඟින්ම විශ්වාසය
+              {t("landing.topStudentsDesc")}
             </p>
           </div>
 
@@ -744,10 +745,10 @@ function LandingPage() {
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-12 text-center">
             <h2 className="text-3xl font-bold text-blue-900 sm:text-4xl">
-              Meet Our Top Tutors
+              {t("landing.meetTutors")}
             </h2>
             <h3 className="mt-1 text-2xl font-bold text-slate-700">
-              හොදම ගුරුවරු එකම තැනකින්
+              {t("landing.meetTutorsDesc")}
             </h3>
           </div>
 
@@ -1055,11 +1056,10 @@ function LandingPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto mb-12 max-w-2xl text-center">
             <h2 className="text-3xl font-bold text-blue-900 sm:text-4xl">
-              අපගේ පාඨමාලාවන්
+              {t("landing.ourCourses")}
             </h2>
             <p className="mt-3 text-lg text-slate-600">
-              Explore instructor-led, project-based courses designed for
-              real-world skills.
+              {t("landing.ourCoursesDesc")}
             </p>
           </div>
 
@@ -1150,7 +1150,7 @@ function LandingPage() {
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 rounded-full bg-blue-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-800 cursor-pointer"
                     >
-                      Enroll now <FiChevronRight />
+                      {t("landing.enrollNow")} <FiChevronRight />
                     </a>
                     {/* <Link
                       to={`/courses/${c.slug}#syllabus`}
@@ -1164,7 +1164,7 @@ function LandingPage() {
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:underline"
                     >
-                      Ask WhatsApp
+                      {t("landing.askWhatsapp")}
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 24 24"
@@ -1196,25 +1196,25 @@ function LandingPage() {
         <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto mb-16 max-w-2xl text-center">
             <span className="inline-flex items-center gap-2 rounded-full bg-blue-50 dark:bg-blue-950/50 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-blue-700 dark:text-blue-400 border border-blue-100/50 dark:border-blue-900/30">
-              Testimonials
+              {t("landing.testimonials")}
             </span>
             <h2 className="mt-4 text-3xl font-bold text-blue-900 dark:text-white sm:text-4xl">
-              What Our Community Says
+              {t("landing.communitySays")}
             </h2>
             <p className="mt-3 text-base text-slate-650 dark:text-slate-400">
-              Real feedback from teachers, educators, and learners.
+              {t("landing.communitySaysDesc")}
             </p>
           </div>
 
           {loading ? (
             <div className="flex justify-center py-12">
               <p className="text-center text-slate-600 dark:text-slate-400 animate-pulse font-medium">
-                Loading feedback…
+                {t("landing.loadingFeedback")}
               </p>
             </div>
           ) : feedbacks.length === 0 ? (
             <p className="text-center text-slate-600 dark:text-slate-400 py-12 font-medium">
-              No feedback yet. Be the first to share!
+              {t("landing.noFeedback")}
             </p>
           ) : (
             <Swiper

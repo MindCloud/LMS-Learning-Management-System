@@ -67,7 +67,7 @@ export default function ThemeToggle() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3">
+    <div className="fixed bottom-6 right-6 z-50">
       {/* Floating Toggle Button Wrapper */}
       <motion.button
         onClick={toggleTheme}
@@ -109,14 +109,14 @@ export default function ThemeToggle() {
 
       {/* Floating Mode Description Badge (expands on hover) */}
       <motion.div
-        initial={{ opacity: 0, x: 20, scale: 0.8 }}
+        initial={{ opacity: 0, x: -20, scale: 0.8 }}
         animate={{
           opacity: hovered ? 1 : 0,
-          x: hovered ? 0 : 20,
+          x: hovered ? 0 : -20,
           scale: hovered ? 1 : 0.8,
         }}
         transition={{ duration: 0.15 }}
-        className="pointer-events-none hidden md:block rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-md backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
+        className="pointer-events-none absolute right-16 top-3.5 hidden md:block rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-md backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 whitespace-nowrap"
       >
         {theme === "dark" ? "Dark Mode Active" : "Light Mode Active"}
       </motion.div>

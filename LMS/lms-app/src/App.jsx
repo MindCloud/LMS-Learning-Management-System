@@ -24,6 +24,7 @@ import Downloads from "./components/Downloads";
 import StudentDetail from "./components/StudentDetail";
 import ManageResourceFolders from "./components/ManageResourceFolders"
 import ThemeToggle from "./components/ThemeToggle"; // 👈 ADD THIS
+import LanguageToggle from "./components/LanguageToggle";
 import ScrollToTop from "./components/ScrollToTop";
 
 // Check if user is logged in
@@ -67,6 +68,8 @@ function App() {
       />
       {/* Global Dark Mode Switcher */}
       <ThemeToggle />
+      {/* Global Language Switcher */}
+      <LanguageToggle />
 
       <div className="flex-1">
         <Routes>

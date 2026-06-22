@@ -12,9 +12,12 @@ import {
   FiInstagram,
   FiLinkedin,
 } from "react-icons/fi";
+import { FaWhatsapp } from "react-icons/fa";
+import { useLanguage } from "../context/LanguageContext";
 import logo from "../assets/logo.jpg";
 
 export default function Footer() {
+  const { t } = useLanguage();
   // Dynamic Calendar State
   const [currentDate, setCurrentDate] = useState(new Date());
   const today = new Date();
@@ -69,7 +72,7 @@ export default function Footer() {
 
       <div className="relative mx-auto max-w-7xl px-6 sm:px-8 z-10">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-10 xl:gap-12 pb-12 border-b border-slate-800/60">
-          
+
           {/* Brand Column - Spans 4 */}
           <div className="md:col-span-4 space-y-6">
             <div className="flex items-center gap-3">
@@ -83,7 +86,7 @@ export default function Footer() {
               </span>
             </div>
             <p className="text-slate-400 text-sm leading-relaxed max-w-sm">
-              Empowering learners and educators in Sri Lanka since 2020. Our modern LMS provides interactive courses, digital materials, and progress analytics to A/L students and beyond.
+              {t("footer.brandDesc")}
             </p>
             {/* Social Icons */}
             <div className="flex items-center gap-4">
@@ -124,7 +127,7 @@ export default function Footer() {
 
           {/* Quick Links Column - Spans 2 */}
           <div className="md:col-span-2 space-y-5">
-            <h4 className="text-sm font-bold uppercase tracking-wider text-white">Explore</h4>
+            <h4 className="text-sm font-bold uppercase tracking-wider text-white">{t("footer.explore")}</h4>
             <ul className="space-y-3 text-slate-400 text-sm font-semibold">
               <li>
                 <a
@@ -135,7 +138,7 @@ export default function Footer() {
                   }}
                   className="hover:text-white transition-colors"
                 >
-                  Home
+                  {t("navbar.home")}
                 </a>
               </li>
               <li>
@@ -147,7 +150,7 @@ export default function Footer() {
                   }}
                   className="hover:text-white transition-colors"
                 >
-                  Courses
+                  {t("navbar.courses")}
                 </a>
               </li>
               <li>
@@ -159,7 +162,7 @@ export default function Footer() {
                   }}
                   className="hover:text-white transition-colors"
                 >
-                  About Us
+                  {t("navbar.about")}
                 </a>
               </li>
             </ul>
@@ -167,38 +170,49 @@ export default function Footer() {
 
           {/* Support Column - Spans 2 */}
           <div className="md:col-span-2 space-y-5">
-            <h4 className="text-sm font-bold uppercase tracking-wider text-white">Support</h4>
+            <h4 className="text-sm font-bold uppercase tracking-wider text-white">{t("footer.support")}</h4>
             <ul className="space-y-3 text-slate-400 text-sm font-semibold">
               <li>
                 <Link to="/help" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="hover:text-white transition-colors">
-                  Help Center
+                  {t("footer.helpCenter")}
                 </Link>
               </li>
               <li>
                 <Link to="/contact" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="hover:text-white transition-colors">
-                  Contact Us
+                  {t("footer.contactUs")}
                 </Link>
               </li>
               <li>
                 <Link to="/faq" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="hover:text-white transition-colors">
-                  FAQs
+                  {t("footer.faqs")}
                 </Link>
               </li>
               <li>
                 <Link to="/downloads" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="hover:text-white transition-colors">
-                  Downloads
+                  {t("footer.downloads")}
                 </Link>
+              </li>
+              <li>
+                <a
+                  href="https://wa.me/94740172552?text=need%20to%20know%20samething%20related%20to%20exonelms"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-white transition-colors flex items-center gap-1.5"
+                >
+                  <FaWhatsapp className="text-green-500 w-4 h-4" />
+                  <span> {t("footer.whatsappSupport")}</span>
+                </a>
               </li>
             </ul>
           </div>
 
           {/* Calendar Widget Column - Spans 4 */}
           <div className="md:col-span-4 space-y-5">
-            <h4 className="text-sm font-bold uppercase tracking-wider text-white">Academic Calendar</h4>
-            
+            <h4 className="text-sm font-bold uppercase tracking-wider text-white">{t("footer.academicCalendar")}</h4>
+
             {/* Interactive Calendar Box */}
             <div className="rounded-2xl bg-slate-900/40 backdrop-blur-md border border-white/5 p-4 shadow-2xl space-y-4">
-              
+
               {/* Header: Month/Year navigation */}
               <div className="flex items-center justify-between">
                 <span className="text-sm font-bold text-white tracking-wide">
@@ -245,11 +259,10 @@ export default function Footer() {
                   return (
                     <div
                       key={`day-${day}`}
-                      className={`h-6 w-full flex items-center justify-center text-xs font-semibold rounded-lg transition-all select-none relative group ${
-                        activeDay
+                      className={`h-6 w-full flex items-center justify-center text-xs font-semibold rounded-lg transition-all select-none relative group ${activeDay
                           ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold shadow-md shadow-blue-500/20 scale-105"
                           : "text-slate-400 hover:bg-slate-800 hover:text-white cursor-pointer"
-                      }`}
+                        }`}
                     >
                       {day}
                       {/* Pulsing glow ring for today's date */}
@@ -268,9 +281,9 @@ export default function Footer() {
 
         {/* Footer Bottom copyright and notes */}
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left text-slate-500 text-xs font-medium">
-          <p>© {new Date().getFullYear()} EZone. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} EZone. {t("footer.allRightsReserved")}</p>
           <p className="flex items-center gap-1">
-            <span>Designed with excellence for students in Sri Lanka</span>
+            <span>{t("footer.designedWith")}</span>
             <span className="text-blue-500/70">❤</span>
           </p>
         </div>
