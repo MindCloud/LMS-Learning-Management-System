@@ -77,19 +77,19 @@ function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-white/80 backdrop-blur">
-      <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/75 backdrop-blur-xl dark:bg-slate-950/80 dark:border-slate-800/80 transition-all duration-300">
+      <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-2 sm:px-6 lg:px-8">
         {/* Brand */}
         <Link
           to="/"
-          className="flex items-center gap-2 font-extrabold tracking-tight text-blue-900"
+          className="flex items-center gap-2 font-extrabold tracking-tight text-blue-900 transition-transform duration-300 hover:scale-[1.02]"
           aria-label="Go to homepage"
         >
           {!logoError ? (
             <img
               src={logo}
               alt="EZone logo"
-              className="h-8 w-auto"
+              className="h-8 w-auto drop-shadow-sm"
               loading="eager"
               decoding="async"
               onError={() => setLogoError(true)}
@@ -121,17 +121,16 @@ function Navbar() {
           <div className="relative">
             <button
               onClick={() => setMenuOpen((v) => !v)}
-              aria-haspopup="true"
-              aria-expanded={menuOpen}
-              className="flex items-center gap-2 rounded-full border border-blue-100 bg-white/80 px-2 py-1.5 pr-3 shadow-sm transition hover:bg-blue-50"
+              aria-haspopup="true; aria-expanded={menuOpen}"
+              className="group flex items-center gap-2 rounded-full border border-slate-200/60 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 pl-2 pr-3.5 py-1.5 hover:bg-blue-50 dark:hover:bg-slate-900/80 transition-all duration-300 shadow-sm"
             >
               <span
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-blue-700 text-white text-sm font-bold"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-blue-750 text-white text-sm font-bold shadow-inner transition-transform group-hover:scale-105"
                 aria-hidden="true"
               >
                 {getInitials(userEmail)}
               </span>
-              <span className="hidden text-sm font-medium text-slate-700 sm:inline">
+              <span className="hidden text-sm font-semibold text-slate-700 dark:text-slate-355 sm:inline">
                 {userEmail ? userEmail.split("@")[0] : "Account"}
               </span>
             </button>
@@ -140,37 +139,37 @@ function Navbar() {
             {menuOpen && (
               <div
                 role="menu"
-                className="absolute right-0 mt-2 w-64 overflow-hidden rounded-xl border border-blue-100 bg-white shadow-xl ring-1 ring-black/5"
+                className="absolute right-0 mt-3 w-64 overflow-hidden rounded-2xl border border-slate-200/50 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl ring-1 ring-black/5 animate-in fade-in slide-in-from-top-2 duration-200 p-2 z-50"
               >
                 {!userEmail ? (
-                  <div className="p-3">
-                    <p className="mb-3 text-xs font-medium uppercase tracking-wide text-slate-500">
+                  <div className="p-2">
+                    <p className="mb-2.5 text-[10px] uppercase font-bold tracking-wider text-slate-400">
                       Welcome to EZone
                     </p>
                     <Link
                       to="/login"
-                      className="flex items-center gap-2 rounded-lg px-3 py-2 text-blue-900 ring-1 ring-blue-100 hover:bg-blue-50"
+                      className="group flex items-center gap-2 rounded-xl px-3.5 py-2.5 text-sm text-slate-755 hover:bg-blue-50 dark:hover:bg-slate-800/60 transition-colors"
                       onClick={() => setMenuOpen(false)}
                     >
-                      <LogIn className="h-4 w-4" />
-                      Log in
+                      <LogIn className="h-4.5 w-4.5 text-blue-600 group-hover:translate-x-0.5 transition-transform" />
+                      <span>Log in</span>
                     </Link>
                     <Link
                       to="/signup"
-                      className="mt-2 flex items-center gap-2 rounded-lg bg-blue-700 px-3 py-2 font-semibold text-white hover:bg-blue-800"
+                      className="mt-2 group flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-650 px-3.5 py-2.5 font-bold text-white hover:from-blue-750 hover:to-indigo-700 shadow-md shadow-blue-500/10 hover:shadow-lg transition-all"
                       onClick={() => setMenuOpen(false)}
                     >
-                      <UserPlus className="h-4 w-4" />
-                      Sign up
+                      <UserPlus className="h-4.5 w-4.5 transition-transform group-hover:scale-110" />
+                      <span>Sign up</span>
                     </Link>
                   </div>
                 ) : (
-                  <div className="p-3">
-                    <div className="mb-3">
-                      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                  <div className="p-2">
+                    <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-800/65 mb-1.5">
+                      <p className="text-[10px] uppercase font-bold tracking-wider text-slate-450 dark:text-slate-400">
                         Signed in as
                       </p>
-                      <p className="truncate text-sm font-semibold text-blue-900">
+                      <p className="truncate text-xs font-bold text-blue-900 dark:text-blue-405">
                         {userEmail}
                       </p>
                     </div>
@@ -178,61 +177,61 @@ function Navbar() {
                     {role === "student" && (
                       <Link
                         to="/home"
-                        className="flex items-center gap-2 rounded-lg px-3 py-2 text-slate-700 hover:bg-blue-50"
+                        className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm text-slate-700 dark:text-slate-355 hover:bg-blue-50 dark:hover:bg-slate-800/60 transition-colors"
                         onClick={() => setMenuOpen(false)}
                       >
-                        <LayoutDashboard className="h-4 w-4" />
-                        Student Dashboard
+                        <LayoutDashboard className="h-4.5 w-4.5 text-blue-600" />
+                        <span>Student Dashboard</span>
                       </Link>
                     )}
                     {role === "teacher" && (
                       <Link
                         to="/dashboard"
-                        className="flex items-center gap-2 rounded-lg px-3 py-2 text-slate-700 hover:bg-blue-50"
+                        className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm text-slate-700 dark:text-slate-355 hover:bg-blue-50 dark:hover:bg-slate-800/60 transition-colors"
                         onClick={() => setMenuOpen(false)}
                       >
-                        <LayoutDashboard className="h-4 w-4" />
-                        Teacher Dashboard
+                        <LayoutDashboard className="h-4.5 w-4.5 text-blue-600" />
+                        <span>Teacher Dashboard</span>
                       </Link>
                     )}
                     {role === "admin" && (
                       <Link
                         to="/admin"
-                        className="flex items-center gap-2 rounded-lg px-3 py-2 text-slate-700 hover:bg-blue-50"
+                        className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm text-slate-700 dark:text-slate-355 hover:bg-blue-50 dark:hover:bg-slate-800/60 transition-colors"
                         onClick={() => setMenuOpen(false)}
                       >
-                        <Shield className="h-4 w-4" />
-                        Admin Dashboard
+                        <Shield className="h-4.5 w-4.5 text-blue-600" />
+                        <span>Admin Dashboard</span>
                       </Link>
                     )}
 
-                    <div className="my-2 border-t border-blue-100" />
+                    <div className="my-1.5 border-t border-slate-100 dark:border-slate-800/65" />
 
                     <Link
                       to="/profile"
-                      className="flex items-center gap-2 rounded-lg px-3 py-2 text-slate-700 hover:bg-blue-50"
+                      className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm text-slate-700 dark:text-slate-355 hover:bg-blue-50 dark:hover:bg-slate-800/60 transition-colors"
                       onClick={() => setMenuOpen(false)}
                     >
-                      <User className="h-4 w-4" />
-                      Profile
+                      <User className="h-4.5 w-4.5 text-blue-600" />
+                      <span>Profile</span>
                     </Link>
                     <Link
                       to="/settings"
-                      className="flex items-center gap-2 rounded-lg px-3 py-2 text-slate-700 hover:bg-blue-50"
+                      className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm text-slate-700 dark:text-slate-355 hover:bg-blue-50 dark:hover:bg-slate-800/60 transition-colors"
                       onClick={() => setMenuOpen(false)}
                     >
-                      <Settings className="h-4 w-4" />
-                      Settings
+                      <Settings className="h-4.5 w-4.5 text-blue-600" />
+                      <span>Settings</span>
                     </Link>
 
-                    <div className="my-2 border-t border-blue-100" />
+                    <div className="my-1.5 border-t border-slate-100 dark:border-slate-800/65" />
 
                     <button
                       onClick={handleLogout}
-                      className="flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 px-3 py-2 font-medium text-white hover:bg-red-700"
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 hover:bg-red-700 px-3 py-2.5 font-bold text-white transition-colors cursor-pointer"
                     >
-                      <LogOut className="h-4 w-4" />
-                      Logout
+                      <LogOut className="h-4.5 w-4.5" />
+                      <span>Logout</span>
                     </button>
                   </div>
                 )}

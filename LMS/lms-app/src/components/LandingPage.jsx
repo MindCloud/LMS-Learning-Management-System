@@ -35,6 +35,11 @@ import {
   FiX,
   FiChevronDown, // ⬅️ for avatar dropdown
   FiDownload,
+  FiHome,
+  FiInfo,
+  FiMessageSquare,
+  FiLogIn,
+  FiUserPlus,
 } from "react-icons/fi";
 
 // Swiper
@@ -1277,63 +1282,66 @@ function Navbar({
     }
   };
 
-  const NavButton = ({ id, children }) => (
+  const NavButton = ({ id, icon: Icon, children }) => (
     <button
       onClick={() => scrollTo(id)}
-      className="rounded-lg px-2.5 py-1.5 text-xs xl:text-sm font-bold text-slate-700 hover:text-blue-700 hover:bg-slate-50 transition-colors"
+      className="group relative flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-xs xl:text-sm font-bold text-slate-700 dark:text-slate-350 hover:text-blue-700 dark:hover:text-blue-400 hover:bg-blue-50/50 dark:hover:bg-slate-900/50 transition-all duration-300 active:scale-95 cursor-pointer"
     >
-      {children}
+      {Icon && (
+        <Icon className="h-4 w-4 text-slate-400 dark:text-slate-500 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300 scale-100 group-hover:scale-110" />
+      )}
+      <span className="relative">
+        {children}
+        <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-blue-600 dark:bg-blue-400 transition-all duration-300 group-hover:w-full rounded-full" />
+      </span>
     </button>
   );
 
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur dark:bg-slate-950/85 dark:border-slate-800">
-      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/75 backdrop-blur-xl dark:bg-slate-950/80 dark:border-slate-800/80 transition-all duration-300">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link
           to="/"
           onClick={(e) => {
             e.preventDefault();
             scrollTo("home");
           }}
-          className="flex items-center gap-2 font-extrabold tracking-tight text-blue-900"
+          className="flex items-center gap-2 font-extrabold tracking-tight text-blue-900 transition-transform duration-300 hover:scale-[1.02]"
         >
           <img
             src={logo}
             alt="EZone Logo"
-            className="h-16 w-24 md:h-18 md:w-28 lg:w-30 object-contain"
+            className="h-12 w-auto object-contain drop-shadow-sm"
           />
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden items-center gap-1.5 lg:flex lg:gap-1 xl:gap-2">
-          <NavButton id="home">Home</NavButton>
-          <NavButton id="tutors">අපෙගේ ඇදුරු මඩුල්ල </NavButton>
-          <NavButton id="top-students">Top Students</NavButton>
-          <NavButton id="courses">පාඨමාලා</NavButton>
-          <NavButton id="about">අපි ගැන විස්තර </NavButton>
-          <NavButton id="testimonials">ප්‍රතිචාර</NavButton>
-          <Link to="/downloads">
-            <NavButton>Downloads</NavButton>
+        <nav className="hidden items-center gap-1 xl:gap-1.5 lg:flex bg-slate-100/50 dark:bg-slate-900/40 p-1 rounded-2xl border border-slate-200/30 dark:border-slate-800/30">
+          <NavButton id="home" icon={FiHome}>Home</NavButton>
+          <NavButton id="top-students" icon={FiAward}>Top Students</NavButton>
+          <NavButton id="tutors" icon={FiUsers}>අපේ ඇදුරු මඩුල්ල</NavButton>
+          <NavButton id="about" icon={FiInfo}>අපි ගැන විස්තර</NavButton>
+          <NavButton id="courses" icon={FiBookOpenIcon}>පාඨමාලා</NavButton>
+          <NavButton id="testimonials" icon={FiMessageSquare}>ප්‍රතිචාර</NavButton>
+          <Link
+            to="/downloads"
+            className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-3.5 py-1.5 text-xs xl:text-sm font-black tracking-wider uppercase shadow-md shadow-orange-500/10 hover:shadow-lg transition-all duration-300 hover:scale-[1.03] active:scale-95 cursor-pointer"
+          >
+            <FiDownload className="h-4 w-4" />
+            <span>Downloads</span>
           </Link>
         </nav>
 
         {/* Right side: Auth */}
         <div className="hidden items-center gap-2 lg:flex lg:gap-2 xl:gap-3">
           {!isAuthenticated ? (
-            <>
-              <Link
-                to="/login"
-                className="rounded-xl px-3 py-1.5 text-xs xl:text-sm font-bold text-blue-900 dark:text-blue-400 ring-1 ring-blue-100 dark:ring-blue-900/60 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-colors"
-              >
-                Log in
-              </Link>
-              <Link
-                to="/signup"
-                className="rounded-xl bg-blue-700 hover:bg-blue-800 dark:bg-blue-650 dark:hover:bg-blue-700 px-3 py-1.5 text-xs xl:text-sm font-bold text-white shadow-sm transition-colors"
-              >
-                Sign up
-              </Link>
-            </>
+            <Link
+              to="/login"
+              className="group flex items-center gap-2 rounded-xl px-4 py-2 text-xs xl:text-sm font-bold text-blue-900 dark:text-blue-400 ring-1 ring-blue-100 dark:ring-blue-900/50 hover:ring-blue-300 dark:hover:ring-blue-800 bg-white/40 dark:bg-slate-900/40 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-all duration-300 active:scale-95 shadow-sm"
+            >
+              <FiLogIn className="w-4 h-4 text-blue-600 dark:text-blue-405 transition-transform group-hover:translate-x-0.5" />
+              <span>Log in</span>
+            </Link>
           ) : (
             <div className="relative">
               <button
@@ -1418,16 +1426,16 @@ function Navbar({
               Home
             </button>
             <button
+              onClick={() => scrollTo("top-students")}
+              className="block w-full rounded-lg px-3 py-2 text-left text-slate-700 hover:bg-blue-50"
+            >
+              ඉහලම ලකුණු ලබාගත් සිසුන්
+            </button>
+            <button
               onClick={() => scrollTo("tutors")}
               className="block w-full rounded-lg px-3 py-2 text-left text-slate-700 hover:bg-blue-50"
             >
               අපගේ ඇදුරු මඩුල්ල
-            </button>
-            <button
-              onClick={() => scrollTo("courses")}
-              className="block w-full rounded-lg px-3 py-2 text-left text-slate-700 hover:bg-blue-50"
-            >
-              පාඨමාලාවන්
             </button>
             <button
               onClick={() => scrollTo("about")}
@@ -1436,10 +1444,16 @@ function Navbar({
               අපි ගැන
             </button>
             <button
-              onClick={() => scrollTo("top-students")}
+              onClick={() => scrollTo("courses")}
               className="block w-full rounded-lg px-3 py-2 text-left text-slate-700 hover:bg-blue-50"
             >
-              ඉහලම ලකුණු ලබාගත් සිසුන්
+              පාඨමාලාවන්
+            </button>
+            <button
+              onClick={() => scrollTo("testimonials")}
+              className="block w-full rounded-lg px-3 py-2 text-left text-slate-700 hover:bg-blue-50"
+            >
+              ප්‍රතිචාර
             </button>
 
             {/* Auth area for mobile */}
