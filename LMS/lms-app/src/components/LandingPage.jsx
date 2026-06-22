@@ -158,24 +158,6 @@ const defaultTutors = [
   },
 ];
 
-// const features = [
-//   {
-//     icon: <FaChalkboardTeacher className="mb-4 text-4xl text-blue-600" />,
-//     title: "Expert Instructors",
-//     description:
-//       "Learn from industry professionals with real-world experience.",
-//   },
-//   {
-//     icon: <FaBookOpen className="mb-4 text-4xl text-blue-500" />,
-//     title: "Comprehensive Courses",
-//     description: "Access a wide range of courses across multiple disciplines.",
-//   },
-//   {
-//     icon: <FaChartLine className="mb-4 text-4xl text-blue-400" />,
-//     title: "Progress Tracking",
-//     description: "Monitor your learning journey with detailed analytics.",
-//   },
-// ];
 
 const defaultFeedbacks = [
   {
@@ -329,6 +311,45 @@ function StarRating({ rating = 5 }) {
   );
 }
 
+function Typewriter({ text, delay = 100, startDelay = 0, className = "" }) {
+  const [currentText, setCurrentText] = useState("");
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [started, setStarted] = useState(false);
+
+  useEffect(() => {
+    if (startDelay > 0) {
+      const timer = setTimeout(() => {
+        setStarted(true);
+      }, startDelay);
+      return () => clearTimeout(timer);
+    } else {
+      setStarted(true);
+    }
+  }, [startDelay]);
+
+  useEffect(() => {
+    if (!started) return;
+
+    if (currentIndex < text.length) {
+      const timeout = setTimeout(() => {
+        setCurrentText((prevText) => prevText + text[currentIndex]);
+        setCurrentIndex((prevIndex) => prevIndex + 1);
+      }, delay);
+
+      return () => clearTimeout(timeout);
+    }
+  }, [currentIndex, delay, text, started]);
+
+  return (
+    <span className={className}>
+      {currentText}
+      {started && currentIndex < text.length && (
+        <span className="inline-block w-[3px] h-[0.9em] bg-current ml-1 animate-pulse align-middle" />
+      )}
+    </span>
+  );
+}
+
 /* ---------- Page component ---------- */
 function LandingPage() {
   const [heroTilt, setHeroTilt] = useState({ rotateX: 0, rotateY: 0, shadowX: 0, shadowY: 0 });
@@ -358,6 +379,23 @@ function LandingPage() {
   const [loading, setLoading] = useState(true);
   const [notices, setNotices] = useState([]);
   const [students, setStudents] = useState([]);
+
+  const getNoticeTag = (title = "", description = "") => {
+    const text = (title + " " + description).toLowerCase();
+    if (text.includes("exam") || text.includes("test") || text.includes("paper") || text.includes("විභාග") || text.includes("ප්‍රශ්න පත්‍ර")) {
+      return { label: "Exam", color: "bg-blue-50 dark:bg-blue-950/40 text-blue-750 dark:text-blue-400 border border-blue-200/50 dark:border-blue-900/40" };
+    }
+    if (text.includes("urgent") || text.includes("important") || text.includes("alert") || text.includes("වැදගත්") || text.includes("අත්‍යවශ්‍ය") || text.includes("විශේෂ")) {
+      return { label: "Urgent", color: "bg-rose-50 dark:bg-rose-950/40 text-rose-750 dark:text-rose-455 border border-rose-200/50 dark:border-rose-900/45 animate-pulse" };
+    }
+    if (text.includes("class") || text.includes("schedule") || text.includes("පන්ති") || text.includes("වේලාව") || text.includes("සටහන")) {
+      return { label: "Class", color: "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-750 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-900/40" };
+    }
+    if (text.includes("holiday") || text.includes("cancel") || text.includes("postpone") || text.includes("නිවාඩු") || text.includes("කල් දැමීම")) {
+      return { label: "Holiday", color: "bg-amber-50 dark:bg-amber-950/40 text-amber-850 dark:text-amber-400 border border-amber-250/50 dark:border-amber-900/40" };
+    }
+    return { label: "Notice", color: "bg-orange-50 dark:bg-orange-950/30 text-orange-750 dark:text-orange-400 border border-orange-200/40 dark:border-orange-900/30" };
+  };
 
   // Tutors state
   const [tutors, setTutors] = useState([]);
@@ -475,10 +513,12 @@ function LandingPage() {
               <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm font-medium text-blue-50 shadow-sm ring-1 ring-white/20 backdrop-blur">
                 <FiCheckCircle /> Trusted by 50k+ learners
               </span>
-              <h1 className="mt-4 text-4xl font-extrabold leading-tight text-white lg:text-5xl xl:text-6xl">
-                අනුරාධ උසස් අධ්‍යාපන ආයතනය මොරවක
+              <h1 className="mt-4 text-4xl font-extrabold leading-tight text-white lg:text-5xl xl:text-6xl min-h-[140px] md:min-h-[160px] lg:min-h-[190px]">
+                <Typewriter text="අනුරාධ උසස් අධ්‍යාපන ආයතනය මොරවක" delay={60} />
                 <br />
-                <span className="text-blue-300">Powered by Ezone </span>
+                <span className="bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 bg-clip-text text-transparent drop-shadow-sm font-black mt-2 inline-block">
+                  <Typewriter text="Powered by Ezone" delay={80} startDelay={2200} />
+                </span>
               </h1>
               <p className="mt-4 text-lg text-blue-100 lg:text-xl">
                 The modern LMS for students, educators, and institutions. Learn
@@ -523,13 +563,7 @@ function LandingPage() {
 
             <div className="relative">
               <div
-                onMouseMove={handleHeroMouseMove}
-                onMouseLeave={handleHeroMouseLeave}
-                className="mx-auto w-full max-w-xl rounded-3xl border border-amber-200/50 bg-white/95 dark:bg-slate-900/90 dark:border-amber-500/20 p-6 shadow-2xl shadow-amber-500/10 dark:shadow-amber-500/5 backdrop-blur transition-all duration-100 ease-out"
-                style={{
-                  transform: `perspective(1000px) rotateX(${heroTilt.rotateX}deg) rotateY(${heroTilt.rotateY}deg) scale3d(1.02, 1.02, 1.02)`,
-                  boxShadow: `${heroTilt.shadowX}px ${heroTilt.shadowY}px 30px rgba(245, 158, 11, 0.08)`,
-                }}
+                className="mx-auto w-full max-w-xl rounded-3xl border border-amber-200/50 bg-white/95 dark:bg-slate-900/90 dark:border-amber-500/20 p-6 shadow-2xl shadow-amber-500/10 dark:shadow-amber-500/5 backdrop-blur transition-all duration-350"
               >
                 {/* Header */}
                 <div className="mb-6 flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
@@ -555,31 +589,9 @@ function LandingPage() {
                   </span>
                 </div>
 
-                {/* Notices */}
-                <ul className="space-y-4">
-                  {notices.map((n) => (
-                    <li
-                      key={n.id}
-                      className="group relative overflow-hidden rounded-2xl border border-amber-100/60 bg-gradient-to-r from-amber-50/20 to-yellow-50/10 dark:from-yellow-950/10 dark:to-amber-950/5 dark:border-yellow-900/10 px-5 py-4 shadow-xs hover:shadow-md hover:border-amber-300/60 dark:hover:border-amber-500/20 transition-all duration-300"
-                    >
-                      {/* Left vertical amber gradient indicator line */}
-                      <div className="absolute left-0 top-0 bottom-0 w-[4.5px] bg-gradient-to-b from-amber-500 to-yellow-450 rounded-r-md" />
-                      
-                      <div className="pl-1">
-                        <h4 className="text-base font-extrabold text-amber-950 dark:text-amber-300 tracking-tight leading-snug">
-                          {n.title}
-                        </h4>
-                        <p className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-350 font-medium">
-                          {n.description}
-                        </p>
-                        <div className="mt-3 flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 font-semibold">
-                          <FiClock className="h-3.5 w-3.5 text-amber-500/70" />
-                          <span>Posted on {n.postedAt || "N/A"}</span>
-                        </div>
-                      </div>
-                    </li>
-                  ))}
-                  {notices.length === 0 && (
+                {/* Scrollable Notices List */}
+                <div className="max-h-[360px] overflow-y-auto pr-1.5 custom-scrollbar">
+                  {notices.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-10 text-center">
                       <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30 text-amber-500 mb-4">
                         <span className="text-2xl opacity-60">📢</span>
@@ -591,8 +603,49 @@ function LandingPage() {
                         Announcements from the institute will be posted here.
                       </p>
                     </div>
+                  ) : (
+                    /* Timeline Minimalist Mode Only */
+                    <div className="relative border-l-2 border-dashed border-amber-200/50 dark:border-slate-800/80 ml-3 pl-6 space-y-6 py-2">
+                      {notices.map((n) => {
+                        const tag = getNoticeTag(n.title, n.description);
+                        return (
+                          <div key={n.id} className="relative group">
+                            <span className="absolute -left-[31px] top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-white dark:bg-slate-900 border-2 border-amber-500 shadow-xs">
+                              <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-ping" />
+                            </span>
+                            <div>
+                              <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                                <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[9px] font-extrabold uppercase ${tag.color}`}>
+                                  {tag.label}
+                                </span>
+                                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold">
+                                  {n.postedAt ? n.postedAt.split(",")[0] : "N/A"}
+                                </span>
+                              </div>
+                              <h4 className="text-lg md:text-xl font-black text-slate-900 dark:text-amber-100">
+                                {n.title}
+                              </h4>
+                              <p className="mt-1 text-sm text-slate-650 dark:text-slate-350 font-medium leading-relaxed">
+                                {n.description}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   )}
-                </ul>
+                </div>
+
+                {/* Read More Notices Button */}
+                <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-center">
+                  <Link
+                    to="/all-notices"
+                    className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 px-5 py-2.5 text-xs sm:text-sm font-black text-white shadow-md shadow-orange-500/10 hover:from-orange-600 hover:to-yellow-600 active:scale-[0.98] transition-all cursor-pointer"
+                  >
+                    <span>සියලුම දැන්වීම් බලන්න (Read More Notices)</span>
+                    <FiChevronRight className="w-4 w-4 transition-transform duration-300 hover:translate-x-1" />
+                  </Link>
+                </div>
               </div>
             </div>
           </div>

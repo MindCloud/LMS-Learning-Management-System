@@ -11,6 +11,7 @@ import Dashboard from "./components/Dashboard";
 import AdminDashboard from "./components/AdminDashboard";
 import LandingPage from "./components/LandingPage";
 import Notices from "./components/Notices";
+import AllNotices from "./components/AllNotices";
 import Materials from "./components/Materials";
 import Homework from "./components/Homework";
 import FeedbackPage from "./components/FeedbackPage";
@@ -120,6 +121,7 @@ function App() {
           />
 
           <Route path="/notices" element={<Notices />} />
+          <Route path="/all-notices" element={<AllNotices />} />
           <Route path="/materials" element={<Materials />} />
           <Route path="/homework" element={<Homework />} />
 
