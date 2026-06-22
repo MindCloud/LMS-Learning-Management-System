@@ -761,7 +761,7 @@ function LandingPage() {
               <p className="mt-2">Check back later or contact the institute</p>
             </div>
           ) : (
-            <div className="grid gap-8 grid-cols-1 lg:grid-cols-2">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {tutors.map((t) => {
                 const subjects = (
                   t.subjects ||
@@ -780,95 +780,95 @@ function LandingPage() {
                 return (
                   <article
                     key={t.id || t.fullName}
-                    className="group flex flex-col md:flex-row h-auto md:min-h-[256px] overflow-hidden rounded-3xl bg-white shadow-sm border border-slate-200/60 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:border-blue-300/80"
+                    className="group relative flex flex-col justify-between p-6 rounded-3xl bg-white shadow-sm ring-1 ring-blue-100 transition hover:-translate-y-1 hover:shadow-xl"
                   >
-                    {/* Left/Top: Tutor Image Container */}
-                    <div className="relative w-full h-56 md:h-auto md:w-44 lg:w-52 md:self-stretch flex-shrink-0 overflow-hidden bg-slate-100">
-                      <img
-                        src={
-                          t.imageUrl ||
-                          "https://via.placeholder.com/300?text=Tutor"
-                        }
-                        alt={t.fullName}
-                        className="h-full w-full object-cover transition-transform duration-500 will-change-transform group-hover:scale-105 md:absolute md:inset-0"
-                        loading="lazy"
-                      />
-                    </div>
-
-                    {/* Right/Bottom: Content details */}
-                    <div className="flex flex-1 flex-col justify-between p-6">
-                      <div>
-                        {/* Subject Small Ribbon header */}
-                        <div className="text-[12px] sm:text-[13px] font-black uppercase tracking-widest text-blue-600 mb-1 leading-none">
-                          {subjects.join(" • ")}
+                    <div>
+                      {/* Tutor info layout - matches Top Student avatar + info styling */}
+                      <div className="flex items-center gap-4">
+                        <div className="relative flex-shrink-0">
+                          <img
+                            src={
+                              t.imageUrl ||
+                              "https://via.placeholder.com/300?text=Tutor"
+                            }
+                            alt={t.fullName}
+                            className="h-24 w-24 rounded-full object-cover ring-4 ring-blue-200 shadow-lg group-hover:scale-105 transition duration-300"
+                            loading="lazy"
+                          />
+                          <div className="absolute bottom-0 right-0 bg-emerald-500 text-white rounded-full p-0.5 shadow-md border border-white flex items-center justify-center">
+                            <FiCheckCircle className="w-3 h-3" />
+                          </div>
                         </div>
-
-                        {/* Tutor Name */}
-                        <h4 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-snug group-hover:text-blue-700 transition-colors">
-                          {t.fullName}
-                        </h4>
-
-                        {/* Attractive Large Subject Badges */}
-                        <div className="mt-3.5 flex flex-wrap gap-2">
-                          {subjects.map((s, i) => {
-                            // Unique aesthetic color palettes for different subjects
-                            const tagStyle = i % 2 === 0
-                              ? "bg-gradient-to-r from-blue-600 to-indigo-600 shadow-blue-500/10"
-                              : "bg-gradient-to-r from-indigo-500 to-cyan-500 shadow-indigo-500/10";
-                            return (
-                              <span
-                                key={`${t.fullName}-${s}`}
-                                className={`inline-flex items-center rounded-2xl px-5 py-2.5 text-sm sm:text-base font-black uppercase tracking-wider text-white shadow-md ${tagStyle}`}
-                              >
-                                {s}
-                              </span>
-                            );
-                          })}
+                        <div className="min-w-0">
+                          <h3 className="text-lg font-semibold text-blue-900 truncate">
+                            {t.fullName}
+                          </h3>
+                          <div className="mt-1">
+                            <span className="inline-flex items-center rounded-lg bg-blue-50 text-blue-700 text-[25px] font-black uppercase tracking-wider px-2.5 py-1 border border-blue-100 shadow-xs">
+                              {subjects.join(" • ")}
+                            </span>
+                          </div>
                         </div>
                       </div>
 
-                      {/* Bottom Section: Stats & Action Buttons */}
-                      <div className="mt-6 flex flex-col min-[450px]:flex-row gap-4 sm:items-center sm:justify-between border-t border-slate-100 pt-4">
-                        {/* Stats Info */}
-                        <div className="flex gap-5">
-                          <div className="text-left">
-                            <div className="text-base font-extrabold text-blue-700">
-                              {studentCount}+
-                            </div>
-                            <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                              Students
-                            </div>
-                          </div>
-                          <div className="text-left border-l border-slate-100 pl-5">
-                            <div className="text-base font-extrabold text-blue-700">
-                              {lessonCount}+
-                            </div>
-                            <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                              Lessons
-                            </div>
-                          </div>
+                      {/* Stats row - styled exactly like student marks box */}
+                      <div className="mt-5 flex items-center justify-between rounded-2xl bg-blue-50 px-4 py-3">
+                        <div>
+                          <p className="text-xs uppercase tracking-wide text-slate-500">
+                            Students
+                          </p>
+                          <p className="text-2xl font-bold text-blue-800">
+                            {studentCount}+
+                          </p>
                         </div>
+                        <div className="text-right">
+                          <p className="text-xs uppercase tracking-wide text-slate-500">
+                            Lessons
+                          </p>
+                          <p className="text-sm font-semibold text-slate-700">
+                            {lessonCount}+
+                          </p>
+                        </div>
+                      </div>
+                    </div>
 
-                        {/* CTAs */}
-                        <div className="flex gap-2">
-                          <Link
-                            to={`/teachers/${t.id || ""}`}
-                            className="inline-flex items-center justify-center rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-4.5 py-2.5 text-xs font-extrabold tracking-wide uppercase transition shadow-md shadow-blue-500/10 hover:shadow-lg active:scale-95 cursor-pointer"
-                          >
-                            Profile
-                          </Link>
-                          <button
-                            onClick={() => {
-                              const el = document.getElementById("courses");
-                              if (el) {
-                                el.scrollIntoView({ behavior: "smooth", block: "start" });
-                              }
-                            }}
-                            className="inline-flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 px-4.5 py-2.5 text-xs font-extrabold tracking-wide uppercase transition border border-transparent active:scale-95 cursor-pointer"
-                          >
-                            Courses
-                          </button>
-                        </div>
+                    {/* Bottom CTA & Social Links */}
+                    <div className="mt-5 flex items-center justify-between">
+                      <Link
+                        to={`/teachers/${t.id || ""}`}
+                        className="text-blue-600 hover:text-blue-800 font-black text-xs uppercase tracking-widest hover:underline transition cursor-pointer"
+                      >
+                        View Profile
+                      </Link>
+
+                      <div className="flex gap-4 items-center">
+                        {/* WhatsApp Link */}
+                        <a
+                          href={`https://wa.me/${(t.contact || "94740172552").replace(/[^0-9]/g, "")}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-blue-755 hover:underline cursor-pointer"
+                          title="Chat on WhatsApp"
+                        >
+                          <span>Ask WhatsApp</span>
+                          <svg className="w-4 h-4 text-green-500 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20.52 3.48A11.91 11.91 0 0012.01 0C5.38 0 .01 5.37.01 12c0 2.11.55 4.17 1.6 5.99L0 24l6.18-1.62a11.94 11.94 0 005.83 1.49h.01c6.63 0 12-5.37 12-12 0-3.2-1.25-6.21-3.5-8.39zM12.01 21.54a9.55 9.55 0 01-4.88-1.34l-.35-.21-3.67.96.98-3.58-.23-.37a9.53 9.53 0 118.15 4.54zm5.52-7.26c-.3-.15-1.77-.87-2.03-.967-.273-.099-.471-.148-.67.15-.2.3-.76.97-.93 1.17-.17.2-.34.22-.64.07-.3-.15-1.25-.46-2.38-1.47-.88-.79-1.47-1.77-1.64-2.07-.17-.3-.02-.46.13-.61.14-.14.3-.34.45-.5.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.66-1.6-.9-2.2-.24-.58-.48-.5-.66-.5h-.57c-.2 0-.52.07-.8.37-.27.3-1.05 1.03-1.05 2.5s1.08 2.9 1.23 3.1c.15.2 2.12 3.24 5.14 4.55.72.31 1.28.5 1.72.64.72.23 1.37.2 1.88.12.57-.09 1.77-.72 2.02-1.42.25-.7.25-1.3.17-1.42-.07-.12-.27-.2-.57-.35z" />
+                          </svg>
+                        </a>
+
+                        {/* YouTube Link */}
+                        <a
+                          href={t.youtubeUrl || `https://www.youtube.com/results?search_query=${encodeURIComponent(t.fullName)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-blue-755 hover:underline cursor-pointer"
+                          title="Watch Lessons on YouTube"
+                        >
+                          <span>YouTube</span>
+                          <svg className="w-4 h-4 text-red-500 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M23.498 6.163a3.003 3.003 0 00-2.11-2.11C19.518 3.545 12 3.545 12 3.545s-7.518 0-9.388.507a3.003 3.003 0 00-2.11 2.11C0 8.033 0 12 0 12s0 3.967.502 5.837a3.003 3.003 0 002.11 2.11c1.87.507 9.388.507 9.388.507s7.518 0 9.388-.507a3.003 3.003 0 002.11-2.11C24 15.967 24 12 24 12s0-3.967-.502-5.837zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                          </svg>
+                        </a>
                       </div>
                     </div>
                   </article>
