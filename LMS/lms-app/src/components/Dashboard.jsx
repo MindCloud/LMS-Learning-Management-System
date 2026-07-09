@@ -483,9 +483,11 @@ function Dashboard() {
   return (
     <div className="relative min-h-screen bg-slate-50/50 font-sans text-slate-900 antialiased pb-12">
       {/* Ambient background decoration */}
-      <div className="absolute top-0 left-1/4 w-[40%] h-[30%] rounded-full bg-gradient-to-tr from-blue-300/10 to-indigo-300/10 blur-[130px] pointer-events-none -z-10" />
-      <div className="absolute top-1/3 right-10 w-[30%] h-[35%] rounded-full bg-gradient-to-br from-indigo-300/10 to-purple-300/10 blur-[150px] pointer-events-none -z-10" />
-      <div className="absolute bottom-10 left-10 w-[35%] h-[30%] rounded-full bg-gradient-to-tr from-sky-300/10 to-blue-300/10 blur-[140px] pointer-events-none -z-10" />
+      <div className="pointer-events-none absolute inset-0 overflow-hidden -z-10">
+        <div className="absolute top-0 left-1/4 w-[40%] h-[30%] rounded-full bg-gradient-to-tr from-blue-300/10 to-indigo-300/10 blur-[130px] pointer-events-none -z-10" />
+        <div className="absolute top-1/3 right-10 w-[30%] h-[35%] rounded-full bg-gradient-to-br from-indigo-300/10 to-purple-300/10 blur-[150px] pointer-events-none -z-10" />
+        <div className="absolute bottom-10 left-10 w-[35%] h-[30%] rounded-full bg-gradient-to-tr from-sky-300/10 to-blue-300/10 blur-[140px] pointer-events-none -z-10" />
+      </div>
 
       {/* Header */}
       <header className="sticky top-0 z-40 bg-white/75 backdrop-blur-xl border-b border-slate-200/50 transition-all">

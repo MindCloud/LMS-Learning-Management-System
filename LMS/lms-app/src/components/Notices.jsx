@@ -274,9 +274,11 @@ function Notices() {
   return (
     <div className="relative min-h-screen bg-gradient-to-b from-orange-50/50 via-amber-50/20 to-white dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 font-sans text-slate-900 dark:text-slate-100 antialiased pb-12 transition-colors duration-300">
       {/* Ambient background decoration */}
-      <div className="absolute top-0 left-1/4 w-[40%] h-[30%] rounded-full bg-gradient-to-tr from-orange-350/10 to-amber-350/10 blur-[130px] pointer-events-none -z-10 animate-float-slow" />
-      <div className="absolute top-1/3 right-10 w-[30%] h-[35%] rounded-full bg-gradient-to-br from-amber-350/10 to-yellow-350/10 blur-[150px] pointer-events-none -z-10 animate-float-medium" />
-      <div className="absolute bottom-10 left-10 w-[35%] h-[30%] rounded-full bg-gradient-to-tr from-yellow-350/10 to-orange-350/10 blur-[140px] pointer-events-none -z-10 animate-float-fast" />
+      <div className="pointer-events-none absolute inset-0 overflow-hidden -z-10">
+        <div className="absolute top-0 left-1/4 w-[40%] h-[30%] rounded-full bg-gradient-to-tr from-orange-350/10 to-amber-350/10 blur-[130px] pointer-events-none -z-10 animate-float-slow" />
+        <div className="absolute top-1/3 right-10 w-[30%] h-[35%] rounded-full bg-gradient-to-br from-amber-350/10 to-yellow-350/10 blur-[150px] pointer-events-none -z-10 animate-float-medium" />
+        <div className="absolute bottom-10 left-10 w-[35%] h-[30%] rounded-full bg-gradient-to-tr from-yellow-350/10 to-orange-350/10 blur-[140px] pointer-events-none -z-10 animate-float-fast" />
+      </div>
 
       <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
         {/* Header */}

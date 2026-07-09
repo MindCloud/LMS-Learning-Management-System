@@ -257,9 +257,11 @@ function Materials() {
   return (
     <div className="relative min-h-screen bg-slate-50/50 font-sans text-slate-900 antialiased pb-12">
       {/* Ambient background decoration */}
-      <div className="absolute top-0 left-1/4 w-[40%] h-[30%] rounded-full bg-gradient-to-tr from-purple-300/10 to-indigo-300/10 blur-[130px] pointer-events-none -z-10" />
-      <div className="absolute top-1/3 right-10 w-[30%] h-[35%] rounded-full bg-gradient-to-br from-indigo-300/10 to-violet-300/10 blur-[150px] pointer-events-none -z-10" />
-      <div className="absolute bottom-10 left-10 w-[35%] h-[30%] rounded-full bg-gradient-to-tr from-sky-300/10 to-purple-300/10 blur-[140px] pointer-events-none -z-10" />
+      <div className="pointer-events-none absolute inset-0 overflow-hidden -z-10">
+        <div className="absolute top-0 left-1/4 w-[40%] h-[30%] rounded-full bg-gradient-to-tr from-purple-300/10 to-indigo-300/10 blur-[130px] pointer-events-none -z-10" />
+        <div className="absolute top-1/3 right-10 w-[30%] h-[35%] rounded-full bg-gradient-to-br from-indigo-300/10 to-violet-300/10 blur-[150px] pointer-events-none -z-10" />
+        <div className="absolute bottom-10 left-10 w-[35%] h-[30%] rounded-full bg-gradient-to-tr from-sky-300/10 to-purple-300/10 blur-[140px] pointer-events-none -z-10" />
+      </div>
 
       <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
         {/* Header */}
