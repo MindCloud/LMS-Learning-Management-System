@@ -38,6 +38,7 @@ import {
   Search,
   MessageCircle,
   HelpCircle,
+  Clock3,
 } from "lucide-react";
 
 export default function AskQuestion() {
@@ -76,14 +77,15 @@ export default function AskQuestion() {
 
         if (isMounted) {
           const data = snap.data();
-          setStudentData({
-            name: data.fullName || "Unknown Student",
-            image: data.studentImage || null,
-          });
-
           const raw = Array.isArray(data.preferredTeachers)
             ? data.preferredTeachers
             : [];
+          setStudentData({
+            name: data.fullName || "Unknown Student",
+            image: data.studentImage || null,
+            preferredTeachers: raw,
+          });
+
           const ids = raw
             .map((t) => (typeof t === "string" ? t : t?.preferredTeacherId))
             .filter(Boolean);
@@ -205,6 +207,12 @@ export default function AskQuestion() {
       return;
     }
 
+    const status = getTeacherStatus(teacherId);
+    if (status !== "active") {
+      toast.error("You can only chat with this teacher once they approve your connection.");
+      return;
+    }
+
     setLoading(true);
     const toastId = toast.loading("Sending your question...");
 
@@ -318,6 +326,16 @@ export default function AskQuestion() {
       toast.dismiss(toastId);
       toast.error("Failed to delete question.");
     }
+  };
+
+  const getTeacherStatus = (tid) => {
+    if (!studentData || !Array.isArray(studentData.preferredTeachers)) return "pending";
+    const association = studentData.preferredTeachers.find(
+      (pt) => (typeof pt === "string" ? pt === tid : pt?.preferredTeacherId === tid)
+    );
+    if (!association) return "pending";
+    if (typeof association === "string") return "active";
+    return association.status || "pending";
   };
 
   // Helper relative time formatter
@@ -505,14 +523,19 @@ export default function AskQuestion() {
                     <div className="flex gap-2.5 overflow-x-auto pb-2 custom-scrollbar">
                       {teachers.map((t) => {
                         const isSelected = teacherId === t.id;
+                        const status = getTeacherStatus(t.id);
+                        const isApproved = status === "active";
                         return (
                           <button
                             key={t.id}
                             type="button"
-                            onClick={() => setTeacherId(t.id)}
+                            onClick={() => isApproved && setTeacherId(t.id)}
+                            disabled={!isApproved}
                             className={`flex flex-col items-center gap-1.5 p-3 rounded-2xl border transition-all duration-200 min-w-24 text-center select-none cursor-pointer ${
                               isSelected
                                 ? "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/20 scale-102"
+                                : !isApproved
+                                ? "bg-slate-105 dark:bg-slate-900/40 border-slate-200/50 text-slate-400 opacity-60 cursor-not-allowed"
                                 : "bg-white border-slate-200/80 text-slate-800 hover:border-slate-300 hover:bg-slate-50/50"
                             }`}
                           >
@@ -527,13 +550,18 @@ export default function AskQuestion() {
                                   <Check className="h-3 w-3 stroke-[3]" />
                                 </span>
                               )}
+                              {!isApproved && (
+                                <span className="absolute -bottom-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-amber-500 text-white shadow ring-1 ring-amber-500/10" title="Pending Approval">
+                                  <Clock3 className="h-3 w-3 stroke-[3]" />
+                                </span>
+                              )}
                             </div>
                             <div>
                               <p className={`text-[11px] font-bold truncate max-w-[80px] leading-tight ${isSelected ? "text-white" : "text-slate-800"}`}>
                                 {t.fullName.split(" ")[0]}
                               </p>
-                              <p className={`text-[9px] truncate max-w-[80px] leading-tight mt-0.5 ${isSelected ? "text-blue-100" : "text-slate-400"}`}>
-                                {t.subjects || "Teacher"}
+                              <p className={`text-[9px] truncate max-w-[80px] leading-tight mt-0.5 ${isSelected ? "text-blue-100" : !isApproved ? "text-amber-600 dark:text-amber-500 font-semibold" : "text-slate-400"}`}>
+                                {!isApproved ? "Pending" : (t.subjects || "Teacher")}
                               </p>
                             </div>
                           </button>
@@ -550,11 +578,15 @@ export default function AskQuestion() {
                         className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100"
                       >
                         <option value="">Choose via dropdown...</option>
-                        {teachers.map((t) => (
-                          <option key={t.id} value={t.id}>
-                            {t.fullName} {t.subjects ? `(${t.subjects})` : ""}
-                          </option>
-                        ))}
+                        {teachers.map((t) => {
+                          const status = getTeacherStatus(t.id);
+                          const isApproved = status === "active";
+                          return (
+                            <option key={t.id} value={t.id} disabled={!isApproved}>
+                              {t.fullName} {!isApproved ? "(Pending Approval)" : t.subjects ? `(${t.subjects})` : ""}
+                            </option>
+                          );
+                        })}
                       </select>
                       <User className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                     </div>
@@ -679,11 +711,15 @@ export default function AskQuestion() {
                   className="w-full appearance-none rounded-2xl border border-slate-200/80 bg-slate-50/40 px-4 py-2.5 pr-10 text-sm outline-none transition focus:border-blue-500 focus:bg-white"
                 >
                   <option value="">All Teachers</option>
-                  {teachers.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.fullName}
-                    </option>
-                  ))}
+                  {teachers.map((t) => {
+                    const status = getTeacherStatus(t.id);
+                    const isApproved = status === "active";
+                    return (
+                      <option key={t.id} value={t.id} disabled={!isApproved}>
+                        {t.fullName} {!isApproved ? "(Pending Approval)" : ""}
+                      </option>
+                    );
+                  })}
                 </select>
                 <Filter className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               </div>
