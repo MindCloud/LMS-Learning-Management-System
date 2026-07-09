@@ -8,6 +8,7 @@ import {
   updateDoc,
   doc,
   serverTimestamp,
+  deleteDoc,
 } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
@@ -29,6 +30,7 @@ import {
   Search,
   Sparkles,
   HelpCircle,
+  Trash2,
 } from "lucide-react";
 
 const QUICK_REPLIES = [
@@ -151,6 +153,24 @@ export default function TeacherQuestions() {
       const trimmed = prev.trim();
       return trimmed ? `${trimmed} ${text}` : text;
     });
+  };
+
+  const handleDeleteQuestion = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this question?")) {
+      return;
+    }
+
+    const toastId = toast.loading("Deleting question...");
+    try {
+      await deleteDoc(doc(db, "questions", id));
+      setQuestions((prev) => prev.filter((q) => q.id !== id));
+      toast.dismiss(toastId);
+      toast.success("Question deleted successfully!");
+    } catch (err) {
+      console.error("Failed to delete question:", err);
+      toast.dismiss(toastId);
+      toast.error("Failed to delete question. Please try again.");
+    }
   };
 
   // Helper relative time formatter
@@ -402,9 +422,9 @@ export default function TeacherQuestions() {
                     <div>
                       {/* Header Row */}
                       <div className="mb-4 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
                           {renderAvatar(q.studentImage, q.studentName)}
-                          <div className="min-w-0">
+                          <div className="min-w-0 flex-1">
                             <h3 className="truncate text-sm font-bold text-slate-800 dark:text-slate-200">
                               {q.studentName}
                             </h3>
@@ -413,7 +433,20 @@ export default function TeacherQuestions() {
                             </span>
                           </div>
                         </div>
-                        <StatusBadge status={q.status} />
+                        <div className="flex items-center gap-2 shrink-0">
+                          <StatusBadge status={q.status} />
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteQuestion(q.id);
+                            }}
+                            className="rounded-lg p-1.5 text-slate-400 hover:text-red-650 hover:bg-red-50/50 transition-all duration-150 active:scale-90 opacity-0 group-hover:opacity-100 focus:opacity-100 cursor-pointer"
+                            title="Delete question"
+                            aria-label="Delete question"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
                       </div>
 
                       {/* Question */}
