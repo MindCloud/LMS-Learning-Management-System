@@ -10,6 +10,7 @@ import {
   doc,
   onSnapshot,
   serverTimestamp,
+  updateDoc,
 } from "firebase/firestore";
 import {
   Bell,
@@ -28,6 +29,7 @@ import {
   Sparkles,
   Info,
   Search,
+  Edit2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
@@ -44,6 +46,7 @@ function Notices() {
   const [submitting, setSubmitting] = useState(false); // For button loading state
   const [searchFilter, setSearchFilter] = useState(""); // Notice content search
   const [gradeFilter, setGradeFilter] = useState("all"); // Notice grade filter
+  const [editingId, setEditingId] = useState(null);
   const navigate = useNavigate();
 
   const grades = [
@@ -56,7 +59,6 @@ function Notices() {
     "O/L",
     "A/L",
     "Other",
-    "All Grades",
   ];
 
   // Real-time listener for teacher's notices
@@ -124,7 +126,7 @@ function Notices() {
     }
   };
 
-  const addNotice = async () => {
+  const saveNotice = async () => {
     if (!newNotice.trim()) {
       toast.error("Please write a notice before publishing.");
       return;
@@ -136,34 +138,66 @@ function Notices() {
     }
 
     setSubmitting(true);
-    toast.loading("Publishing notice...");
+    if (editingId) {
+      toast.loading("Updating notice...");
+    } else {
+      toast.loading("Publishing notice...");
+    }
 
     try {
       const finalGrades = selectedGrades.includes("All Grades")
         ? grades.filter((g) => g !== "All Grades")
         : selectedGrades;
 
-      await addDoc(collection(db, "notices"), {
-        teacherId: auth.currentUser.uid,
-        content: newNotice.trim(),
-        grades: finalGrades,
-        createdAt: serverTimestamp(), // Better than client time
-      });
-
-      toast.dismiss();
-      toast.success("Notice published successfully!");
+      if (editingId) {
+        await updateDoc(doc(db, "notices", editingId), {
+          content: newNotice.trim(),
+          grades: finalGrades,
+        });
+        toast.dismiss();
+        toast.success("Notice updated successfully!");
+      } else {
+        await addDoc(collection(db, "notices"), {
+          teacherId: auth.currentUser.uid,
+          content: newNotice.trim(),
+          grades: finalGrades,
+          createdAt: serverTimestamp(), // Better than client time
+        });
+        toast.dismiss();
+        toast.success("Notice published successfully!");
+      }
 
       // Reset form
       setNewNotice("");
       setSelectedGrades([]);
       setIsDropdownOpen(false);
+      setEditingId(null);
     } catch (error) {
-      console.error("Error adding notice:", error);
+      console.error("Error saving notice:", error);
       toast.dismiss();
-      toast.error("Failed to publish notice. Please try again.");
+      toast.error(
+        editingId
+          ? "Failed to update notice. Please try again."
+          : "Failed to publish notice. Please try again."
+      );
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleEditNotice = (notice) => {
+    setEditingId(notice.id);
+    setNewNotice(notice.content);
+    setSelectedGrades(notice.grades || []);
+    setIsDropdownOpen(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setNewNotice("");
+    setSelectedGrades([]);
+    setIsDropdownOpen(false);
   };
 
   const deleteNotice = async (id) => {
@@ -173,6 +207,9 @@ function Notices() {
       await deleteDoc(doc(db, "notices", id));
       toast.dismiss();
       toast.success("Notice deleted.");
+      if (editingId === id) {
+        cancelEdit();
+      }
     } catch (error) {
       console.error("Error deleting notice:", error);
       toast.dismiss();
@@ -281,7 +318,7 @@ function Notices() {
                     <Sparkles className="h-4.5 w-4.5" />
                   </div>
                   <h2 className="text-sm font-bold text-slate-850 dark:text-slate-250 uppercase tracking-wider">
-                    New Announcement
+                    {editingId ? "Edit Announcement" : "New Announcement"}
                   </h2>
                 </div>
               </div>
@@ -412,18 +449,39 @@ function Notices() {
                   </AnimatePresence>
                 </div>
 
-                <button
-                  onClick={addNotice}
-                  disabled={submitting}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 px-4 py-3 text-sm font-bold text-white shadow-md shadow-orange-500/15 hover:from-orange-650 hover:via-amber-655 hover:to-yellow-600 active:scale-[0.98] transition-all disabled:opacity-75 disabled:cursor-not-allowed cursor-pointer mt-2"
-                >
-                  {submitting ? (
-                    <Loader2 className="h-4.5 w-4.5 animate-spin" />
-                  ) : (
-                    <Send className="h-4 w-4" />
+                <div className="flex gap-2.5 mt-2">
+                  <button
+                    onClick={saveNotice}
+                    disabled={submitting}
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 px-4 py-3 text-sm font-bold text-white shadow-md shadow-orange-500/15 hover:from-orange-650 hover:via-amber-655 hover:to-yellow-600 active:scale-[0.98] transition-all disabled:opacity-75 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    {submitting ? (
+                      <Loader2 className="h-4.5 w-4.5 animate-spin" />
+                    ) : editingId ? (
+                      <CheckCircle2 className="h-4 w-4" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                    {submitting
+                      ? editingId
+                        ? "Updating..."
+                        : "Publishing..."
+                      : editingId
+                      ? "Save Changes"
+                      : "Publish Notice"}
+                  </button>
+
+                  {editingId && (
+                    <button
+                      onClick={cancelEdit}
+                      disabled={submitting}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-4 py-3 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-[0.98] transition-all disabled:opacity-75 cursor-pointer"
+                    >
+                      <X className="h-4 w-4" />
+                      Cancel
+                    </button>
                   )}
-                  {submitting ? "Publishing..." : "Publish Notice"}
-                </button>
+                </div>
               </div>
             </div>
 
@@ -556,14 +614,28 @@ function Notices() {
                             </div>
                           </div>
 
-                          <button
-                            onClick={() => deleteNotice(notice.id)}
-                            className="rounded-lg p-2 text-slate-400 hover:text-red-650 hover:bg-red-50/50 transition-all duration-150 active:scale-90"
-                            title="Delete announcement"
-                            aria-label="Delete announcement"
-                          >
-                            <Trash2 className="h-4.5 w-4.5" />
-                          </button>
+                          <div className="flex gap-1 shrink-0">
+                            <button
+                              onClick={() => handleEditNotice(notice)}
+                              className={`rounded-lg p-2 transition-all duration-150 active:scale-90 ${
+                                editingId === notice.id
+                                  ? "text-orange-600 bg-orange-50 dark:bg-orange-950/30"
+                                  : "text-slate-400 hover:text-orange-600 hover:bg-orange-50/30"
+                              }`}
+                              title="Edit announcement"
+                              aria-label="Edit announcement"
+                            >
+                              <Edit2 className="h-4.5 w-4.5" />
+                            </button>
+                            <button
+                              onClick={() => deleteNotice(notice.id)}
+                              className="rounded-lg p-2 text-slate-400 hover:text-red-650 hover:bg-red-50/50 transition-all duration-150 active:scale-90"
+                              title="Delete announcement"
+                              aria-label="Delete announcement"
+                            >
+                              <Trash2 className="h-4.5 w-4.5" />
+                            </button>
+                          </div>
                         </div>
 
                         {/* Footer Information Row */}
