@@ -254,7 +254,7 @@ export default function TeacherQuestions() {
   });
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-indigo-50/70 via-slate-50/50 to-white dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 py-8 px-4 sm:px-6 transition-colors duration-300">
+    <div className="relative min-h-screen bg-gradient-to-b from-indigo-50/70 via-slate-50/50 to-white dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 py-8 px-4 sm:px-6 transition-colors duration-300">
       {/* Floating soft background blobs */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden z-[-1]">
         <div className="absolute -top-20 -left-20 h-72 w-72 rounded-full bg-sky-100/50 dark:bg-sky-950/10 blur-3xl animate-float-slow" />

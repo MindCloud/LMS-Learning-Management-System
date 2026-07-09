@@ -438,11 +438,13 @@ export default function AskQuestion() {
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-slate-50 font-sans text-slate-800 flex flex-col py-8 px-4 sm:px-6">
+    <div className="min-h-screen relative bg-slate-50 font-sans text-slate-800 flex flex-col py-8 px-4 sm:px-6">
       {/* Background Atmosphere Blobs */}
-      <div className="pointer-events-none absolute top-[-10%] left-[-10%] h-[50%] w-[50%] rounded-full bg-indigo-100/40 blur-[120px] animate-float-slow" />
-      <div className="pointer-events-none absolute bottom-[-10%] right-[-10%] h-[50%] w-[50%] rounded-full bg-rose-100/30 blur-[120px] animate-float-medium" />
-      <div className="pointer-events-none absolute top-[40%] right-[10%] h-[40%] w-[40%] rounded-full bg-sky-100/30 blur-[120px] animate-float-fast" />
+      <div className="pointer-events-none absolute inset-0 overflow-hidden z-[-1]">
+        <div className="absolute top-[-10%] left-[-10%] h-[50%] w-[50%] rounded-full bg-indigo-100/40 blur-[120px] animate-float-slow" />
+        <div className="absolute bottom-[-10%] right-[-10%] h-[50%] w-[50%] rounded-full bg-rose-100/30 blur-[120px] animate-float-medium" />
+        <div className="absolute top-[40%] right-[10%] h-[40%] w-[40%] rounded-full bg-sky-100/30 blur-[120px] animate-float-fast" />
+      </div>
 
       <div className="mx-auto w-full max-w-6xl z-10 flex-1 flex flex-col">
         {/* Navigation & Header */}

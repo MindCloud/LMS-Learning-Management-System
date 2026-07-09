@@ -590,11 +590,13 @@ function Home() {
   const isPending = (profile.status || "").toLowerCase() === "pending";
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-slate-50 font-sans text-slate-800 flex flex-col">
+    <div className="min-h-screen relative bg-slate-50 font-sans text-slate-800 flex flex-col">
       {/* Background Animated Blobs for Atmosphere */}
-      <div className="pointer-events-none absolute top-[-10%] left-[-10%] h-[50%] w-[50%] rounded-full bg-indigo-200/40 blur-[120px] animate-float-slow" />
-      <div className="pointer-events-none absolute bottom-[-10%] right-[-10%] h-[50%] w-[50%] rounded-full bg-rose-100/40 blur-[120px] animate-float-medium" />
-      <div className="pointer-events-none absolute top-[40%] right-[10%] h-[40%] w-[40%] rounded-full bg-sky-200/30 blur-[120px] animate-float-fast" />
+      <div className="pointer-events-none absolute inset-0 overflow-hidden z-[-1]">
+        <div className="absolute top-[-10%] left-[-10%] h-[50%] w-[50%] rounded-full bg-indigo-200/40 blur-[120px] animate-float-slow" />
+        <div className="absolute bottom-[-10%] right-[-10%] h-[50%] w-[50%] rounded-full bg-rose-100/40 blur-[120px] animate-float-medium" />
+        <div className="absolute top-[40%] right-[10%] h-[40%] w-[40%] rounded-full bg-sky-200/30 blur-[120px] animate-float-fast" />
+      </div>
 
       {/* Header */}
       <header className="sticky top-0 z-30 border-b bg-white/75 backdrop-blur-md transition-all">
