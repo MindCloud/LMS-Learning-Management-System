@@ -61,6 +61,7 @@ import {
   Check,
   BookOpenText,
   Edit3,
+  Camera,
 } from "lucide-react";
 
 
@@ -170,8 +171,8 @@ function Home() {
     localStorage.setItem("student_notes", e.target.value);
   };
 
-  // Edit Profile States
-  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  // Edit Profile Modal States
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [changePassword, setChangePassword] = useState(false);
   const [editForm, setEditForm] = useState({
     contactNumber: "",
@@ -186,17 +187,17 @@ function Home() {
 
   const startEditing = () => {
     setEditForm({
-      contactNumber: profile.contactNumber || "",
-      birthday: profile.birthday || "",
-      guardianName: profile.guardianName || "",
-      email: auth.currentUser?.email || profile.email || "",
+      contactNumber: profile?.contactNumber || "",
+      birthday: profile?.birthday || "",
+      guardianName: profile?.guardianName || "",
+      email: auth.currentUser?.email || profile?.email || "",
       currentPassword: "",
       newPassword: "",
       confirmPassword: "",
-      studentImage: profile.studentImage || "",
+      studentImage: profile?.studentImage || "",
     });
     setChangePassword(false);
-    setIsEditingProfile(true);
+    setIsProfileModalOpen(true);
   };
 
   const saveProfile = async () => {
@@ -257,7 +258,7 @@ function Home() {
         ...prev,
         ...updates,
       }));
-      setIsEditingProfile(false);
+      setIsProfileModalOpen(false);
       toast.dismiss("saving-profile");
       toast.success("Profile updated successfully!");
     } catch (e) {
@@ -650,9 +651,22 @@ function Home() {
               <span className="hidden sm:inline">Ask Teacher</span>
             </button>
 
+            {/* Profile Avatar Button */}
+            <button
+              onClick={startEditing}
+              className="flex items-center gap-2 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition group cursor-pointer"
+              title="Edit Student Profile"
+            >
+              <img
+                src={profile.studentImage || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200"}
+                alt="Profile Avatar"
+                className="h-9 w-9 rounded-full object-cover ring-2 ring-blue-500/80 group-hover:scale-105 transition-transform"
+              />
+            </button>
+
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 rounded-full bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 text-sm font-medium transition shadow-md shadow-slate-950/10"
+              className="flex items-center gap-2 rounded-full bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 text-sm font-medium transition shadow-md shadow-slate-950/10 cursor-pointer"
               title="Log out"
             >
               <LogOut className="h-4 w-4" />
@@ -712,16 +726,27 @@ function Home() {
                     <div className="flex items-center gap-4">
                       <button
                         onClick={refreshQuote}
-                        className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-white/80 hover:text-white hover:bg-white/10 transition"
+                        className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-white/80 hover:text-white hover:bg-white/10 transition cursor-pointer"
                         title="New quote"
                       >
                         <Sparkles className="h-4 w-4" />
                       </button>
-                      <img
-                        src={profile.studentImage || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200"}
-                        alt="Profile avatar"
-                        className="h-16 w-16 rounded-2xl border-2 border-blue-500 object-cover shadow-lg"
-                      />
+
+                      {/* Clickable Profile Avatar */}
+                      <button
+                        onClick={startEditing}
+                        className="relative group shrink-0 cursor-pointer"
+                        title="Click to edit profile"
+                      >
+                        <img
+                          src={profile.studentImage || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200"}
+                          alt="Profile avatar"
+                          className="h-16 w-16 rounded-2xl border-2 border-blue-500 object-cover shadow-lg group-hover:scale-105 transition-transform"
+                        />
+                        <div className="absolute inset-0 bg-black/40 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Camera className="h-5 w-5 text-white" />
+                        </div>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -785,8 +810,8 @@ function Home() {
                   })}
                 </div>
 
-                {/* Dashboard Tools Grid (Pomodoro, Notepad, Announcements) */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Dashboard Tools Grid (Pomodoro, Notepad) */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   {/* Column 1: Pomodoro Timer */}
                   <div className="lg:col-span-1 flex flex-col bg-white border border-slate-200 rounded-3xl p-6 shadow-sm relative overflow-hidden">
                     <div className="flex items-center justify-between mb-6">
@@ -908,195 +933,6 @@ function Home() {
                       placeholder="Write your study notes here..."
                       className="flex-1 w-full bg-slate-50/50 border border-slate-100 rounded-2xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:bg-white resize-none min-h-[180px] custom-scrollbar text-slate-700"
                     />
-                  </div>
-
-                  {/* Column 3: Profile Info Card */}
-                  <div className="lg:col-span-1 flex flex-col bg-white border border-slate-200 rounded-3xl p-6 shadow-sm justify-between">
-                    <div>
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                          <User className="h-5 w-5 text-blue-500" />
-                          Student Profile
-                        </h3>
-                        <span className="text-xs bg-emerald-50 text-emerald-700 font-semibold px-2 py-0.5 rounded-full border border-emerald-100">
-                          {profile.status || "Approved"}
-                        </span>
-                      </div>
-
-                      <div className="space-y-3 text-sm text-slate-600 mt-4">
-                        <div className="flex justify-between items-center py-2 border-b border-slate-100">
-                          <span className="font-medium text-slate-400">Class/Course</span>
-                          <span className="font-semibold text-slate-800">{profile.course || profile.grade || "General"}</span>
-                        </div>
-                        <div className="flex justify-between items-center py-2 border-b border-slate-100">
-                          <span className="font-medium text-slate-400">Student ID</span>
-                          <span className="font-semibold text-slate-800">{profile.studentId}</span>
-                        </div>
-                        <div className="flex justify-between items-center py-2 border-b border-slate-100">
-                          <span className="font-medium text-slate-400">Birthday</span>
-                          {isEditingProfile ? (
-                            <input
-                              type="text"
-                              placeholder="YYYY-MM-DD"
-                              value={editForm.birthday}
-                              onChange={(e) => setEditForm({ ...editForm, birthday: e.target.value })}
-                              className="border border-slate-200 rounded-lg px-2 py-1 text-slate-800 text-xs w-36 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                            />
-                          ) : (
-                            <span className="font-semibold text-slate-800">{profile.birthday || "—"}</span>
-                          )}
-                        </div>
-                        <div className="flex justify-between items-center py-2 border-b border-slate-100">
-                          <span className="font-medium text-slate-400">Emergency Contact</span>
-                          {isEditingProfile ? (
-                            <input
-                              type="text"
-                              value={editForm.contactNumber}
-                              onChange={(e) => setEditForm({ ...editForm, contactNumber: e.target.value })}
-                              className="border border-slate-200 rounded-lg px-2 py-1 text-slate-800 text-xs w-36 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                            />
-                          ) : (
-                            <span className="font-semibold text-slate-800">{profile.contactNumber || "—"}</span>
-                          )}
-                        </div>
-                        <div className="flex justify-between items-center py-2 border-b border-slate-100">
-                          <span className="font-medium text-slate-400">Guardian</span>
-                          {isEditingProfile ? (
-                            <input
-                              type="text"
-                              value={editForm.guardianName}
-                              onChange={(e) => setEditForm({ ...editForm, guardianName: e.target.value })}
-                              className="border border-slate-200 rounded-lg px-2 py-1 text-slate-800 text-xs w-36 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                            />
-                          ) : (
-                            <span className="font-semibold text-slate-800">{profile.guardianName || "—"}</span>
-                          )}
-                        </div>
-                        <div className="flex justify-between items-center py-2 border-b border-slate-100">
-                          <span className="font-medium text-slate-400">Email</span>
-                          {isEditingProfile ? (
-                            <input
-                              type="email"
-                              value={editForm.email}
-                              onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                              className="border border-slate-200 rounded-lg px-2 py-1 text-slate-800 text-xs w-36 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                            />
-                          ) : (
-                            <span className="font-semibold text-slate-800 truncate max-w-[150px]" title={auth.currentUser?.email || profile.email}>
-                              {auth.currentUser?.email || profile.email || "—"}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex justify-between items-center py-2 border-b border-slate-100">
-                          <span className="font-medium text-slate-400">Profile Image URL</span>
-                          {isEditingProfile ? (
-                            <input
-                              type="text"
-                              placeholder="https://example.com/image.png"
-                              value={editForm.studentImage}
-                              onChange={(e) => setEditForm({ ...editForm, studentImage: e.target.value })}
-                              className="border border-slate-200 rounded-lg px-2 py-1 text-slate-800 text-xs w-36 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                            />
-                          ) : (
-                            <span className="font-semibold text-slate-800 truncate max-w-[150px]" title={profile.studentImage || "Not set"}>
-                              {profile.studentImage ? "Custom URL Link" : "Default Image"}
-                            </span>
-                          )}
-                        </div>
-
-                        {isEditingProfile && (
-                          <div className="py-2 border-b border-slate-100 space-y-2">
-                            <label className="flex items-center gap-2 text-xs font-semibold text-slate-500 cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={changePassword}
-                                onChange={(e) => setChangePassword(e.target.checked)}
-                                className="rounded text-blue-600 focus:ring-blue-400"
-                              />
-                              Change Password?
-                            </label>
-
-                            {(changePassword || editForm.email !== (auth.currentUser?.email || profile.email || "")) && (
-                              <div className="space-y-2 pt-1">
-                                <div className="flex justify-between items-center text-xs">
-                                  <span className="font-medium text-slate-400">Current Password *</span>
-                                  <input
-                                    type="password"
-                                    placeholder="Required to save"
-                                    value={editForm.currentPassword}
-                                    onChange={(e) => setEditForm({ ...editForm, currentPassword: e.target.value })}
-                                    className="border border-slate-200 rounded-lg px-2 py-1 text-slate-800 text-xs w-36 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                                  />
-                                </div>
-                                {changePassword && (
-                                  <>
-                                    <div className="flex justify-between items-center text-xs">
-                                      <span className="font-medium text-slate-400">New Password *</span>
-                                      <input
-                                        type="password"
-                                        placeholder="Min 6 chars"
-                                        value={editForm.newPassword}
-                                        onChange={(e) => setEditForm({ ...editForm, newPassword: e.target.value })}
-                                        className="border border-slate-200 rounded-lg px-2 py-1 text-slate-800 text-xs w-36 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                                      />
-                                    </div>
-                                    <div className="flex justify-between items-center text-xs">
-                                      <span className="font-medium text-slate-400">Confirm Password *</span>
-                                      <input
-                                        type="password"
-                                        placeholder="Re-type new password"
-                                        value={editForm.confirmPassword}
-                                        onChange={(e) => setEditForm({ ...editForm, confirmPassword: e.target.value })}
-                                        className="border border-slate-200 rounded-lg px-2 py-1 text-slate-800 text-xs w-36 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                                      />
-                                    </div>
-                                  </>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        {!isEditingProfile && (
-                          <div className="flex justify-between items-center py-2">
-                            <span className="font-medium text-slate-400">Password</span>
-                            <span className="font-semibold text-slate-800">••••••••</span>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="mt-4 pt-4 border-t border-slate-100 flex justify-end gap-2">
-                        {isEditingProfile ? (
-                          <>
-                            <button
-                              onClick={() => setIsEditingProfile(false)}
-                              className="px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition"
-                            >
-                              Cancel
-                            </button>
-                            <button
-                              onClick={saveProfile}
-                              className="px-3 py-1.5 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
-                            >
-                              Save
-                            </button>
-                          </>
-                        ) : (
-                          <button
-                            onClick={startEditing}
-                            className="px-3 py-1.5 text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition flex items-center gap-1"
-                          >
-                            <Edit3 className="h-3 w-3 text-slate-500" />
-                            <span>Edit Details</span>
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="mt-6 pt-4 border-t border-slate-100 flex items-center gap-2 text-xs text-slate-400">
-                      <MapPin className="h-4 w-4 flex-shrink-0" />
-                      <span className="truncate" title={profile.address}>{profile.address || "Address not provided"}</span>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -1720,6 +1556,177 @@ function Home() {
         </div>
       )}
 
+      {/* EDIT PROFILE MODAL */}
+      <AnimatePresence>
+        {isProfileModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="w-full max-w-xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[90vh]"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 rounded-xl">
+                    <User className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">Edit Student Profile</h2>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Update your profile photo and personal details</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsProfileModalOpen(false)}
+                  className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition cursor-pointer"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Content Body */}
+              <div className="p-6 overflow-y-auto space-y-6 custom-scrollbar">
+                {/* Avatar Preview & URL */}
+                <div className="flex flex-col sm:flex-row items-center gap-5 p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-200/80 dark:border-slate-800/80">
+                  <div className="relative group shrink-0">
+                    <img
+                      src={editForm.studentImage || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200"}
+                      alt="Preview"
+                      className="h-20 w-20 rounded-2xl object-cover border-2 border-blue-500 shadow-md"
+                    />
+                    <div className="absolute inset-0 bg-black/40 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Camera className="h-6 w-6 text-white" />
+                    </div>
+                  </div>
+                  <div className="flex-1 w-full space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Profile Photo Image URL</label>
+                    <input
+                      type="text"
+                      placeholder="https://example.com/my-photo.jpg"
+                      value={editForm.studentImage}
+                      onChange={(e) => setEditForm({ ...editForm, studentImage: e.target.value })}
+                      className="w-full text-xs p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <p className="text-[11px] text-slate-400">Paste any direct image link to update your avatar</p>
+                  </div>
+                </div>
+
+                {/* Input Fields Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Guardian Name</label>
+                    <input
+                      type="text"
+                      value={editForm.guardianName}
+                      onChange={(e) => setEditForm({ ...editForm, guardianName: e.target.value })}
+                      className="w-full text-sm p-3 bg-white dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Emergency Contact</label>
+                    <input
+                      type="text"
+                      value={editForm.contactNumber}
+                      onChange={(e) => setEditForm({ ...editForm, contactNumber: e.target.value })}
+                      className="w-full text-sm p-3 bg-white dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Birthday</label>
+                    <input
+                      type="date"
+                      value={editForm.birthday}
+                      onChange={(e) => setEditForm({ ...editForm, birthday: e.target.value })}
+                      className="w-full text-sm p-3 bg-white dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Email Address</label>
+                    <input
+                      type="email"
+                      value={editForm.email}
+                      onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                      className="w-full text-sm p-3 bg-white dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Password Security Section */}
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3">
+                  <label className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={changePassword}
+                      onChange={(e) => setChangePassword(e.target.checked)}
+                      className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500"
+                    />
+                    <span>Change Password</span>
+                  </label>
+
+                  {(changePassword || editForm.email !== (auth.currentUser?.email || profile.email || "")) && (
+                    <div className="p-4 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/40 space-y-3">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Current Password *</label>
+                        <input
+                          type="password"
+                          placeholder="Required to save security changes"
+                          value={editForm.currentPassword}
+                          onChange={(e) => setEditForm({ ...editForm, currentPassword: e.target.value })}
+                          className="w-full text-sm p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      {changePassword && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">New Password *</label>
+                            <input
+                              type="password"
+                              placeholder="Min 6 characters"
+                              value={editForm.newPassword}
+                              onChange={(e) => setEditForm({ ...editForm, newPassword: e.target.value })}
+                              className="w-full text-sm p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Confirm New Password *</label>
+                            <input
+                              type="password"
+                              placeholder="Re-type new password"
+                              value={editForm.confirmPassword}
+                              onChange={(e) => setEditForm({ ...editForm, confirmPassword: e.target.value })}
+                              className="w-full text-sm p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+                <button
+                  onClick={() => setIsProfileModalOpen(false)}
+                  className="px-5 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={saveProfile}
+                  className="px-6 py-2.5 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg shadow-blue-500/20 transition active:scale-95 cursor-pointer"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
