@@ -1,7 +1,7 @@
 // src/pages/Home.jsx
 // Redesigned: Modern aesthetic, tabbed layout, gamification widgets (Pomodoro & Notepad), interactive performance chart
 
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { auth, db } from "../firebase";
 import {
   onAuthStateChanged,
@@ -16,6 +16,8 @@ import {
   getDoc,
   collection,
   getDocs,
+  onSnapshot,
+  orderBy,
   query,
   where,
   documentId,
@@ -144,6 +146,28 @@ function Home() {
   // Per-Teacher Active Category inside My Teachers
   // maps teacherId -> "materials" | "homework" | "notices"
   const [teacherInnerTabs, setTeacherInnerTabs] = useState({});
+
+  // Real-time Notice & Announcement Popup States
+  const [specialNotices, setSpecialNotices] = useState([]);
+  const [activeNoticePopup, setActiveNoticePopup] = useState(null);
+  const [isBellOpen, setIsBellOpen] = useState(false);
+  const [readNoticeIds, setReadNoticeIds] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("read_notice_ids") || "[]");
+    } catch {
+      return [];
+    }
+  });
+
+  const markNoticeAsRead = (id) => {
+    if (!id) return;
+    setReadNoticeIds((prev) => {
+      if (prev.includes(id)) return prev;
+      const updated = [...prev, id];
+      localStorage.setItem("read_notice_ids", JSON.stringify(updated));
+      return updated;
+    });
+  };
 
   const navigate = useNavigate();
 
@@ -496,7 +520,22 @@ function Home() {
         }
 
         if (!isPending) {
-          const fetchAndFilter = async (colName, setter, teacherId) => {
+          // Real-time listener for Admin Special Notices
+          const qSpecial = query(collection(db, "SpecialNotices"), orderBy("postedAt", "desc"));
+          const unsubSpecial = onSnapshot(qSpecial, (snap) => {
+            if (!isMounted) return;
+            const list = snap.docs.map((d) => ({
+              id: d.id,
+              type: "special",
+              authorName: "EZone Admin",
+              title: d.data().title || "Special Notice",
+              description: d.data().description || "",
+              ...d.data(),
+            }));
+            setSpecialNotices(list);
+          });
+
+          const fetchAndFilterStatic = async (colName, setter, teacherId) => {
             try {
               const q = query(
                 collection(db, colName),
@@ -528,12 +567,46 @@ function Home() {
             }
           };
 
+          const listenToTeacherNotices = (teacherId, teacherName) => {
+            const q = query(
+              collection(db, "notices"),
+              where("teacherId", "==", teacherId),
+              limit(50)
+            );
+            return onSnapshot(q, (snap) => {
+              if (!isMounted) return;
+              let list = snap.docs.map((d) => ({
+                id: d.id,
+                type: "teacher",
+                teacherId: teacherId,
+                authorName: teacherName || "Instructor",
+                title: d.data().title || "Class Notice",
+                description: d.data().description || d.data().content || d.data().details || "",
+                ...d.data(),
+              }));
+              list.sort(
+                (a, b) =>
+                  (b.createdAt?.toMillis?.() ?? 0) -
+                  (a.createdAt?.toMillis?.() ?? 0)
+              );
+
+              const filteredList = list.filter((item) => {
+                if (!item.grades || !Array.isArray(item.grades) || item.grades.length === 0 || item.grades.includes("All Grades")) {
+                  return true;
+                }
+                return item.grades.includes(studentGrade);
+              });
+
+              setNotices((prev) => ({ ...prev, [teacherId]: filteredList }));
+            });
+          };
+
           await Promise.all(
             fetchedTeachers.map((t) =>
               Promise.all([
-                fetchAndFilter("homework", setHomework, t.id),
-                fetchAndFilter("materials", setMaterials, t.id),
-                fetchAndFilter("notices", setNotices, t.id),
+                fetchAndFilterStatic("homework", setHomework, t.id),
+                fetchAndFilterStatic("materials", setMaterials, t.id),
+                listenToTeacherNotices(t.id, t.fullName),
               ])
             )
           );
@@ -553,6 +626,30 @@ function Home() {
       unsub();
     };
   }, [navigate]);
+
+  // Combined notices & unread calculation
+  const allCombinedNotices = useMemo(() => {
+    const teacherList = Object.values(notices).flat();
+    const combined = [...specialNotices, ...teacherList];
+    return combined.sort((a, b) => {
+      const timeA = a.postedAt?.toMillis?.() || a.createdAt?.toMillis?.() || 0;
+      const timeB = b.postedAt?.toMillis?.() || b.createdAt?.toMillis?.() || 0;
+      return timeB - timeA;
+    });
+  }, [specialNotices, notices]);
+
+  const unreadCount = useMemo(() => {
+    return allCombinedNotices.filter((n) => !readNoticeIds.includes(n.id)).length;
+  }, [allCombinedNotices, readNoticeIds]);
+
+  // Auto-trigger announcement pop-up for unread notices
+  useEffect(() => {
+    if (allCombinedNotices.length === 0) return;
+    const unreadNotice = allCombinedNotices.find((n) => !readNoticeIds.includes(n.id));
+    if (unreadNotice && !activeNoticePopup) {
+      setActiveNoticePopup(unreadNotice);
+    }
+  }, [allCombinedNotices, readNoticeIds]);
 
   // Calculations for Widgets
   const totalHomework = Object.values(homework).flat().length;
@@ -642,6 +739,77 @@ function Home() {
           </nav>
 
           <div className="flex items-center gap-3">
+            {/* Notification Bell Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setIsBellOpen(!isBellOpen)}
+                className="relative p-2.5 rounded-full bg-white dark:bg-slate-900 ring-1 ring-slate-200 dark:ring-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition text-slate-700 dark:text-slate-200 cursor-pointer shadow-sm"
+                title="Notices & Announcements"
+              >
+                <Bell className="h-4 w-4" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-black text-white shadow-md animate-pulse">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Bell Dropdown Menu */}
+              {isBellOpen && (
+                <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-3xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-800 z-50 p-4 space-y-3">
+                  <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                    <h4 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                      <Bell className="h-4 w-4 text-blue-500" />
+                      Announcements ({allCombinedNotices.length})
+                    </h4>
+                    {unreadCount > 0 && (
+                      <span className="text-[10px] font-bold bg-red-50 text-red-600 dark:bg-red-950/40 dark:text-red-400 px-2.5 py-0.5 rounded-full">
+                        {unreadCount} Unread
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="space-y-2 max-h-72 overflow-y-auto custom-scrollbar">
+                    {allCombinedNotices.length === 0 ? (
+                      <p className="text-center text-slate-400 text-xs py-6">No notices at this time</p>
+                    ) : (
+                      allCombinedNotices.map((n) => {
+                        const isRead = readNoticeIds.includes(n.id);
+                        return (
+                          <button
+                            key={n.id}
+                            onClick={() => {
+                              setActiveNoticePopup(n);
+                              setIsBellOpen(false);
+                              document.body.style.overflow = "hidden";
+                            }}
+                            className={`w-full text-left p-3 rounded-2xl border transition-all flex items-start gap-3 cursor-pointer ${
+                              !isRead
+                                ? "bg-blue-50/80 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800"
+                                : "bg-slate-50/50 dark:bg-slate-950/20 border-slate-100 dark:border-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800/40"
+                            }`}
+                          >
+                            <div className={`p-2 rounded-xl shrink-0 ${n.type === "special" ? "bg-purple-100 text-purple-600 dark:bg-purple-950 dark:text-purple-400" : "bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-400"}`}>
+                              <Megaphone className="h-4 w-4" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className={`text-xs font-bold truncate ${!isRead ? "text-blue-900 dark:text-blue-200" : "text-slate-800 dark:text-slate-200"}`}>
+                                {n.title}
+                              </p>
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                                {n.authorName || "Instructor"}
+                              </p>
+                            </div>
+                            {!isRead && <span className="h-2 w-2 rounded-full bg-blue-600 shrink-0 mt-1" />}
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <button
               onClick={() => navigate("/ask")}
               className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2 text-sm font-medium text-slate-700 bg-white ring-1 ring-slate-200 rounded-full hover:bg-slate-50 transition shadow-sm cursor-pointer"
@@ -1721,6 +1889,84 @@ function Home() {
                   className="px-6 py-2.5 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg shadow-blue-500/20 transition active:scale-95 cursor-pointer"
                 >
                   Save Changes
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* REAL-TIME NOTICE ANNOUNCEMENT POP-UP MODAL */}
+      <AnimatePresence>
+        {activeNoticePopup && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 30 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 30 }}
+              className="w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col"
+            >
+              {/* Header Banner */}
+              <div className="relative p-6 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-white/10 backdrop-blur-md rounded-2xl">
+                    <Megaphone className="h-6 w-6 text-yellow-300 animate-bounce" />
+                  </div>
+                  <div>
+                    <span className="text-[11px] font-black uppercase tracking-widest text-blue-200 bg-white/10 px-2.5 py-0.5 rounded-full">
+                      {activeNoticePopup.type === "special" ? "✨ Special Announcement" : "📢 Class Notice"}
+                    </span>
+                    <h3 className="text-xl font-black mt-1 text-white leading-snug">
+                      {activeNoticePopup.title}
+                    </h3>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    markNoticeAsRead(activeNoticePopup.id);
+                    setActiveNoticePopup(null);
+                    document.body.style.overflow = "";
+                  }}
+                  className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition cursor-pointer"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Notice Body */}
+              <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar">
+                <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                  <span className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1">
+                    <User className="h-3.5 w-3.5 text-blue-500" />
+                    {activeNoticePopup.authorName || activeNoticePopup.teacherName || "Instructor"}
+                  </span>
+                  <span>•</span>
+                  <span className="flex items-center gap-1">
+                    <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                    {activeNoticePopup.postedAt?.toDate
+                      ? activeNoticePopup.postedAt.toDate().toLocaleString()
+                      : activeNoticePopup.createdAt?.toDate
+                      ? activeNoticePopup.createdAt.toDate().toLocaleString()
+                      : "Recently posted"}
+                  </span>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/50 border border-slate-200/80 dark:border-slate-800 text-sm text-slate-800 dark:text-slate-200 font-medium whitespace-pre-wrap leading-relaxed">
+                  {activeNoticePopup.description || activeNoticePopup.content || activeNoticePopup.details || "No details provided."}
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="p-4 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end">
+                <button
+                  onClick={() => {
+                    markNoticeAsRead(activeNoticePopup.id);
+                    setActiveNoticePopup(null);
+                    document.body.style.overflow = "";
+                  }}
+                  className="w-full sm:w-auto px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-blue-500/20 transition cursor-pointer"
+                >
+                  Mark as Read & Close
                 </button>
               </div>
             </motion.div>
