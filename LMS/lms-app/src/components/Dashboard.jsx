@@ -68,7 +68,7 @@ function Dashboard() {
   const [isAddFolderModalOpen, setIsAddFolderModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
-  const [studentViewMode, setStudentViewMode] = useState("grid");
+  const [studentViewMode, setStudentViewMode] = useState("list");
 
   // Sidebar grade filters
   const [selectedGradeNotices, setSelectedGradeNotices] = useState("all");

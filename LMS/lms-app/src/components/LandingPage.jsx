@@ -27,6 +27,8 @@ import {
   FiUsers,
   FiCheckCircle,
   FiChevronRight,
+  FiChevronLeft,
+  FiMaximize2,
   FiBookOpen as FiBookOpenIcon,
   FiClock,
   FiTarget,
@@ -54,64 +56,71 @@ import "swiper/css/pagination";
 
 // const HERO_BG_360 = "https://royalinstitute.org/wp-content/uploads/2021/03/Gampaha-RGB.jpg";
 
-// const topStudents = [
-//   {
-//     id: "s1",
-//     name: "Kavindu Perera",
-//     subject: "Mathematics",
-//     marks: 98,
-//     instructor: "John Silva",
-//     image: "https://randomuser.me/api/portraits/men/32.jpg",
-//   },
-//   {
-//     id: "s2",
-//     name: "Nethmi Fernando",
-//     subject: "Science",
-//     marks: 96,
-//     instructor: "Nimali Perera",
-//     image: "https://randomuser.me/api/portraits/women/44.jpg",
-//   },
-//   {
-//     id: "s3",
-//     name: "Sahan Jayawardena",
-//     subject: "ICT",
-//     marks: 95,
-//     instructor: "Tharindu Peris",
-//     image: "https://randomuser.me/api/portraits/men/54.jpg",
-//   },
-//   {
-//     id: "s4",
-//     name: "Hiruni Madushika",
-//     subject: "Physics",
-//     marks: 94,
-//     instructor: "Amara De Silva",
-//     image: "https://randomuser.me/api/portraits/women/68.jpg",
-//   },
-//   {
-//     id: "s5",
-//     name: "Dilshan Weerasinghe",
-//     subject: "Chemistry",
-//     marks: 93,
-//     instructor: "Ruwan Jayasuriya",
-//     image: "https://randomuser.me/api/portraits/men/61.jpg",
-//   },
-//   {
-//     id: "s6",
-//     name: "Sachini Gunawardena",
-//     subject: "English",
-//     marks: 92,
-//     instructor: "Ishara Fernando",
-//     image: "https://randomuser.me/api/portraits/women/71.jpg",
-//   },
-//   {
-//     id: "s7",
-//     name: "Ashen Wickramasinghe",
-//     subject: "Web Development",
-//     marks: 91,
-//     instructor: "Chamindu Madushan",
-//     image: "https://randomuser.me/api/portraits/men/77.jpg",
-//   },
-// ];
+const defaultTopStudents = [
+  {
+    id: "s1",
+    name: "Kavindu Perera",
+    subject: "Mathematics",
+    marks: 98,
+    grade: "A+",
+    instructor: "John Silva",
+    image: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=600",
+  },
+  {
+    id: "s2",
+    name: "Nethmi Fernando",
+    subject: "Science",
+    marks: 96,
+    grade: "A+",
+    instructor: "Nimali Perera",
+    image: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=600",
+  },
+  {
+    id: "s3",
+    name: "Sahan Jayawardena",
+    subject: "ICT",
+    marks: 95,
+    grade: "9A",
+    instructor: "Tharindu Peris",
+    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=600",
+  },
+  {
+    id: "s4",
+    name: "Hiruni Madushika",
+    subject: "Physics",
+    marks: 94,
+    grade: "A",
+    instructor: "Amara De Silva",
+    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=600",
+  },
+  {
+    id: "s5",
+    name: "Dilshan Weerasinghe",
+    subject: "Chemistry",
+    marks: 93,
+    grade: "A",
+    instructor: "Ruwan Jayasuriya",
+    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=600",
+  },
+  {
+    id: "s6",
+    name: "Sachini Gunawardena",
+    subject: "English",
+    marks: 92,
+    grade: "Distinction",
+    instructor: "Ishara Fernando",
+    image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=600",
+  },
+  {
+    id: "s7",
+    name: "Ashen Wickramasinghe",
+    subject: "Web Development",
+    marks: 91,
+    grade: "Distinction",
+    instructor: "Chamindu Madushan",
+    image: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&q=80&w=600",
+  },
+];
 
 /* ---------- Shared data ---------- */
 const defaultTutors = [
@@ -380,7 +389,8 @@ function LandingPage() {
   const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notices, setNotices] = useState([]);
-  const [students, setStudents] = useState([]);
+  const [students, setStudents] = useState(defaultTopStudents);
+  const [selectedStudentIndex, setSelectedStudentIndex] = useState(null);
 
   const getNoticeTag = (title = "", description = "") => {
     const text = (title + " " + description).toLowerCase();
@@ -487,16 +497,35 @@ function LandingPage() {
     // Query Firestore: TopStudents collection, order by marks descending
     const q = query(collection(db, "TopStudents"), orderBy("marks", "desc"));
     const unsub = onSnapshot(q, (snapshot) => {
-      setStudents(
-        snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })),
-      );
+      const docsData = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setStudents(docsData.length > 0 ? docsData : defaultTopStudents);
     });
 
     return () => unsub();
   }, []);
+
+  // Keyboard navigation for Top Students Photo Album Lightbox Modal
+  useEffect(() => {
+    if (selectedStudentIndex === null) return;
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        setSelectedStudentIndex(null);
+      } else if (e.key === "ArrowLeft") {
+        setSelectedStudentIndex((prev) =>
+          prev > 0 ? prev - 1 : students.length - 1
+        );
+      } else if (e.key === "ArrowRight") {
+        setSelectedStudentIndex((prev) =>
+          prev < students.length - 1 ? prev + 1 : 0
+        );
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedStudentIndex, students.length]);
 
   return (
     <div className="bg-white text-slate-900">
@@ -656,76 +685,98 @@ function LandingPage() {
       {/* Top Students */}
       <section
         id="top-students"
-        className="relative overflow-hidden bg-gradient-to-b from-white to-blue-50 py-20 scroll-mt-24"
+        className="relative overflow-hidden bg-gradient-to-b from-white to-blue-50 dark:from-slate-950 dark:to-slate-900 py-20 scroll-mt-24 transition-colors duration-300"
       >
         {/* Background glow */}
         <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -top-24 left-1/3 h-72 w-72 rounded-full bg-blue-200/40 blur-3xl" />
-          <div className="absolute -bottom-24 right-1/4 h-72 w-72 rounded-full bg-blue-100/60 blur-3xl" />
+          <div className="absolute -top-24 left-1/3 h-72 w-72 rounded-full bg-blue-200/40 dark:bg-amber-500/10 blur-3xl" />
+          <div className="absolute -bottom-24 right-1/4 h-72 w-72 rounded-full bg-blue-100/60 dark:bg-blue-900/20 blur-3xl" />
         </div>
 
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-12 text-center">
-            <h2 className="text-3xl font-bold text-blue-900 sm:text-4xl">
+            <h2 className="text-3xl font-bold text-blue-900 dark:text-white sm:text-4xl">
               {t("landing.topStudents")}
             </h2>
-            <p className="mt-3 text-lg text-slate-600">
+            <p className="mt-3 text-lg text-slate-600 dark:text-slate-350">
               {t("landing.topStudentsDesc")}
             </p>
           </div>
 
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {students.length === 0 && (
-              <p className="text-center text-slate-400 col-span-full">
+              <p className="text-center text-slate-400 dark:text-slate-500 col-span-full">
                 No top students found.
               </p>
             )}
 
-            {students.map((s) => (
+            {students.map((s, index) => (
               <article
-                key={s.id}
-                className="group relative overflow-hidden rounded-3xl bg-white p-6 shadow-sm ring-1 ring-blue-100 transition hover:-translate-y-1 hover:shadow-xl"
+                key={s.id || index}
+                onClick={() => setSelectedStudentIndex(index)}
+                className="group relative overflow-hidden rounded-3xl bg-white dark:bg-slate-900/90 p-6 shadow-sm dark:shadow-slate-950/60 ring-1 ring-blue-100 dark:ring-slate-800 transition duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:ring-amber-300 dark:hover:ring-amber-400/80 cursor-pointer"
               >
+                {/* Maximize Badge Overlay */}
+                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition duration-300 bg-amber-500 text-white p-2 rounded-full shadow-lg scale-90 group-hover:scale-100 z-10">
+                  <FiMaximize2 className="w-4 h-4" />
+                </div>
+
                 {/* Student info */}
                 <div className="flex items-center gap-4">
-                  <img
-                    src={s.image}
-                    alt={s.name}
-                    className="h-24 w-24 rounded-full object-cover ring-4 ring-blue-200 shadow-lg group-hover:scale-105 transition"
-                    loading="lazy"
-                  />
-                  <div>
-                    <h3 className="text-lg font-semibold text-blue-900">
+                  <div className="relative">
+                    <img
+                      src={s.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=600"}
+                      alt={s.name}
+                      className="h-24 w-24 rounded-full object-cover ring-4 ring-blue-200 dark:ring-slate-800 shadow-lg group-hover:ring-amber-400 dark:group-hover:ring-amber-400 group-hover:scale-105 transition duration-300"
+                      loading="lazy"
+                    />
+                    <div className="absolute bottom-0 right-0 bg-gradient-to-tr from-amber-500 to-yellow-400 text-white rounded-full p-1 shadow-md border-2 border-white dark:border-slate-900 flex items-center justify-center">
+                      <FiAward className="w-3.5 h-3.5" />
+                    </div>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-lg font-bold text-blue-900 dark:text-slate-100 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors truncate">
                       {s.name}
                     </h3>
-                    <p className="text-sm text-slate-600">
-                      Subject: {s.subject}
+                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400 truncate">
+                      Subject: <span className="text-slate-800 dark:text-slate-200 font-semibold">{s.subject}</span>
                     </p>
+                    <span className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2.5 py-0.5 rounded-full border border-amber-200 dark:border-amber-900/50 shadow-xs">
+                      View Photo Album 📸
+                    </span>
                   </div>
                 </div>
 
-                {/* Marks and instructor */}
-                <div className="mt-5 flex items-center justify-between rounded-2xl bg-blue-50 px-4 py-3">
+                {/* Marks, Grade, and instructor */}
+                <div className="mt-5 flex items-center justify-between rounded-2xl bg-blue-50/70 dark:bg-slate-800/60 group-hover:bg-amber-50/70 dark:group-hover:bg-amber-950/30 px-4 py-3 transition-colors">
                   <div>
-                    <p className="text-xs uppercase tracking-wide text-slate-500">
-                      Marks
+                    <p className="text-xs uppercase font-extrabold tracking-wide text-slate-500 dark:text-slate-400">
+                      {s.marks !== undefined && s.marks !== null && s.marks !== "" && s.grade
+                        ? "Marks / Grade"
+                        : s.grade
+                        ? "Grade"
+                        : "Marks"}
                     </p>
-                    <p className="text-2xl font-bold text-blue-800">
-                      {s.marks}%
+                    <p className="text-xl sm:text-2xl font-black text-blue-800 dark:text-amber-400 group-hover:text-amber-700 dark:group-hover:text-amber-300">
+                      {s.marks !== undefined && s.marks !== null && s.marks !== ""
+                        ? `${s.marks}${typeof s.marks === "number" ? "%" : ""}`
+                        : ""}
+                      {s.marks !== undefined && s.marks !== null && s.marks !== "" && s.grade
+                        ? ` (${s.grade})`
+                        : s.grade && (s.marks === undefined || s.marks === null || s.marks === "")
+                        ? s.grade
+                        : ""}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs uppercase tracking-wide text-slate-500">
+                    <p className="text-xs uppercase font-extrabold tracking-wide text-slate-500 dark:text-slate-400">
                       Instructor
                     </p>
-                    <p className="text-sm font-semibold text-slate-700">
+                    <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
                       {s.instructor}
                     </p>
                   </div>
                 </div>
-
-                {/* Progress bar */}
-
               </article>
             ))}
           </div>
@@ -735,19 +786,19 @@ function LandingPage() {
       {/* Tutors Section */}
       <section
         id="tutors"
-        className="relative overflow-hidden bg-gradient-to-b from-blue-50 to-white py-20 scroll-mt-24"
+        className="relative overflow-hidden bg-gradient-to-b from-blue-50 to-white dark:from-slate-900 dark:to-slate-950 py-20 scroll-mt-24 transition-colors duration-300"
       >
         <div className="pointer-events-none absolute inset-0 opacity-50">
-          <div className="absolute -top-28 -right-24 h-72 w-72 rounded-full bg-blue-200/40 blur-3xl" />
-          <div className="absolute -bottom-32 -left-24 h-72 w-72 rounded-full bg-blue-100/50 blur-3xl" />
+          <div className="absolute -top-28 -right-24 h-72 w-72 rounded-full bg-blue-200/40 dark:bg-blue-950/20 blur-3xl" />
+          <div className="absolute -bottom-32 -left-24 h-72 w-72 rounded-full bg-blue-100/50 dark:bg-slate-900/40 blur-3xl" />
         </div>
 
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-12 text-center">
-            <h2 className="text-3xl font-bold text-blue-900 sm:text-4xl">
+            <h2 className="text-3xl font-bold text-blue-900 dark:text-white sm:text-4xl">
               {t("landing.meetTutors")}
             </h2>
-            <h3 className="mt-1 text-2xl font-bold text-slate-700">
+            <h3 className="mt-1 text-2xl font-bold text-slate-700 dark:text-slate-300">
               {t("landing.meetTutorsDesc")}
             </h3>
           </div>
@@ -757,7 +808,7 @@ function LandingPage() {
               <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
             </div>
           ) : tutors.length === 0 ? (
-            <div className="text-center py-16 text-slate-500">
+            <div className="text-center py-16 text-slate-500 dark:text-slate-400">
               <p className="text-xl">No tutors available at the moment</p>
               <p className="mt-2">Check back later or contact the institute</p>
             </div>
@@ -775,13 +826,14 @@ function LandingPage() {
                   .filter(Boolean)
                   .slice(0, 3);
 
-                const studentCount = t.students || 120;
+                const experience = t.experience || t.yearsOfExperience || "5+ Years";
+                const rating = t.rating || 4.9;
                 const lessonCount = t.lessons || 45;
 
                 return (
                   <article
                     key={t.id || t.fullName}
-                    className="group relative flex flex-col justify-between p-6 rounded-3xl bg-white shadow-sm ring-1 ring-blue-100 transition hover:-translate-y-1 hover:shadow-xl"
+                    className="group relative flex flex-col justify-between p-6 rounded-3xl bg-white dark:bg-slate-900/90 shadow-sm dark:shadow-slate-950/60 ring-1 ring-blue-100 dark:ring-slate-800 transition hover:-translate-y-1 hover:shadow-xl"
                   >
                     <div>
                       {/* Tutor info layout - matches Top Student avatar + info styling */}
@@ -793,41 +845,42 @@ function LandingPage() {
                               "https://via.placeholder.com/300?text=Tutor"
                             }
                             alt={t.fullName}
-                            className="h-24 w-24 rounded-full object-cover ring-4 ring-blue-200 shadow-lg group-hover:scale-105 transition duration-300"
+                            className="h-24 w-24 rounded-full object-cover ring-4 ring-blue-200 dark:ring-slate-800 shadow-lg group-hover:scale-105 transition duration-300"
                             loading="lazy"
                           />
-                          <div className="absolute bottom-0 right-0 bg-emerald-500 text-white rounded-full p-0.5 shadow-md border border-white flex items-center justify-center">
+                          <div className="absolute bottom-0 right-0 bg-emerald-500 text-white rounded-full p-0.5 shadow-md border border-white dark:border-slate-900 flex items-center justify-center">
                             <FiCheckCircle className="w-3 h-3" />
                           </div>
                         </div>
                         <div className="min-w-0">
-                          <h3 className="text-lg font-semibold text-blue-900 truncate">
+                          <h3 className="text-lg font-semibold text-blue-900 dark:text-white truncate">
                             {t.fullName}
                           </h3>
                           <div className="mt-1">
-                            <span className="inline-flex items-center rounded-lg bg-blue-50 text-blue-700 text-[25px] font-black uppercase tracking-wider px-2.5 py-1 border border-blue-100 shadow-xs">
+                            <span className="inline-flex items-center rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-350 text-xs font-black uppercase tracking-wider px-2.5 py-1 border border-blue-100 dark:border-blue-900/40 shadow-xs">
                               {subjects.join(" • ")}
                             </span>
                           </div>
                         </div>
                       </div>
 
-                      {/* Stats row - styled exactly like student marks box */}
-                      <div className="mt-5 flex items-center justify-between rounded-2xl bg-blue-50 px-4 py-3">
+                      {/* Stats row - Experience & Star Rating */}
+                      <div className="mt-5 flex items-center justify-between rounded-2xl bg-blue-50 dark:bg-slate-800/60 px-4 py-3">
                         <div>
-                          <p className="text-xs uppercase tracking-wide text-slate-500">
-                            Students
+                          <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                            <FiClock className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Experience
                           </p>
-                          <p className="text-2xl font-bold text-blue-800">
-                            {studentCount}+
+                          <p className="text-base font-bold text-blue-800 dark:text-blue-300">
+                            {experience}
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="text-xs uppercase tracking-wide text-slate-500">
-                            Lessons
+                          <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 flex items-center justify-end gap-1">
+                            <FiStar className="w-3.5 h-3.5 text-amber-500 fill-amber-400" /> Rating
                           </p>
-                          <p className="text-sm font-semibold text-slate-700">
-                            {lessonCount}+
+                          <p className="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center justify-end gap-1">
+                            <span>{rating}</span>
+                            <span className="text-xs font-normal text-slate-500 dark:text-slate-400">(5.0)</span>
                           </p>
                         </div>
                       </div>
@@ -1309,6 +1362,225 @@ function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* Top Students Full-Screen Photo Album Spotlight Lightbox */}
+      {selectedStudentIndex !== null && students[selectedStudentIndex] && (
+        <div
+          className="fixed inset-0 z-[100] flex flex-col items-center justify-between bg-slate-950/95 backdrop-blur-xl p-4 sm:p-6 overflow-y-auto animate-fade-in text-white selection:bg-amber-500 selection:text-black"
+          onClick={() => setSelectedStudentIndex(null)}
+        >
+          {/* Lightbox Header Bar */}
+          <div
+            className="w-full max-w-6xl flex items-center justify-between py-2 border-b border-white/10 z-10 shrink-0"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-slate-950 font-black shadow-lg shadow-amber-500/30">
+                🏆
+              </span>
+              <div>
+                <span className="text-xs uppercase font-black tracking-widest text-amber-400">
+                  Top Student Spotlight
+                </span>
+                <p className="text-xs font-semibold text-slate-400">
+                  Student {selectedStudentIndex + 1} of {students.length}
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setSelectedStudentIndex(null)}
+              className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-slate-300 hover:bg-rose-600 hover:text-white transition duration-300 backdrop-blur cursor-pointer shadow-lg active:scale-95"
+              title="Close (Esc)"
+            >
+              <FiX className="w-6 h-6" />
+            </button>
+          </div>
+
+          {/* Main Photo Album Container */}
+          <div
+            className="relative w-full max-w-5xl my-auto py-6 flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-14"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Prev Navigation Button */}
+            <button
+              onClick={() =>
+                setSelectedStudentIndex((prev) =>
+                  prev > 0 ? prev - 1 : students.length - 1
+                )
+              }
+              className="absolute left-0 sm:-left-4 lg:-left-12 top-1/2 -translate-y-1/2 z-20 flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-slate-900/80 text-white ring-2 ring-amber-400/40 shadow-2xl hover:bg-amber-500 hover:text-slate-950 transition duration-300 active:scale-90 cursor-pointer"
+              title="Previous Student (Left Arrow)"
+            >
+              <FiChevronLeft className="w-7 h-7" />
+            </button>
+
+            {/* HUGE Portrait Photo Album Frame */}
+            <div className="relative group flex-shrink-0">
+              <div className="absolute -inset-2 rounded-3xl bg-gradient-to-tr from-amber-500 via-orange-500 to-yellow-400 blur-xl opacity-60 group-hover:opacity-100 transition duration-500 animate-pulse" />
+              
+              <div className="relative overflow-hidden rounded-3xl ring-4 ring-amber-400/60 shadow-2xl shadow-amber-500/20 bg-slate-900">
+                <img
+                  src={
+                    students[selectedStudentIndex].image ||
+                    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=800"
+                  }
+                  alt={students[selectedStudentIndex].name}
+                  className="w-72 h-72 sm:w-96 sm:h-96 md:w-[400px] md:h-[400px] lg:w-[440px] lg:h-[440px] object-cover object-center transition-transform duration-500 group-hover:scale-105"
+                />
+                {/* Photo Frame Corner Badges */}
+                <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 rounded-full bg-slate-950/80 px-3 py-1.5 text-xs font-black text-amber-400 backdrop-blur border border-amber-400/30">
+                  <FiAward className="w-4 h-4 text-amber-400" />
+                  Rank #{selectedStudentIndex + 1}
+                </div>
+                <div className="absolute bottom-4 right-4 inline-flex items-center gap-1 rounded-full bg-amber-500 px-3.5 py-1.5 text-sm font-black text-slate-950 shadow-xl">
+                  {students[selectedStudentIndex].marks !== undefined &&
+                  students[selectedStudentIndex].marks !== null &&
+                  students[selectedStudentIndex].marks !== ""
+                    ? `${students[selectedStudentIndex].marks}${
+                        typeof students[selectedStudentIndex].marks === "number"
+                          ? "%"
+                          : ""
+                      }`
+                    : ""}
+                  {students[selectedStudentIndex].marks !== undefined &&
+                  students[selectedStudentIndex].marks !== null &&
+                  students[selectedStudentIndex].marks !== "" &&
+                  students[selectedStudentIndex].grade
+                    ? ` • Grade ${students[selectedStudentIndex].grade}`
+                    : students[selectedStudentIndex].grade &&
+                      (students[selectedStudentIndex].marks === undefined ||
+                        students[selectedStudentIndex].marks === null ||
+                        students[selectedStudentIndex].marks === "")
+                    ? `Grade ${students[selectedStudentIndex].grade}`
+                    : ""}
+                </div>
+              </div>
+            </div>
+
+            {/* Student Details with HUGE Name */}
+            <div className="flex flex-col items-center lg:items-start text-center lg:text-left max-w-xl">
+              {/* Academic Excellence Badge */}
+              <span className="inline-flex items-center gap-2 rounded-full bg-amber-400/10 px-4 py-1.5 text-xs font-black uppercase tracking-widest text-amber-300 border border-amber-400/30 mb-3">
+                ✨ Academic Excellence Award
+              </span>
+
+              {/* HUGE STUDENT NAME */}
+              <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-yellow-300 tracking-tight leading-none drop-shadow-2xl mb-4">
+                {students[selectedStudentIndex].name}
+              </h2>
+
+              {/* Info Grid Pills */}
+              <div className="grid grid-cols-2 gap-3 w-full my-4 text-left">
+                <div className="rounded-2xl bg-white/5 border border-white/10 p-4 backdrop-blur">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                    Subject
+                  </p>
+                  <p className="text-lg font-black text-white mt-0.5">
+                    {students[selectedStudentIndex].subject}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-white/5 border border-white/10 p-4 backdrop-blur">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                    {students[selectedStudentIndex].marks !== undefined &&
+                    students[selectedStudentIndex].marks !== null &&
+                    students[selectedStudentIndex].marks !== "" &&
+                    students[selectedStudentIndex].grade
+                      ? "Score & Grade"
+                      : students[selectedStudentIndex].grade
+                      ? "Academic Grade"
+                      : "Score Rate"}
+                  </p>
+                  <p className="text-lg font-black text-amber-400 mt-0.5">
+                    {students[selectedStudentIndex].marks !== undefined &&
+                    students[selectedStudentIndex].marks !== null &&
+                    students[selectedStudentIndex].marks !== ""
+                      ? `${students[selectedStudentIndex].marks}${
+                          typeof students[selectedStudentIndex].marks === "number"
+                            ? "%"
+                            : ""
+                        }`
+                      : ""}
+                    {students[selectedStudentIndex].marks !== undefined &&
+                    students[selectedStudentIndex].marks !== null &&
+                    students[selectedStudentIndex].marks !== "" &&
+                    students[selectedStudentIndex].grade
+                      ? ` (${students[selectedStudentIndex].grade})`
+                      : students[selectedStudentIndex].grade &&
+                        (students[selectedStudentIndex].marks === undefined ||
+                          students[selectedStudentIndex].marks === null ||
+                          students[selectedStudentIndex].marks === "")
+                      ? students[selectedStudentIndex].grade
+                      : ""}
+                  </p>
+                </div>
+                <div className="col-span-2 rounded-2xl bg-white/5 border border-white/10 p-4 backdrop-blur flex items-center justify-between">
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                      Supervising Instructor
+                    </p>
+                    <p className="text-base font-bold text-slate-200 mt-0.5">
+                      {students[selectedStudentIndex].instructor}
+                    </p>
+                  </div>
+                  <div className="h-10 w-10 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-400/40 flex items-center justify-center font-bold text-xl">
+                    🎓
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-sm text-slate-300 italic font-medium mt-1 leading-relaxed">
+                "Recognized for extraordinary commitment to academic mastery and outstanding examination performance."
+              </p>
+            </div>
+
+            {/* Next Navigation Button */}
+            <button
+              onClick={() =>
+                setSelectedStudentIndex((prev) =>
+                  prev < students.length - 1 ? prev + 1 : 0
+                )
+              }
+              className="absolute right-0 sm:-right-4 lg:-right-12 top-1/2 -translate-y-1/2 z-20 flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-slate-900/80 text-white ring-2 ring-amber-400/40 shadow-2xl hover:bg-amber-500 hover:text-slate-950 transition duration-300 active:scale-90 cursor-pointer"
+              title="Next Student (Right Arrow)"
+            >
+              <FiChevronRight className="w-7 h-7" />
+            </button>
+          </div>
+
+          {/* Bottom Thumbnail Strip (Photo Album Selector) */}
+          <div
+            className="w-full max-w-4xl py-3 px-4 bg-slate-900/80 rounded-2xl border border-white/10 backdrop-blur z-10 flex items-center justify-center gap-3 overflow-x-auto custom-scrollbar shrink-0"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {students.map((st, idx) => (
+              <button
+                key={st.id || idx}
+                onClick={() => setSelectedStudentIndex(idx)}
+                className={`relative group flex-shrink-0 transition duration-300 rounded-xl overflow-hidden cursor-pointer ${
+                  selectedStudentIndex === idx
+                    ? "ring-4 ring-amber-400 scale-110 shadow-lg shadow-amber-500/30"
+                    : "opacity-50 hover:opacity-100 hover:scale-105"
+                }`}
+              >
+                <img
+                  src={
+                    st.image ||
+                    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200"
+                  }
+                  alt={st.name}
+                  className="w-12 h-12 sm:w-14 sm:h-14 object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end justify-center pb-0.5">
+                  <span className="text-[10px] font-black text-amber-300 truncate max-w-[50px]">
+                    {st.name ? st.name.split(" ")[0] : "Student"}
+                  </span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

@@ -17,6 +17,7 @@ export default function AddTopStudentModal({ open, onClose }) {
   const [name, setName] = useState("");
   const [subject, setSubject] = useState("");
   const [marks, setMarks] = useState("");
+  const [grade, setGrade] = useState("");
   const [instructor, setInstructor] = useState("");
   const [image, setImage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -24,7 +25,7 @@ export default function AddTopStudentModal({ open, onClose }) {
   const [editingId, setEditingId] = useState(null);
 
   useEffect(() => {
-    const q = query(collection(db, "TopStudents"), orderBy("marks", "desc"));
+    const q = query(collection(db, "TopStudents"), orderBy("createdAt", "desc"));
     const unsub = onSnapshot(q, (snapshot) => {
       setStudents(snapshot.docs.map((d) => ({ id: d.id, ...d.data() })));
     });
@@ -35,12 +36,25 @@ export default function AddTopStudentModal({ open, onClose }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!marks.trim() && !grade.trim()) {
+      alert("Please provide either Marks or a Grade for the student.");
+      return;
+    }
+
     setLoading(true);
+
+    const parsedMarks = marks.trim()
+      ? isNaN(Number(marks.trim()))
+        ? marks.trim()
+        : Number(marks.trim())
+      : "";
 
     const studentData = {
       name,
       subject,
-      marks: Number(marks),
+      marks: parsedMarks,
+      grade: grade.trim(),
       instructor,
       image,
       createdAt: serverTimestamp(),
@@ -56,6 +70,7 @@ export default function AddTopStudentModal({ open, onClose }) {
       setName("");
       setSubject("");
       setMarks("");
+      setGrade("");
       setInstructor("");
       setImage("");
     } catch (err) {
@@ -68,11 +83,14 @@ export default function AddTopStudentModal({ open, onClose }) {
 
   const handleEdit = (s) => {
     setEditingId(s.id);
-    setName(s.name);
-    setSubject(s.subject);
-    setMarks(s.marks);
-    setInstructor(s.instructor);
-    setImage(s.image);
+    setName(s.name || "");
+    setSubject(s.subject || "");
+    setMarks(
+      s.marks !== undefined && s.marks !== null ? String(s.marks) : ""
+    );
+    setGrade(s.grade || "");
+    setInstructor(s.instructor || "");
+    setImage(s.image || "");
   };
 
   const handleDelete = async (id) => {
@@ -87,7 +105,7 @@ export default function AddTopStudentModal({ open, onClose }) {
         <div className="flex items-center justify-between px-6 py-4 border-b sticky top-0 bg-white z-10 font-bold">
           <h2 className="text-lg flex items-center gap-2 text-slate-900">
             <Star className="text-yellow-500" size={20} />
-            Top Students
+            Top Students Management
           </h2>
           <button
             onClick={onClose}
@@ -104,56 +122,84 @@ export default function AddTopStudentModal({ open, onClose }) {
             className="grid gap-4 p-6 border-b bg-slate-50/30 md:grid-cols-2"
           >
             {/* Name */}
-            <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
-              <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Student Name"
-                required
-                className="w-full rounded-xl border border-slate-200 pl-10 pr-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-              />
+            <div className="relative md:col-span-2">
+              <label className="block text-xs font-bold text-slate-600 mb-1">Student Name</label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
+                <input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Student Name"
+                  required
+                  className="w-full rounded-xl border border-slate-200 pl-10 pr-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                />
+              </div>
             </div>
 
             {/* Subject */}
-            <div className="relative">
-              <Book className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
+            <div>
+              <label className="block text-xs font-bold text-slate-600 mb-1">Subject</label>
+              <div className="relative">
+                <Book className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
+                <input
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  placeholder="Subject (e.g. Mathematics)"
+                  required
+                  className="w-full rounded-xl border border-slate-200 pl-10 pr-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                />
+              </div>
+            </div>
+
+            {/* Instructor */}
+            <div>
+              <label className="block text-xs font-bold text-slate-600 mb-1">Instructor</label>
               <input
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                placeholder="Subject"
+                value={instructor}
+                onChange={(e) => setInstructor(e.target.value)}
+                placeholder="Instructor Name"
                 required
-                className="w-full rounded-xl border border-slate-200 pl-10 pr-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
               />
             </div>
 
             {/* Marks */}
-            <input
-              type="number"
-              value={marks}
-              onChange={(e) => setMarks(e.target.value)}
-              placeholder="Marks (e.g., 95)"
-              required
-              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-            />
+            <div>
+              <label className="block text-xs font-bold text-slate-600 mb-1">
+                Marks <span className="text-slate-400 font-normal">(Optional if Grade is set)</span>
+              </label>
+              <input
+                value={marks}
+                onChange={(e) => setMarks(e.target.value)}
+                placeholder="e.g. 95 or 98%"
+                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              />
+            </div>
 
-            {/* Instructor */}
-            <input
-              value={instructor}
-              onChange={(e) => setInstructor(e.target.value)}
-              placeholder="Instructor Name"
-              required
-              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-            />
+            {/* Grade */}
+            <div>
+              <label className="block text-xs font-bold text-slate-600 mb-1">
+                Grade <span className="text-slate-400 font-normal">(Optional if Marks is set)</span>
+              </label>
+              <input
+                value={grade}
+                onChange={(e) => setGrade(e.target.value)}
+                placeholder="e.g. A+, 9A, Distinction"
+                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              />
+            </div>
 
             {/* Image URL */}
-            <input
-              value={image}
-              onChange={(e) => setImage(e.target.value)}
-              placeholder="Image URL (e.g. https://...)"
-              required
-              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 transition-all md:col-span-2"
-            />
+            <div className="md:col-span-2">
+              <label className="block text-xs font-bold text-slate-600 mb-1">Photo Image URL</label>
+              <input
+                value={image}
+                onChange={(e) => setImage(e.target.value)}
+                placeholder="Image URL (e.g. https://...)"
+                required
+                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              />
+            </div>
 
             {/* Buttons */}
             <div className="flex flex-col sm:flex-row justify-end gap-3 md:col-span-2">
@@ -165,6 +211,7 @@ export default function AddTopStudentModal({ open, onClose }) {
                     setName("");
                     setSubject("");
                     setMarks("");
+                    setGrade("");
                     setInstructor("");
                     setImage("");
                   }}
@@ -207,8 +254,12 @@ export default function AddTopStudentModal({ open, onClose }) {
                     <p className="text-sm text-slate-600">
                       Instructor: {s.instructor}
                     </p>
-                    <p className="text-xs text-slate-400 mt-1">
-                      Marks: {s.marks}
+                    <p className="text-xs font-semibold text-blue-600 mt-1">
+                      {s.marks !== undefined && s.marks !== null && s.marks !== ""
+                        ? `Marks: ${s.marks}${typeof s.marks === "number" ? "%" : ""}`
+                        : ""}
+                      {s.marks && s.grade ? " • " : ""}
+                      {s.grade ? `Grade: ${s.grade}` : ""}
                     </p>
                   </div>
                 </div>

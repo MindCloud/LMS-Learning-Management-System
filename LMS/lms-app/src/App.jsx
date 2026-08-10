@@ -27,25 +27,31 @@ import ThemeToggle from "./components/ThemeToggle"; // 👈 ADD THIS
 import LanguageToggle from "./components/LanguageToggle";
 import ScrollToTop from "./components/ScrollToTop";
 
-// Check if user is logged in
-const isAuthenticated = () => {
-  return auth.currentUser !== null;
-};
+import { useAuth } from "./context/AuthContext";
 
-// Get user role
-const getUserRole = () => {
-  return localStorage.getItem("role");
-};
-
-// Protected Route with role restriction
+// Protected Route with role restriction & initial session verification
 const ProtectedRoute = ({ children, allowedRoles }) => {
-  if (!isAuthenticated()) {
-    return <Navigate to="/login" />;
+  const { currentUser, userEmail, role, authLoading } = useAuth();
+
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-950 text-white font-sans">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
+          <p className="text-sm font-semibold text-slate-400">Verifying session...</p>
+        </div>
+      </div>
+    );
   }
 
-  const role = getUserRole();
+  const isAuthed = currentUser !== null || Boolean(userEmail);
+
+  if (!isAuthed) {
+    return <Navigate to="/login" replace />;
+  }
+
   if (allowedRoles && !allowedRoles.includes(role)) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/login" replace />;
   }
 
   return children;

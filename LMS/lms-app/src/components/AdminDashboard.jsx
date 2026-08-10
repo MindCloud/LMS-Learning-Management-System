@@ -60,7 +60,7 @@ function AdminDashboard() {
   const [subjectFilter, setSubjectFilter] = useState("");
   const [gradeFilter, setGradeFilter] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
-  const [view, setView] = useState("grid");
+  const [view, setView] = useState("list");
   const [sortKey, setSortKey] = useState("name");
   const [sortDir, setSortDir] = useState("asc");
 

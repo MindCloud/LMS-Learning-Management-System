@@ -1,7 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { auth, db } from "../firebase";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import {
+  signInWithEmailAndPassword,
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence,
+} from "firebase/auth";
 import {
   doc,
   getDoc,
@@ -15,23 +20,43 @@ import { MdEmail } from "react-icons/md";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import logo from "../assets/logo.jpg";
+import { useAuth } from "../context/AuthContext";
 
 function Login() {
+  const { setUserEmail, setRole } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const isRemembered = localStorage.getItem("ezone_remember_me") === "true";
+    if (isRemembered) {
+      const savedEmail = localStorage.getItem("ezone_remember_email") || "";
+      const savedPassword = localStorage.getItem("ezone_remember_password") || "";
+      if (savedEmail) setEmail(savedEmail);
+      if (savedPassword) setPassword(savedPassword);
+      setRememberMe(true);
+    }
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
+      // Set Firebase Auth persistence mode
+      await setPersistence(
+        auth,
+        rememberMe ? browserLocalPersistence : browserSessionPersistence
+      );
+
       const userCredential = await signInWithEmailAndPassword(
         auth,
         email,
-        password,
+        password
       );
       const user = userCredential.user;
 
@@ -57,8 +82,20 @@ function Login() {
 
       const role = userData.role?.toLowerCase().trim();
 
-      localStorage.setItem("role", role);
-      localStorage.setItem("userEmail", user.email); // 🔥 FIX
+      // Sync AuthContext and localStorage
+      setUserEmail(user.email);
+      setRole(role);
+
+      // Handle Remember Me credentials saving
+      if (rememberMe) {
+        localStorage.setItem("ezone_remember_me", "true");
+        localStorage.setItem("ezone_remember_email", email);
+        localStorage.setItem("ezone_remember_password", password);
+      } else {
+        localStorage.removeItem("ezone_remember_me");
+        localStorage.removeItem("ezone_remember_email");
+        localStorage.removeItem("ezone_remember_password");
+      }
 
       toast.success(`Welcome back, ${role}!`);
 
@@ -66,10 +103,10 @@ function Login() {
         role === "student"
           ? "/home"
           : role === "teacher"
-            ? "/dashboard"
-            : role === "admin"
-              ? "/admin"
-              : "/",
+          ? "/dashboard"
+          : role === "admin"
+          ? "/admin"
+          : "/"
       );
     } catch (err) {
       toast.error(err.message || "Login failed");
@@ -168,6 +205,19 @@ function Login() {
                   )}
                 </button>
               </div>
+            </div>
+
+            {/* Remember Me Checkbox */}
+            <div className="flex items-center justify-between ml-1">
+              <label className="flex items-center gap-2.5 text-xs text-slate-300 font-medium cursor-pointer hover:text-white transition-colors">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-4 h-4 rounded border-slate-700 bg-slate-950 text-blue-600 focus:ring-blue-500 focus:ring-offset-slate-900 cursor-pointer"
+                />
+                <span>Remember me & keep me signed in</span>
+              </label>
             </div>
 
             {/* Submit Button */}
